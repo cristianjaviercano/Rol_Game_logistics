@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Elige tu empresa</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1200px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 24px 32px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+  <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="align-self: flex-start; font-size: 12px; font-weight: 600; background: {{t.pYellow}}; border-radius: 999px; padding: 6px 12px">Partida 03 · lobby</span>
+      <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700">Elige tu empresa</h1>
+      <p style="margin: 0; font-size: 14px; color: {{t.quiet}}; max-width: 720px">Tu empresa hereda la divisa, el bloque comercial y las reglas de importación y exportación de su país. Su exposición define qué eventos globales la golpean.</p>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+      <div style="font-size: 13px; font-weight: 500; padding: 8px 12px; border-radius: 999px; background: {{t.pBlue}}">17 empresas · 14 países · 6 continentes</div>
+    </div>
+  </header>
+
+  <div role="group" aria-label="Filtrar por continente" style="display: flex; flex-wrap: wrap; gap: 8px">
+    <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
+      <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">{{f.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <div style="flex: 999 1 640px; min-width: 0; display: flex; flex-wrap: wrap; gap: 12px; align-content: flex-start">
+      <sc-for list="{{cards}}" as="c" hint-placeholder-count="9">
+        <button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="{{c.style}}">
+          <span style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+            <span style="{{c.contStyle}}">{{c.continent}}</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600">{{c.currency}}</span>
+          </span>
+          <span style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 600; margin-top: 10px">{{c.name}}</span>
+          <span style="display: block; font-size: 13px; margin-top: 2px; color: {{t.quiet}}">{{c.country}} · {{c.role}}</span>
+          <span style="display: block; font-size: 13px; margin-top: 6px">{{c.sells}}</span>
+          <sc-if value="{{c.pmv}}" hint-placeholder-val="{{false}}">
+            <span style="display: inline-block; font-size: 12px; font-weight: 700; margin-top: 8px; padding: 3px 8px; border-radius: 999px; color: {{t.accentInk}}; background: {{t.accent}}">Incluida en el PMV</span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </div>
+
+    <aside style="flex: 1 1 420px; min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: {{t.accentText}}">FICHA DE LA EMPRESA</span>
+        <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700">{{d.name}}</h2>
+        <span style="font-size: 14px; color: {{t.quiet}}">{{d.country}} · {{d.role}} · vende {{d.sells}}</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <div style="background: {{t.pBlue}}; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">Divisa</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600">{{d.currency}}</span></div>
+        <div style="background: {{t.pYellow}}; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">Bloque</span><span style="font-size: 13px; font-weight: 600">{{d.bloc}}</span></div>
+        <div style="background: {{t.pRed}}; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">Paso crítico</span><span style="font-size: 13px; font-weight: 600">{{d.choke}}</span></div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 600">Reglas de comercio exterior del país</span>
+        <div style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.45"><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; color: {{t.accentInk}}; background: {{t.accent}}">EXPO</span><span>{{d.expo}}</span></div>
+        <div style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.45"><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; color: {{t.warnInk}}; background: {{t.warn}}">IMPO</span><span>{{d.impo}}</span></div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 600">Cadena de suministro: insumos que debes importar</span>
+        <sc-for list="{{d.inputs}}" as="in" hint-placeholder-count="2">
+          <div style="border: 1px solid {{t.border}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 13px; font-weight: 600">{{in.name}}</span>
+            <sc-for list="{{in.options}}" as="op" hint-placeholder-count="2">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px">
+                <span>{{op.label}}</span>
+                <span style="{{op.tagStyle}}">{{op.tag}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 600">Exposición a eventos globales</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{d.exposures}}" as="ex" hint-placeholder-count="3">
+            <span style="font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; color: {{t.alertText}}; background: {{t.pRed}}">{{ex.text}}</span>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+          <span style="font-size: 14px; font-weight: 600">Elige tu rol</span>
+          <span style="font-size: 12px; font-weight: 600; color: {{t.quiet}}">{{seats.free}} de 6 roles libres</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{roles}}" as="r" hint-placeholder-count="6">
+            <button type="button" onClick="{{r.pick}}" aria-pressed="{{r.pressed}}" aria-disabled="{{r.taken}}" style="{{r.style}}">
+              <span style="display: block; font-size: 13px; font-weight: 600">{{r.label}}</span>
+              <span style="{{r.subStyle}}">{{r.sub}}</span>
+            </button>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: {{t.quiet}}; line-height: 1.45">Los roles que sigan libres al iniciar los cubre un bot de IA. En equipos pequeños, el Superusuario puede activar el modo Multirrol: un jugador asume dos roles.</span>
+      </div>
+
+      <sc-if value="{{hasMsg}}" hint-placeholder-val="{{false}}">
+        <div role="status" style="{{msgStyle}}">{{msg}}</div>
+      </sc-if>
+
+      <button type="button" onClick="{{join}}" aria-pressed="{{joinPressed}}" style="{{joinStyle}}">{{joinLabel}}</button>
+    </aside>
+  </div>
+  <div style="font-size: 12px; color: {{t.quiet}}">Mock-up del PMV · empresas ficticias · reglas simplificadas con fines didácticos</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'Todos', company: 'cafe', role: 'Comercial', joined: null, msg: '' };
+    this.join = () => this.setState((s) => {
+      const here = s.joined && s.joined.company === s.company && s.joined.role === s.role;
+      if (here) return { joined: null, msg: 'Saliste del rol. Elige otro cuando quieras.' };
+      if (this.seats(s.company)[s.role]) return { msg: 'Ese rol ya está ocupado: elige uno libre.' };
+      return { joined: { company: s.company, role: s.role }, msg: '' };
+    });
+  }
+
+  roleList() {
+    return ['CEO', 'Comercial', 'Tráfico', 'Aduanas', 'CFO', 'Riesgos'];
+  }
+
+  seats(companyId) {
+    if (companyId === 'cafe') return { CEO: 'Laura P.', 'Tráfico': 'Andrés M.', Aduanas: 'Sofía G.' };
+    const names = ['Mateo R.', 'Valentina C.', 'Juan D.', 'Camila H.', 'Samuel O.', 'Isabella T.', 'Daniel V.', 'Mariana L.'];
+    const roles = this.roleList();
+    let h = 0;
+    for (let i = 0; i < companyId.length; i++) h = (h * 31 + companyId.charCodeAt(i)) % 9973;
+    const taken = {};
+    for (let j = 0; j < h % 4; j++) {
+      const r = roles[(h + j * 2) % 6];
+      if (r !== 'Comercial') taken[r] = names[(h + j) % names.length];
+    }
+    return taken;
+  }
+
+  firstFree(companyId, prefer) {
+    const taken = this.seats(companyId);
+    if (prefer && !taken[prefer]) return prefer;
+    return this.roleList().filter((r) => !taken[r])[0];
+  }
+
+  theme() {
+    if (this.props.nocturno === true) {
+      return { bg: '#0B1320', card: '#0F1A2B', soft: '#13213A', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3', accent: '#3DD6D0', accentInk: '#06201F', accentText: '#3DD6D0', alertText: '#F2A93B', warn: '#F2A93B', warnInk: '#1A1206', pBlue: '#13213A', pYellow: '#13213A', pRed: '#13213A', selBg: '#13213A', cont: { 'América': '#13213A', 'Europa': '#13213A', 'África': '#13213A', 'Asia': '#13213A', 'Oceanía': '#13213A' } };
+    }
+    return { bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', accentInk: '#FFFFFF', accentText: '#1F5EFF', alertText: '#B01F2E', warn: '#FFC93C', warnInk: '#14213D', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', selBg: '#E4ECFF', cont: { 'América': '#E4ECFF', 'Europa': '#FFF4CC', 'África': '#FFE3E6', 'Asia': '#ECE6FF', 'Oceanía': '#DDF4EA' } };
+  }
+
+  world() {
+    const countries = {
+      Colombia: { cont: 'América', cur: 'COP', bloc: 'CAN · Alianza del Pacífico', choke: 'Canal de Panamá', expo: 'Declaración de exportación ante la DIAN; las exportaciones están exentas de IVA.', impo: 'Vistos buenos en la VUCE (ICA, Invima) según el producto; IVA del 19 %.' },
+      'México': { cont: 'América', cur: 'MXN', bloc: 'T-MEC', choke: 'Frontera con EE. UU.', expo: 'Cumplir reglas de origen del T-MEC para la preferencia arancelaria.', impo: 'Pedimento tramitado por agente aduanal; IVA del 16 %.' },
+      'EE. UU.': { cont: 'América', cur: 'USD', bloc: 'T-MEC', choke: 'Puertos costeros', expo: 'Controles de exportación según destino y producto.', impo: 'Alimentos: registro y aviso previo ante la FDA; ISF 10+2 en carga marítima.' },
+      Brasil: { cont: 'América', cur: 'BRL', bloc: 'Mercosur', choke: 'Puerto de Santos', expo: 'Registro de la operación en Siscomex.', impo: 'Tributos en cascada: II, IPI, PIS/COFINS e ICMS.' },
+      Chile: { cont: 'América', cur: 'CLP', bloc: 'Alianza del Pacífico · CPTPP', choke: 'Pacífico sur', expo: 'Certificados de origen para aprovechar sus TLC.', impo: 'Arancel general del 6 % (0 % con TLC); IVA del 19 %.' },
+      'Países Bajos': { cont: 'Europa', cur: 'EUR', bloc: 'Unión Europea', choke: 'Rotterdam · mar Rojo', expo: 'Documentos de exportación de la UE.', impo: 'Arancel externo común; declaración previa ICS2; IVA del 21 %.' },
+      Alemania: { cont: 'Europa', cur: 'EUR', bloc: 'Unión Europea', choke: 'Río Rin', expo: 'Licencias para bienes de doble uso.', impo: 'Arancel externo común; IVA del 19 %.' },
+      'Sudáfrica': { cont: 'África', cur: 'ZAR', bloc: 'SACU · AfCFTA', choke: 'Cabo de Buena Esperanza', expo: 'Certificación fitosanitaria para productos agrícolas.', impo: 'IVA del 15 %.' },
+      Egipto: { cont: 'África', cur: 'EGP', bloc: 'AfCFTA · COMESA', choke: 'Canal de Suez', expo: 'Certificados de origen preferencial.', impo: 'Información anticipada de carga (ACI) obligatoria; IVA del 14 %.' },
+      EAU: { cont: 'Asia', cur: 'AED', bloc: 'CCG', choke: 'Estrecho de Ormuz', expo: 'Reexportación desde zonas francas.', impo: 'Arancel común del CCG del 5 %; IVA del 5 %.' },
+      China: { cont: 'Asia', cur: 'CNY', bloc: 'RCEP', choke: 'Taiwán · Malaca', expo: 'Licencias para bienes controlados.', impo: 'Alimentos: exportador registrado ante la GACC; IVA del 13 %.' },
+      India: { cont: 'Asia', cur: 'INR', bloc: 'TLC bilaterales', choke: 'Mar Arábigo · mar Rojo', expo: 'Código IEC obligatorio para el exportador.', impo: 'Arancel básico más IGST.' },
+      'Japón': { cont: 'Asia', cur: 'JPY', bloc: 'CPTPP · RCEP', choke: 'Estrecho de Taiwán', expo: 'Controles para tecnología sensible.', impo: 'Impuesto al consumo del 10 %.' },
+      Australia: { cont: 'Oceanía', cur: 'AUD', bloc: 'CPTPP · RCEP', choke: 'Mar de China Meridional', expo: 'Certificados de exportación agrícola.', impo: 'Bioseguridad estricta; GST del 10 %.' }
+    };
+    const supCont = { Colombia: 'América', 'México': 'América', 'EE. UU.': 'América', Brasil: 'América', Chile: 'América', 'Panamá': 'América', 'Países Bajos': 'Europa', Alemania: 'Europa', 'España': 'Europa', Polonia: 'Europa', 'Sudáfrica': 'África', Egipto: 'África', 'Etiopía': 'África', EAU: 'Asia', China: 'Asia', India: 'Asia', 'Japón': 'Asia', Vietnam: 'Asia', Singapur: 'Asia', 'Bangladés': 'Asia', Australia: 'Oceanía' };
+    const companies = [
+      { id: 'cafe', name: 'Café Sinú S.A.S.', country: 'Colombia', role: 'Productora agro', sells: 'café verde especial', pmv: true, inputs: [{ name: 'Sacos para café', options: [['Jute & Pack India', 'India'], ['Fique (proveedor bot)', 'Colombia']] }, { name: 'Trilladora', options: [['Rhein Maschinenbau', 'Alemania'], ['Proveedor bot', 'Brasil']] }], exposures: ['Huracanes del Caribe', 'USD/COP', 'Precio internacional del café'] },
+      { id: 'tilapia', name: 'Acuícola del Sinú', country: 'Colombia', role: 'Productora acuícola', sells: 'tilapia congelada', pmv: true, inputs: [{ name: 'Alimento balanceado de soya', options: [['SojaSul Agroindústria', 'Brasil'], ['Proveedor bot', 'EE. UU.']] }, { name: 'Empaque al vacío', options: [['Shenzhen Parts Co.', 'China'], ['Proveedor bot', 'México']] }], exposures: ['Cadena de frío', 'Alertas sanitarias', 'USD/COP'] },
+      { id: 'caribe', name: 'Caribe Line', country: 'Colombia', role: 'Naviera', sells: 'fletes Caribe–EE. UU.–Europa', pmv: true, inputs: [{ name: 'Combustible (bunker)', options: [['Proveedor bot', 'Panamá'], ['Proveedor bot', 'EAU']] }, { name: 'Contenedores reefer', options: [['Proveedor bot', 'China'], ['Proveedor bot', 'EE. UU.']] }], exposures: ['Canal de Panamá', 'Precio del petróleo', 'Huracanes'] },
+      { id: 'bajio', name: 'Autopartes del Bajío', country: 'México', role: 'Manufactura', sells: 'arneses automotrices', pmv: false, inputs: [{ name: 'Cobre', options: [['Cobre Andino', 'Chile'], ['Proveedor bot', 'Australia']] }, { name: 'Microcontroladores', options: [['Shenzhen Parts Co.', 'China'], ['Proveedor bot', 'EE. UU.']] }], exposures: ['Aranceles de EE. UU.', 'Estrecho de Taiwán', 'MXN'] },
+      { id: 'gulf', name: 'Gulf Retail Inc.', country: 'EE. UU.', role: 'Importadora', sells: 'distribución de alimentos', pmv: true, inputs: [{ name: 'Café', options: [['Café Sinú S.A.S.', 'Colombia'], ['Proveedor bot', 'Vietnam']] }, { name: 'Tilapia', options: [['Acuícola del Sinú', 'Colombia'], ['Proveedor bot', 'China']] }], exposures: ['Normas FDA', 'Huelgas portuarias', 'Guerra comercial'] },
+      { id: 'soja', name: 'SojaSul Agroindústria', country: 'Brasil', role: 'Productora agro', sells: 'harina de soya', pmv: false, inputs: [{ name: 'Urea', options: [['Nilo Fertilizantes', 'Egipto'], ['Proveedor bot', 'EE. UU.']] }], exposures: ['BRL', 'Sequía', 'Canal de Suez (insumo)'] },
+      { id: 'cobre', name: 'Cobre Andino', country: 'Chile', role: 'Minería', sells: 'cátodos de cobre', pmv: false, inputs: [{ name: 'Maquinaria minera', options: [['Rhein Maschinenbau', 'Alemania'], ['Proveedor bot', 'EE. UU.']] }, { name: 'Neumáticos mineros', options: [['Proveedor bot', 'Japón'], ['Proveedor bot', 'Brasil']] }], exposures: ['Precio del cobre', 'Sismos', 'CLP'] },
+      { id: 'rotterdam', name: 'Rotterdam Foods B.V.', country: 'Países Bajos', role: 'Importadora', sells: 'alimentos para la UE', pmv: true, inputs: [{ name: 'Café', options: [['Café Sinú S.A.S.', 'Colombia'], ['Proveedor bot', 'Etiopía']] }, { name: 'Cítricos', options: [['Cape Citrus Ltd.', 'Sudáfrica'], ['Proveedor bot', 'España']] }], exposures: ['Huelga en Rotterdam', 'Mar Rojo', 'Normas de la UE'] },
+      { id: 'rhein', name: 'Rhein Maschinenbau GmbH', country: 'Alemania', role: 'Manufactura', sells: 'maquinaria agroindustrial', pmv: false, inputs: [{ name: 'Acero', options: [['Proveedor bot', 'India'], ['Proveedor bot', 'Polonia']] }, { name: 'Electrónica', options: [['Shenzhen Parts Co.', 'China'], ['Osaka Precision', 'Japón']] }], exposures: ['Bajo caudal del Rin', 'Precio de la energía', 'Mar Rojo'] },
+      { id: 'cape', name: 'Cape Citrus Ltd.', country: 'Sudáfrica', role: 'Productora agro', sells: 'cítricos frescos', pmv: false, inputs: [{ name: 'Cartón corrugado', options: [['Proveedor bot', 'Sudáfrica'], ['Proveedor bot', 'Brasil']] }, { name: 'Flete reefer', options: [['Dragon Ocean Lines', 'China'], ['Caribe Line', 'Colombia']] }], exposures: ['Alertas fitosanitarias', 'ZAR', 'Congestión en el Cabo'] },
+      { id: 'nilo', name: 'Nilo Fertilizantes', country: 'Egipto', role: 'Química', sells: 'urea', pmv: false, inputs: [{ name: 'Catalizadores', options: [['Proveedor bot', 'Alemania'], ['Proveedor bot', 'EAU']] }], exposures: ['Canal de Suez', 'EGP', 'Precio del gas'] },
+      { id: 'hub', name: 'Gulf Hub Logistics', country: 'EAU', role: 'Operador 3PL y aéreo', sells: 'carga aérea y almacenamiento', pmv: false, inputs: [{ name: 'Combustible de aviación', options: [['Proveedor bot', 'EAU'], ['Proveedor bot', 'India']] }], exposures: ['Estrecho de Ormuz', 'Cierres de espacio aéreo'] },
+      { id: 'shenzhen', name: 'Shenzhen Parts Co.', country: 'China', role: 'Manufactura tech', sells: 'componentes electrónicos', pmv: true, inputs: [{ name: 'Cobre', options: [['Cobre Andino', 'Chile'], ['Proveedor bot', 'Australia']] }, { name: 'Tierras raras', options: [['Proveedor bot', 'China'], ['Proveedor bot', 'Australia']] }], exposures: ['Guerra comercial', 'Estrecho de Taiwán', 'Pandemias'] },
+      { id: 'dragon', name: 'Dragon Ocean Lines', country: 'China', role: 'Naviera', sells: 'fletes transpacífico y Asia–Europa', pmv: false, inputs: [{ name: 'Combustible (bunker)', options: [['Proveedor bot', 'Singapur'], ['Proveedor bot', 'EAU']] }], exposures: ['Estrecho de Malaca', 'Canal de Suez', 'Tifones'] },
+      { id: 'jute', name: 'Jute & Pack India', country: 'India', role: 'Manufactura', sells: 'sacos de yute y empaques', pmv: false, inputs: [{ name: 'Yute crudo', options: [['Proveedor bot', 'India'], ['Proveedor bot', 'Bangladés']] }], exposures: ['Monzón', 'INR'] },
+      { id: 'osaka', name: 'Osaka Precision', country: 'Japón', role: 'Manufactura tech', sells: 'sensores industriales', pmv: false, inputs: [{ name: 'Cobre', options: [['Cobre Andino', 'Chile'], ['Proveedor bot', 'Australia']] }, { name: 'Tierras raras', options: [['Shenzhen Parts Co.', 'China'], ['Proveedor bot', 'Australia']] }], exposures: ['Sismos', 'Estrecho de Taiwán', 'JPY'] },
+      { id: 'austral', name: 'Austral Grains', country: 'Australia', role: 'Productora agro', sells: 'trigo y cebada', pmv: false, inputs: [{ name: 'Urea', options: [['Nilo Fertilizantes', 'Egipto'], ['Proveedor bot', 'China']] }, { name: 'Maquinaria', options: [['Rhein Maschinenbau', 'Alemania'], ['Proveedor bot', 'EE. UU.']] }], exposures: ['Sequía', 'Bioseguridad', 'Mar Rojo (insumo)'] }
+    ];
+    return { countries: countries, supCont: supCont, companies: companies };
+  }
+
+  renderVals() {
+    const t = this.theme();
+    const w = this.world();
+    const filter = this.state.filter;
+    const filters = ['Todos', 'América', 'Europa', 'África', 'Asia', 'Oceanía'].map((f) => ({
+      label: f,
+      pressed: f === filter ? 'true' : 'false',
+      style: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 999px; cursor: pointer; ' + (f === filter ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+      pick: () => {
+        const st = this.state;
+        const visible = w.companies.filter((c) => f === 'Todos' || w.countries[c.country].cont === f);
+        const keep = visible.some((c) => c.id === st.company);
+        const company = keep || !visible.length ? st.company : visible[0].id;
+        this.setState({ filter: f, company: company, role: this.firstFree(company, st.role), msg: '' });
+      }
+    }));
+    const list = w.companies.filter((c) => filter === 'Todos' || w.countries[c.country].cont === filter);
+    const cards = list.map((c) => {
+      const k = w.countries[c.country], on = c.id === this.state.company;
+      return {
+        name: c.name, country: c.country, role: c.role, sells: c.sells, pmv: c.pmv,
+        continent: k.cont, currency: k.cur,
+        contStyle: 'font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; color: ' + t.text + '; background: ' + t.cont[k.cont],
+        pressed: on ? 'true' : 'false',
+        style: 'flex: 1 1 220px; min-width: 0; max-width: 360px; text-align: left; font: inherit; color: ' + t.text + '; padding: 14px; border-radius: 18px; cursor: pointer; ' + (on ? 'background: ' + t.selBg + '; border: 2px solid ' + t.accent : 'background: ' + t.card + '; border: 1px solid ' + t.border2),
+        pick: () => this.setState((s) => ({ company: c.id, role: this.firstFree(c.id, s.role), msg: '' }))
+      };
+    });
+    const sel = w.companies.filter((c) => c.id === this.state.company)[0];
+    const k = w.countries[sel.country];
+    const d = {
+      name: sel.name, country: sel.country, role: sel.role, sells: sel.sells,
+      currency: k.cur, bloc: k.bloc, choke: k.choke, expo: k.expo, impo: k.impo,
+      inputs: sel.inputs.map((inp) => ({
+        name: inp.name,
+        options: inp.options.map((o) => {
+          const same = w.supCont[o[1]] === k.cont;
+          return {
+            label: o[0] + ' · ' + o[1],
+            tag: same ? 'Mismo continente' : 'Otro continente',
+            tagStyle: 'flex: none; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; ' + (same ? 'color: ' + t.text + '; background: ' + t.pBlue : 'color: ' + t.warnInk + '; background: ' + t.warn)
+          };
+        })
+      })),
+      exposures: sel.exposures.map((e) => ({ text: e }))
+    };
+    const st = this.state;
+    const taken = this.seats(sel.id);
+    const joined = st.joined;
+    const roles = this.roleList().map((r) => {
+      const mine = !!joined && joined.company === sel.id && joined.role === r;
+      const who = taken[r];
+      const on = r === st.role;
+      return {
+        label: r,
+        sub: mine ? 'Tú' : (who ? who : 'Libre'),
+        taken: who ? 'true' : 'false',
+        pressed: on ? 'true' : 'false',
+        subStyle: 'display: block; font-size: 12px; margin-top: 2px; ' + (on ? 'color: ' + t.accentInk : 'color: ' + t.quiet),
+        style: 'font: inherit; text-align: center; min-height: 52px; padding: 6px 4px; border-radius: 12px; cursor: pointer; ' + (on
+          ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent
+          : (who ? 'background: ' + t.soft + '; color: ' + t.quiet + '; border: 1px dashed ' + t.border2 : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2)),
+        pick: () => {
+          if (who) { this.setState({ msg: 'El rol ' + r + ' ya lo ocupa ' + who + '. Elige un rol libre o pide al Superusuario el modo Multirrol.' }); return; }
+          this.setState({ role: r, msg: '' });
+        }
+      };
+    });
+    const free = this.roleList().filter((r) => !taken[r]).length;
+    const here = !!joined && joined.company === sel.id && joined.role === st.role;
+    let msg = st.msg;
+    if (!msg && here) msg = 'Te uniste como ' + st.role + ' de ' + sel.name + '. Espera a que el Superusuario inicie la partida.';
+    const joinedName = joined ? w.companies.filter((c) => c.id === joined.company)[0].name : '';
+    const joinLabel = here ? 'Salir del rol' : (joined ? 'Cambiarme a ' + st.role + ' de ' + sel.name : 'Unirme como ' + st.role + ' de ' + sel.name);
+    return {
+      t: t, filters: filters, cards: cards, d: d, roles: roles, roleLabel: st.role,
+      seats: { free: free },
+      hasMsg: !!msg, msg: msg,
+      msgStyle: 'border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: ' + t.text + '; background: ' + (st.msg && !here && /ocupa/.test(st.msg) ? t.pRed : t.pBlue),
+      join: this.join,
+      joinPressed: here ? 'true' : 'false',
+      joinLabel: joinLabel,
+      joinedName: joinedName,
+      joinStyle: 'font: inherit; font-size: 15px; font-weight: 600; min-height: 52px; border-radius: 14px; cursor: pointer; ' + (here ? 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2 : 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 0')
+    };
+  }
+}
+</script>
+</body>
+</html>

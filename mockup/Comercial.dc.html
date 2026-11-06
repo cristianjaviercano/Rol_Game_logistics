@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Gerente Comercial · Incoterms</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 20px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto">
+  <div style="display: flex; justify-content: space-between; align-items: center">
+    <span style="font-size: 12px; font-weight: 600; color: {{t.text}}; background: {{t.pBlue}}; border-radius: 999px; padding: 6px 12px">Gerente Comercial · Café Sinú S.A.S.</span>
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; background: {{t.pYellow}}; border-radius: 999px; padding: 6px 10px">Día 14</span>
+  </div>
+  <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 600; line-height: 1.2">Negociación con Rotterdam Foods B.V.</h1>
+
+  <div style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Producto</span><span>Café verde especial</span></div>
+    <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Cantidad</span><span>2 contenedores 40' HC</span></div>
+    <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Ruta</span><span>Cartagena → Rotterdam</span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid {{t.border}}; padding-top: 8px"><span style="font-size: 13px; color: {{t.quiet}}">Precio ofertado</span><span aria-live="polite" style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 500; color: {{t.accentText}}">USD {{price}} {{term}}</span></div>
+    <span style="font-size: 12px; color: {{t.quiet}}; line-height: 1.4">{{how}}</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 13px; font-weight: 600">Elige el Incoterm 2020</span>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{terms}}" as="tm" hint-placeholder-count="4">
+        <button type="button" onClick="{{tm.pick}}" aria-pressed="{{tm.pressed}}" style="{{tm.style}}">{{tm.code}}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="display: flex; justify-content: space-between; font-size: 12px; color: {{t.quiet}}"><span>Tramo de la DFI</span><span>Paga y gestiona</span></div>
+    <sc-for list="{{legs}}" as="l" hint-placeholder-count="7">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-top: 1px solid {{t.border}}">
+        <span style="font-size: 14px">{{l.label}}</span>
+        <span style="{{l.badgeStyle}}">{{l.who}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="background: {{t.pRed}}; border-radius: 14px; padding: 12px; font-size: 13px; line-height: 1.45"><span style="font-weight: 600; color: {{t.alertText}}">Transferencia del riesgo: </span>{{risk}}</div>
+
+  <sc-if value="{{hasNotes}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="background: {{t.pYellow}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 1.45">
+      <sc-for list="{{notes}}" as="nt" hint-placeholder-count="1">
+        <span>{{nt.text}}</span>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{hasStatus}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="{{statusStyle}}">{{status}}</div>
+  </sc-if>
+
+  <div style="display: flex; gap: 10px; margin-top: auto">
+    <button type="button" onClick="{{askCEO}}" aria-pressed="{{cta.cePressed}}" style="flex: 1; font: inherit; font-size: 14px; font-weight: 600; min-height: 48px; border-radius: 14px; border: 1px solid {{t.border2}}; background: {{t.card}}; color: {{t.text}}; cursor: pointer">{{cta.ceo}}</button>
+    <button type="button" onClick="{{sendOffer}}" style="flex: 1; font: inherit; font-size: 14px; font-weight: 600; min-height: 48px; border-radius: 14px; border: 0; background: {{t.accent}}; color: {{t.accentInk}}; cursor: pointer">{{cta.send}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { term: 'CIF', visto: 'none', sent: false, warn: '', world: { active: {} } };
+    this.askCEO = () => {
+      if (this.state.visto !== 'none') return;
+      this.setState({ visto: 'pedido', warn: '' });
+      clearTimeout(this.vt);
+      this.vt = setTimeout(() => this.setState((s) => (s.visto === 'pedido' ? { visto: 'ok' } : null)), 2500);
+    };
+    this.sendOffer = () => {
+      if (this.state.sent) return;
+      if (this.state.visto !== 'ok') {
+        this.setState({ warn: 'Primero pide el visto del CEO: las ofertas superiores a USD 40.000 lo requieren.' });
+        return;
+      }
+      this.setState({ sent: true, warn: '' });
+    };
+  }
+  componentDidMount() {
+    const read = (m) => { if (m && m.active) this.setState({ world: m }); };
+    try { const raw = window.localStorage.getItem('logiverse-mundo'); if (raw) read(JSON.parse(raw)); } catch (err) {}
+    try { this.bc = new BroadcastChannel('logiverse-mundo'); this.bc.onmessage = (e) => read(e.data); } catch (err) { this.bc = null; }
+  }
+  componentWillUnmount() {
+    clearTimeout(this.vt);
+    try { if (this.bc) this.bc.close(); } catch (err) {}
+  }
+  theme() {
+    if (this.props.nocturno === true) {
+      return { bg: '#0B1320', card: '#0F1A2B', soft: '#13213A', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3', accent: '#3DD6D0', accentInk: '#06201F', accentText: '#3DD6D0', alertText: '#F2A93B', pBlue: '#13213A', pYellow: '#13213A', pRed: '#13213A', buyerBg: 'transparent', buyerInk: '#C9D6E3', buyerLine: '#4A6384' };
+    }
+    return { bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', accentInk: '#FFFFFF', accentText: '#1F5EFF', alertText: '#B01F2E', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', buyerBg: '#FFF4CC', buyerInk: '#6B4E00', buyerLine: '#FFC93C' };
+  }
+  fmt(v) {
+    return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  act() {
+    return (this.state.world && this.state.world.active) || {};
+  }
+  pricing(term, act) {
+    const fob = 44000, origen = 1400, destino = 1150, r = 0.0075;
+    const flete = 3700 * (act.flete ? 1.18 : 1);
+    const cif = (fob + flete) / (1 - 1.1 * r);
+    const seguro = cif - fob - flete;
+    const up = (v) => Math.ceil(v / 100) * 100;
+    const f = (v) => this.fmt(v);
+    const table = {
+      EXW: { price: up(fob - origen), how: 'FOB ' + f(fob) + ' − carga, aduana y acarreo en origen ' + f(origen) },
+      FOB: { price: up(fob), how: 'Valor de la mercancía puesta a bordo en Cartagena' },
+      CIF: { price: up(cif), how: 'FOB ' + f(fob) + ' + flete ' + f(flete) + ' + seguro ' + f(seguro) + ', redondeado a la centena' },
+      DAP: { price: up(cif + destino), how: 'CIF ' + f(cif) + ' + descargue y entrega en Rotterdam ' + f(destino) + ', redondeado a la centena' }
+    };
+    return table[term];
+  }
+  renderVals() {
+    const t = this.theme(), s = this.state, act = this.act();
+    const V = 'Vendedor', C = 'Comprador', VO = 'Vendedor (opcional)';
+    const matrix = {
+      EXW: [V, C, C, C, C, C, C],
+      FOB: [V, V, V, C, C, C, C],
+      CIF: [V, V, V, V, V, C, C],
+      DAP: [V, V, V, V, VO, C, V]
+    };
+    const risk = {
+      EXW: 'en la bodega del vendedor, al poner la mercancía a disposición del comprador.',
+      FOB: 'cuando la mercancía queda a bordo del buque en Cartagena.',
+      CIF: 'a bordo del buque en Cartagena, aunque el vendedor paga flete y seguro (cobertura mínima: 110 % del valor del contrato).',
+      DAP: 'en Rotterdam, con la mercancía lista para descargar en el lugar convenido. El seguro no es obligatorio, pero el riesgo del viaje es del vendedor.'
+    };
+    const labels = ['Embalaje', 'Carga en origen', 'Aduana de exportación', 'Flete principal', 'Seguro', 'Aduana de importación', 'Entrega final'];
+    const term = s.term;
+    const row = matrix[term];
+    const legs = labels.map((label, i) => ({
+      label: label,
+      who: row[i],
+      badgeStyle: row[i] !== C
+        ? 'font-size: 12px; font-weight: 600; color: ' + t.accentInk + '; background: ' + t.accent + '; border: 1px solid ' + t.accent + '; border-radius: 999px; padding: 3px 10px'
+        : 'font-size: 12px; font-weight: 600; color: ' + t.buyerInk + '; background: ' + t.buyerBg + '; border: 1px solid ' + t.buyerLine + '; border-radius: 999px; padding: 3px 10px'
+    }));
+    const terms = ['EXW', 'FOB', 'CIF', 'DAP'].map((code) => ({
+      code: code,
+      pressed: code === term ? 'true' : 'false',
+      style: 'font-family: \'IBM Plex Mono\', monospace; font-size: 15px; font-weight: 500; min-height: 44px; border-radius: 12px; cursor: pointer; ' + (code === term ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+      pick: () => { if (code !== this.state.term) this.setState({ term: code, visto: 'none', sent: false, warn: '' }); }
+    }));
+    const p = this.pricing(term, act);
+    const priceTxt = this.fmt(p.price);
+    const notes = [];
+    if (act.huelga) notes.push({ text: term === 'DAP' ? 'Huelga en Rotterdam: en DAP la demora y el riesgo siguen siendo tuyos hasta la entrega.' : 'Huelga en Rotterdam: con ' + term + ' el riesgo ya es del comprador, pero la entrega se retrasa.' });
+    if (act.flete && (term === 'CIF' || term === 'DAP')) notes.push({ text: 'Alza de fletes: el precio ya incluye el flete marítimo +18 %.' });
+    if (act.devaluacion) notes.push({ text: 'Devaluación del peso: cada dólar que cobres vale 12 % más en COP.' });
+    let status = '', tone = 'info';
+    if (s.sent) status = 'Oferta enviada a Rotterdam Foods B.V.: USD ' + priceTxt + ' ' + term + '. Esperando respuesta del comprador.';
+    else if (s.warn) { status = s.warn; tone = 'warn'; }
+    else if (s.visto === 'ok') status = 'Visto del CEO aprobado para USD ' + priceTxt + ' ' + term + '. Ya puedes enviar la oferta.';
+    else if (s.visto === 'pedido') status = 'Visto solicitado al CEO para USD ' + priceTxt + ' ' + term + '…';
+    return {
+      t: t, term: term, terms: terms, legs: legs, risk: risk[term],
+      price: priceTxt, how: p.how,
+      notes: notes, hasNotes: notes.length > 0,
+      hasStatus: status !== '', status: status,
+      statusStyle: 'border-radius: 14px; padding: 12px; font-size: 13px; line-height: 1.45; ' + (tone === 'warn' ? 'background: ' + t.pRed + '; color: ' + t.text : 'background: ' + t.pBlue + '; color: ' + t.text),
+      cta: {
+        ceo: s.visto === 'ok' ? 'Visto aprobado' : (s.visto === 'pedido' ? 'Esperando al CEO…' : 'Pedir visto al CEO'),
+        cePressed: s.visto === 'none' ? 'false' : 'true',
+        send: s.sent ? 'Oferta enviada' : 'Enviar oferta'
+      },
+      askCEO: this.askCEO,
+      sendOffer: this.sendOffer
+    };
+  }
+}
+</script>
+</body>
+</html>

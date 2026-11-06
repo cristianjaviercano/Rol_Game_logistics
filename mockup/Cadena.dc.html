@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cadena de suministro y negociación</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1300px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 24px 32px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+  <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="align-self: flex-start; font-size: 12px; font-weight: 600; background: {{t.pBlue}}; border-radius: 999px; padding: 6px 12px">Café Sinú S.A.S. · Colombia · COP</span>
+      <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700">Cadena de suministro y negociación</h1>
+      <p style="margin: 0; font-size: 14px; color: {{t.quiet}}; max-width: 760px">Elige proveedores en tu continente o en otros, decide si usas doble fuente e inventario de seguridad, y negocia con otros equipos. Activa eventos para ver cómo se propagan por tu cadena.</p>
+    </div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; background: {{t.pYellow}}; border-radius: 999px; padding: 8px 12px">USD 3.200 · EUR 3.580 en COP</div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <div style="flex: 999 1 720px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+
+      <section style="background: {{t.pRed}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">Eventos activos en el mundo</h2>
+          <span style="font-size: 13px; color: {{t.quiet}}">Se sincronizan con la consola del Superusuario; también puedes simularlos aquí.</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{events}}" as="ev" hint-placeholder-count="6">
+            <button type="button" onClick="{{ev.pick}}" aria-pressed="{{ev.pressed}}" style="{{ev.style}}">{{ev.label}}</button>
+          </sc-for>
+        </div>
+      </section>
+
+      <sc-for list="{{inputs}}" as="in" hint-placeholder-count="2">
+        <section style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px">
+            <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{in.name}}</h2>
+            <button type="button" onClick="{{in.toggleDual}}" aria-pressed="{{in.dualPressed}}" style="{{in.dualStyle}}">{{in.dualLabel}}</button>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px">
+            <sc-for list="{{in.options}}" as="op" hint-placeholder-count="3">
+              <button type="button" onClick="{{op.pick}}" aria-pressed="{{op.pressed}}" style="{{op.style}}">
+                <span style="display: flex; justify-content: space-between; gap: 8px; align-items: center"><span style="font-size: 14px; font-weight: 600">{{op.label}}</span><span style="{{op.tagStyle}}">{{op.tag}}</span></span>
+                <span style="display: block; font-size: 12px; margin-top: 4px; color: {{t.quiet}}">{{op.origin}}</span>
+                <span style="display: block; font-size: 13px; margin-top: 6px; font-family: 'IBM Plex Mono', monospace">{{op.price}}</span>
+                <span style="display: block; font-size: 13px; margin-top: 2px">{{op.lead}}</span>
+                <sc-if value="{{op.hit}}" hint-placeholder-val="{{false}}">
+                  <span style="display: block; font-size: 12px; font-weight: 600; margin-top: 6px; color: {{t.alertText}}">{{op.hitText}}</span>
+                </sc-if>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font-size: 13px; line-height: 1.45; padding: 10px 12px; border-radius: 12px; background: {{t.soft}}">{{in.summary}}</div>
+        </section>
+      </sc-for>
+
+      <section style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px">
+          <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">Inventario de seguridad</h2>
+          <div style="display: flex; gap: 6px">
+            <sc-for list="{{stock}}" as="sk" hint-placeholder-count="3">
+              <button type="button" onClick="{{sk.pick}}" aria-pressed="{{sk.pressed}}" style="{{sk.style}}">{{sk.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+          <div style="background: {{t.pBlue}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">Costo de insumos por lote</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 500">COP {{k.cost}}</span></div>
+          <div style="background: {{t.pYellow}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">Abastecimiento más lento</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 500">{{k.lead}} días</span></div>
+          <div style="{{k.riskBox}}"><span style="font-size: 12px; color: {{t.quiet}}">Días de planta detenida</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600">{{k.stop}}</span></div>
+          <div style="background: {{t.soft}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">Concentración (IHH) · resiliencia</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 500">{{k.hhi}} · {{k.res}}/100</span></div>
+        </div>
+        <span style="font-size: 12px; color: {{t.quiet}}">Días detenida = retraso causado por eventos − cobertura del inventario. La doble fuente reparte el pedido 50/50 y usa el proveedor que llegue primero.</span>
+      </section>
+    </div>
+
+    <aside style="flex: 1 1 440px; min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: {{t.accentText}}">SALA DE NEGOCIACIÓN B2B</span>
+        <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Con Jute & Pack India</h2>
+        <span style="font-size: 13px; color: {{t.quiet}}">Equipo 7 · India · INR · reputación de tu empresa: 82/100</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 230px; overflow-y: auto">
+        <sc-for list="{{history}}" as="h" hint-placeholder-count="2">
+          <div style="{{h.style}}"><span style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 2px">{{h.who}}</span>{{h.text}}</div>
+        </sc-for>
+      </div>
+
+      <sc-for list="{{fields}}" as="fd" hint-placeholder-count="6">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; font-weight: 600">{{fd.label}}</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{fd.options}}" as="fo" hint-placeholder-count="4">
+              <button type="button" onClick="{{fo.pick}}" aria-pressed="{{fo.pressed}}" style="{{fo.style}}">{{fo.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+
+      <div style="background: {{t.pBlue}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Valor del contrato</span><span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600">{{n.total}}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Probabilidad de aceptación</span><span style="font-family: 'IBM Plex Mono', monospace">{{n.prob}} %</span></div>
+        <div style="height: 8px; border-radius: 999px; background: {{t.card}}; overflow: hidden"><div style="{{n.bar}}"></div></div>
+        <span style="font-size: 12px; color: {{t.quiet}}; line-height: 1.4">{{n.hint}}</span>
+      </div>
+
+      <sc-if value="{{hasDeal}}" hint-placeholder-val="{{false}}">
+        <div role="status" style="background: {{t.pYellow}}; border: 1px solid {{t.warn}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 13px; font-weight: 700">Contrato firmado</span>
+          <span style="font-size: 13px; line-height: 1.45">{{dealText}}</span>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; gap: 10px">
+        <button type="button" onClick="{{reset}}" style="flex: 1; font: inherit; font-size: 14px; font-weight: 600; min-height: 48px; border-radius: 14px; border: 1px solid {{t.border2}}; background: {{t.card}}; color: {{t.text}}; cursor: pointer">{{resetLabel}}</button>
+        <sc-if value="{{noDeal}}" hint-placeholder-val="{{true}}">
+          <button type="button" onClick="{{send}}" style="flex: 2; font: inherit; font-size: 14px; font-weight: 600; min-height: 48px; border-radius: 14px; border: 0; background: {{t.accent}}; color: {{t.accentInk}}; cursor: pointer">Enviar oferta</button>
+        </sc-if>
+      </div>
+    </aside>
+  </div>
+  <div style="font-size: 12px; color: {{t.quiet}}">Mock-up del PMV · precios, tiempos e índices de demostración</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.first = { who: 'Jute & Pack India', text: 'Podemos despachar 2.000 sacos desde Nhava Sheva. Precio de lista: USD 1,15 por saco FOB, con carta de crédito.', me: false };
+    this.state = {
+      ev: {}, pick: { sacos: 'jute', trill: 'rhein' }, dual: {}, stock: 15,
+      offer: { qty: 2000, price: 1.05, cur: 'USD', inc: 'FOB', pay: 'Carta de crédito', term: 'Contado' },
+      history: [this.first],
+      deal: null,
+      rounds: 0
+    };
+    this.reset = () => this.setState({ history: [this.first], deal: null, rounds: 0 });
+    this.send = () => {
+      if (this.state.deal) return;
+      const n = this.negotiate();
+      this.setState((s) => ({ rounds: s.rounds + 1 }));
+      const o = this.state.offer;
+      const mine = { who: 'Café Sinú S.A.S.', text: 'Oferta: ' + this.fmtN(o.qty) + ' sacos a ' + o.cur + ' ' + this.money(o.price, o.cur) + ' ' + o.inc + ', ' + o.pay.toLowerCase() + ', ' + o.term.toLowerCase() + '.', me: true };
+      const msgs = [mine, { who: 'Jute & Pack India', text: n.reply, me: false }];
+      if (n.accepted) {
+        const deal = Object.assign({}, o);
+        msgs.push({ who: 'Sistema', text: 'Contrato generado: ' + this.dealLine(deal) + '. Jute & Pack India queda como tu proveedor de sacos.', me: false, sys: true });
+        this.setState((s) => ({ history: s.history.concat(msgs).slice(-8), deal: deal, pick: Object.assign({}, s.pick, { sacos: 'jute' }) }));
+        return;
+      }
+      this.setState((s) => ({ history: s.history.concat(msgs).slice(-8) }));
+    };
+  }
+
+  componentDidMount() {
+    const read = (m) => {
+      if (!m || !m.active) return;
+      const a = m.active;
+      this.setState((s) => ({ ev: Object.assign({}, s.ev, { marrojo: !!a.marrojo, pandemia: !!a.pandemia, huracan: !!a.tormenta, panama: !!a.sequia, devcop: !!a.devaluacion }) }));
+    };
+    try { const raw = window.localStorage.getItem('logiverse-mundo'); if (raw) read(JSON.parse(raw)); } catch (err) {}
+    try { this.bc = new BroadcastChannel('logiverse-mundo'); this.bc.onmessage = (e) => read(e.data); } catch (err) { this.bc = null; }
+  }
+
+  componentWillUnmount() {
+    try { if (this.bc) this.bc.close(); } catch (err) {}
+  }
+
+  dealLine(d) {
+    return this.fmtN(d.qty) + ' sacos a ' + d.cur + ' ' + this.money(d.price, d.cur) + ' por saco ' + d.inc + ', ' + d.pay.toLowerCase() + ', ' + d.term.toLowerCase();
+  }
+
+  unitOf(o) {
+    return this.state.deal && o.id === 'jute' ? this.state.deal.price : o.unit;
+  }
+
+  theme() {
+    if (this.props.nocturno === true) {
+      return { bg: '#0B1320', card: '#0F1A2B', soft: '#13213A', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3', accent: '#3DD6D0', accentInk: '#06201F', accentText: '#3DD6D0', alert: '#F2A93B', alertInk: '#1A1206', alertText: '#F2A93B', warn: '#F2A93B', warnInk: '#1A1206', pBlue: '#13213A', pYellow: '#13213A', pRed: '#13213A', selBg: '#13213A' };
+    }
+    return { bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', accentInk: '#FFFFFF', accentText: '#1F5EFF', alert: '#D62839', alertInk: '#FFFFFF', alertText: '#B01F2E', warn: '#FFC93C', warnInk: '#14213D', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', selBg: '#E4ECFF' };
+  }
+
+  fmtN(v) { return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  money(v, cur) { return cur === 'COP' ? this.fmtN(v * 3200) : (cur === 'INR' ? this.fmtN(v * 88) : v.toFixed(2).replace('.', ',')); }
+
+  eventDefs() {
+    return [
+      { key: 'marrojo', label: 'Ataques en el mar Rojo' },
+      { key: 'pandemia', label: 'Pandemia' },
+      { key: 'huracan', label: 'Huracán en el Caribe' },
+      { key: 'panama', label: 'Sequía en Panamá' },
+      { key: 'rin', label: 'Bajo caudal del Rin' },
+      { key: 'devcop', label: 'Devaluación del COP 12 %' }
+    ];
+  }
+
+  inputDefs() {
+    return [
+      { key: 'sacos', name: 'Sacos para café · 2.000 por lote', qty: 2000, options: [
+        { id: 'jute', label: 'Jute & Pack India', kind: 'Jugador', origin: 'India · Asia · vía mar Rojo y Suez', cont: 'Asia', cur: 'USD', unit: 1.15, lead: 38, exp: ['marrojo', 'pandemia', 'huracan'] },
+        { id: 'fique', label: 'Fique de Santander', kind: 'Bot', origin: 'Colombia · América · terrestre', cont: 'América', cur: 'COP', unit: 1.65, lead: 4, exp: ['pandemia'] },
+        { id: 'pp', label: 'Sacos de polipropileno', kind: 'Bot', origin: 'Brasil · América · marítimo por el Atlántico', cont: 'América', cur: 'USD', unit: 1.35, lead: 18, exp: ['pandemia', 'huracan'] }
+      ] },
+      { key: 'trill', name: 'Kit de repuestos de trilladora · 1 por lote', qty: 1, options: [
+        { id: 'rhein', label: 'Rhein Maschinenbau', kind: 'Jugador', origin: 'Alemania · Europa · Rin y Atlántico', cont: 'Europa', cur: 'EUR', unit: 8400, lead: 24, exp: ['rin', 'pandemia', 'huracan'] },
+        { id: 'brkit', label: 'Repuestos genéricos', kind: 'Bot', origin: 'Brasil · América · marítimo por el Atlántico', cont: 'América', cur: 'USD', unit: 10900, lead: 15, exp: ['pandemia', 'huracan'] },
+        { id: 'cnkit', label: 'Repuestos compatibles', kind: 'Bot', origin: 'China · Asia · vía Canal de Panamá', cont: 'Asia', cur: 'USD', unit: 7200, lead: 40, exp: ['panama', 'pandemia', 'huracan'] }
+      ] }
+    ];
+  }
+
+  delay(o, ev) {
+    const add = { marrojo: 12, pandemia: o.cont === 'América' && o.cur === 'COP' ? 2 : 5, huracan: 6, panama: 4, rin: 5 };
+    let d = 0;
+    const why = [];
+    o.exp.forEach((e) => { if (ev[e]) { d += add[e]; why.push('+' + add[e] + ' d'); } });
+    return { days: d, why: why };
+  }
+
+  copCost(o, qty, ev) {
+    const rate = o.cur === 'EUR' ? 3580 : (o.cur === 'USD' ? 3200 : 3200);
+    const fx = o.cur !== 'COP' && ev.devcop ? 1.12 : 1;
+    const pand = ev.pandemia && o.cur !== 'COP' ? 1.2 : 1;
+    const rojo = ev.marrojo && o.exp.indexOf('marrojo') >= 0 ? 1.06 : 1;
+    return this.unitOf(o) * qty * rate * fx * pand * rojo;
+  }
+
+  negotiate() {
+    const o = this.state.offer;
+    const incAdj = { FCA: -0.02, FOB: 0, CFR: 0.08, CIF: 0.10 };
+    const qtyAdj = o.qty >= 4000 ? -0.05 : (o.qty <= 1000 ? 0.05 : 0);
+    const payRisk = { 'Anticipo 100 %': 0, 'Carta de crédito': 0.01, 'Cobranza documentaria': 0.04, 'Cuenta abierta': 0.07 };
+    const termRisk = { Contado: 0, '30 días': 0.02, '60 días': 0.04 };
+    const curRisk = { USD: 0, INR: -0.01, COP: 0.04 };
+    const list = 1.15, rep = 82;
+    const floor = list * (1 - 0.08 * rep / 100) + incAdj[o.inc] + qtyAdj;
+    const premium = (payRisk[o.pay] + (o.pay === 'Anticipo 100 %' ? 0 : termRisk[o.term]) + curRisk[o.cur]) * 0.8;
+    const req = floor + premium;
+    const margin = o.price - req;
+    const first = (this.state.rounds || 0) === 0;
+    const holdOut = first && margin >= 0 && o.price < list + incAdj[o.inc];
+    const prob = Math.max(3, Math.min(97, Math.round(50 + margin * 500 - (holdOut ? 25 : 0))));
+    const fx = (v) => v.toFixed(2).replace('.', ',');
+    let reply, accepted = false;
+    if (holdOut) {
+      const counter = Math.max(req, (o.price + list + incAdj[o.inc]) / 2);
+      reply = 'Estamos cerca. Proponemos USD ' + fx(Math.ceil(counter * 100) / 100) + ' por saco con estas mismas condiciones.';
+    } else if (margin >= 0) {
+      reply = 'Aceptamos. Enviamos la proforma y reservamos espacio con la naviera esta semana.';
+      accepted = true;
+    } else if (margin >= -0.06) {
+      reply = 'Podemos hacerlo a USD ' + fx(Math.ceil(req * 20) / 20) + ' por saco con estas mismas condiciones.';
+    } else {
+      reply = 'No podemos con esas condiciones. Mejoren el precio o el medio de pago.';
+    }
+    let hint = 'Tu oferta cubre el precio mínimo estimado del vendedor.';
+    if (holdOut) hint = 'Cubres el mínimo del vendedor, pero en la primera ronda casi siempre contraoferta: sostén o ajusta tu precio en la siguiente.';
+    else if (margin < 0) hint = o.pay === 'Cuenta abierta' || o.pay === 'Cobranza documentaria' ? 'El medio de pago traslada riesgo al vendedor: una carta de crédito o un anticipo mejoran tu probabilidad.' : 'Sube el precio, el volumen o cambia a un Incoterm con menos tramos a cargo del vendedor.';
+    return { prob: prob, reply: reply, hint: hint, accepted: accepted, req: req };
+  }
+
+  renderVals() {
+    const t = this.theme(), st = this.state, ev = st.ev;
+    const events = this.eventDefs().map((e) => ({
+      label: e.label,
+      pressed: ev[e.key] ? 'true' : 'false',
+      style: 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 999px; cursor: pointer; ' + (ev[e.key] ? 'background: ' + t.alert + '; color: ' + t.alertInk + '; border: 1px solid ' + t.alert : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+      pick: () => this.setState((s) => ({ ev: Object.assign({}, s.ev, { [e.key]: !s.ev[e.key] }) }))
+    }));
+
+    let totalCost = 0, maxLead = 0, maxStop = 0, hhiSum = 0;
+    const defs = this.inputDefs();
+    const inputs = defs.map((inp) => {
+      const sel = inp.options.filter((o) => o.id === st.pick[inp.key])[0];
+      const dual = !!st.dual[inp.key];
+      const alt = inp.options.filter((o) => o.id !== sel.id).sort((a, b) => (a.lead + this.delay(a, ev).days) - (b.lead + this.delay(b, ev).days))[0];
+      const dSel = this.delay(sel, ev), dAlt = this.delay(alt, ev);
+      const cost = dual ? (this.copCost(sel, inp.qty / 2, ev) + this.copCost(alt, inp.qty / 2, ev)) : this.copCost(sel, inp.qty, ev);
+      const effLead = dual ? Math.min(sel.lead + dSel.days, alt.lead + dAlt.days) : sel.lead + dSel.days;
+      const extra = dual ? Math.min(dSel.days, dAlt.days) : dSel.days;
+      const stop = Math.max(0, extra - st.stock);
+      totalCost += cost; maxLead = Math.max(maxLead, effLead); maxStop = Math.max(maxStop, stop);
+      hhiSum += dual ? 5000 : 10000;
+      const options = inp.options.map((o) => {
+        const on = o.id === sel.id, dl = this.delay(o, ev);
+        const same = o.cont === 'América';
+        const unit = this.unitOf(o), contract = !!st.deal && o.id === 'jute';
+        return {
+          label: o.label, origin: o.origin,
+          tag: contract ? 'Contrato' : (o.kind === 'Jugador' ? 'Jugador' : 'Bot'),
+          tagStyle: 'flex: none; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; ' + (contract ? 'color: ' + t.warnInk + '; background: ' + t.warn : (o.kind === 'Jugador' ? 'color: ' + t.accentInk + '; background: ' + t.accent : 'color: ' + t.text + '; background: ' + t.soft)),
+          price: o.cur + ' ' + (o.cur === 'COP' ? this.fmtN(unit * 3200) : (unit >= 100 ? this.fmtN(unit) : unit.toFixed(2).replace('.', ','))) + ' por unidad' + (contract ? ' (pactado)' : '') + ' · ' + (same ? 'mismo continente' : 'otro continente'),
+          lead: 'Tránsito base: ' + o.lead + ' días',
+          hit: dl.days > 0,
+          hitText: 'Eventos activos: +' + dl.days + ' días',
+          pressed: on ? 'true' : 'false',
+          style: 'flex: 1 1 220px; min-width: 0; text-align: left; font: inherit; color: ' + t.text + '; padding: 12px 14px; border-radius: 14px; cursor: pointer; ' + (on ? 'background: ' + t.selBg + '; border: 2px solid ' + t.accent : 'background: ' + t.card + '; border: 1px solid ' + t.border2),
+          pick: () => this.setState((s) => ({ pick: Object.assign({}, s.pick, { [inp.key]: o.id }) }))
+        };
+      });
+      return {
+        name: inp.name, options: options,
+        dualLabel: dual ? 'Doble fuente activa: ' + alt.label : 'Activar doble fuente',
+        dualPressed: dual ? 'true' : 'false',
+        dualStyle: 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; cursor: pointer; ' + (dual ? 'background: ' + t.warn + '; color: ' + t.warnInk + '; border: 1px solid ' + t.warn : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+        toggleDual: () => this.setState((s) => ({ dual: Object.assign({}, s.dual, { [inp.key]: !s.dual[inp.key] }) })),
+        summary: (st.deal && inp.key === 'sacos' && sel.id === 'jute' ? 'Contrato vigente con Jute & Pack India. ' : '') + 'Costo: COP ' + this.fmtN(cost) + ' · llega en ' + effLead + ' días' + (stop > 0 ? ' · la planta se detiene ' + stop + ' días' : ' · sin parada de planta')
+      };
+    });
+    const hhi = Math.round(hhiSum / defs.length);
+    const res = Math.max(0, Math.min(100, Math.round(100 - maxStop * 4 - (hhi - 5000) / 125 + st.stock / 3)));
+    const k = {
+      cost: this.fmtN(totalCost), lead: maxLead, stop: maxStop, hhi: this.fmtN(hhi), res: res,
+      riskBox: 'border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px; background: ' + (maxStop > 0 ? t.pRed : t.pBlue) + '; color: ' + (maxStop > 0 ? t.alertText : t.text)
+    };
+    const stock = [0, 15, 30].map((d) => ({
+      label: d + ' días',
+      pressed: st.stock === d ? 'true' : 'false',
+      style: 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; cursor: pointer; ' + (st.stock === d ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+      pick: () => this.setState({ stock: d })
+    }));
+
+    const o = st.offer;
+    const fieldDefs = [
+      { key: 'qty', label: 'Cantidad (sacos)', values: [1000, 2000, 4000], show: (v) => this.fmtN(v) },
+      { key: 'price', label: 'Precio por saco (USD de referencia)', values: [1.00, 1.05, 1.10, 1.15, 1.20], show: (v) => v.toFixed(2).replace('.', ',') },
+      { key: 'cur', label: 'Moneda de facturación', values: ['USD', 'INR', 'COP'], show: (v) => v },
+      { key: 'inc', label: 'Incoterm 2020', values: ['FCA', 'FOB', 'CFR', 'CIF'], show: (v) => v },
+      { key: 'pay', label: 'Medio de pago', values: ['Anticipo 100 %', 'Carta de crédito', 'Cobranza documentaria', 'Cuenta abierta'], show: (v) => v },
+      { key: 'term', label: 'Plazo de pago', values: ['Contado', '30 días', '60 días'], show: (v) => v }
+    ];
+    const fields = fieldDefs.map((f) => ({
+      label: f.label,
+      options: f.values.map((v) => ({
+        label: f.show(v),
+        pressed: o[f.key] === v ? 'true' : 'false',
+        style: 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 10px; cursor: pointer; ' + (o[f.key] === v ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+        pick: () => this.setState((s) => ({ offer: Object.assign({}, s.offer, { [f.key]: v }) }))
+      }))
+    }));
+    const neg = this.negotiate();
+    const n = {
+      total: o.cur + ' ' + this.money(o.price * o.qty, o.cur),
+      prob: neg.prob,
+      bar: 'height: 8px; border-radius: 999px; width: ' + neg.prob + '%; background: ' + (neg.prob >= 50 ? t.accent : t.alert),
+      hint: neg.hint
+    };
+    const history = st.history.map((h) => ({
+      who: h.who, text: h.text,
+      style: 'font-size: 13px; line-height: 1.45; padding: 10px 12px; border-radius: 12px; max-width: 88%; ' + (h.sys ? 'align-self: center; background: ' + t.soft + '; color: ' + t.text + '; border: 1px dashed ' + t.border2 : (h.me ? 'align-self: flex-end; background: ' + t.accent + '; color: ' + t.accentInk : 'align-self: flex-start; background: ' + t.pYellow + '; color: ' + t.text))
+    }));
+    return {
+      t: t, events: events, inputs: inputs, k: k, stock: stock, fields: fields, n: n, history: history, reset: this.reset, send: this.send,
+      hasDeal: !!st.deal, noDeal: !st.deal,
+      dealText: st.deal ? 'Jute & Pack India: ' + this.dealLine(st.deal) + '. El precio pactado ya se aplica al costo de tu cadena.' : '',
+      resetLabel: st.deal ? 'Rescindir y renegociar' : 'Reiniciar'
+    };
+  }
+}
+</script>
+</body>
+</html>

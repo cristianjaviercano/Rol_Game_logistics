@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mesa del Superusuario</title>
+<script src="./support.js"></script>
+<script src="/_blob/478300407335490ca021634fb285ef8f"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1080px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; background: {{t.card}}; border-bottom: 1px solid {{t.border}}">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Logi<span style="color: {{t.accent}}">Verse</span></span>
+      <span style="font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: {{t.pRed}}">Mesa del Superusuario · Partida 03</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 6px 12px; border-radius: 999px; background: {{t.pYellow}}">Ronda {{round}}</span>
+      <div role="status" style="{{live.style}}"><span style="{{live.dot}}"></span>{{live.label}}</div>
+    </div>
+    <ol aria-label="Fases de la ronda" style="display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none">
+      <sc-for list="{{phases}}" as="ph" hint-placeholder-count="7">
+        <li style="{{ph.style}}" aria-current="{{ph.current}}">{{ph.n}}. {{ph.label}}</li>
+      </sc-for>
+    </ol>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 24px; background: {{t.soft}}; border-bottom: 1px solid {{t.border}}">
+    <sc-for list="{{tops}}" as="tp" hint-placeholder-count="5">
+      <div style="{{tp.box}}">
+        <span style="font-size: 12px; color: {{t.quiet}}">{{tp.label}}</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600">{{tp.value}}</span>
+        <span style="{{tp.deltaStyle}}">{{tp.delta}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <main style="flex: 1; padding: 16px 24px; display: grid; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr) minmax(250px, 300px); gap: 16px; align-items: start">
+    <aside aria-label="Empresas de América" style="display: flex; flex-direction: column; gap: 12px">
+      <sc-for list="{{left}}" as="co" hint-placeholder-count="3">
+        <article style="{{co.box}}">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+            <span style="font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700">{{co.name}}</span>
+            <span style="{{co.rankStyle}}">{{co.rank}}</span>
+          </div>
+          <span style="font-size: 12px; color: {{t.quiet}}">{{co.meta}}</span>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+            <sc-for list="{{co.kpis}}" as="kk" hint-placeholder-count="3">
+              <div style="{{kk.box}}"><span style="font-size: 12px; color: {{t.quiet}}">{{kk.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600">{{kk.value}}</span></div>
+            </sc-for>
+          </div>
+          <span style="font-size: 12px; font-weight: 600">{{co.op}}</span>
+          <div style="height: 8px; border-radius: 999px; background: {{t.soft}}; overflow: hidden"><div style="{{co.bar}}"></div></div>
+          <span style="font-size: 12px; color: {{t.quiet}}">{{co.cardsLine}}</span>
+          <div>
+            <sc-for list="{{co.causes}}" as="cz" hint-placeholder-count="0">
+              <span style="{{cz.style}}">{{cz.label}}</span>
+            </sc-for>
+          </div>
+        </article>
+      </sc-for>
+    </aside>
+
+    <section style="min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+        <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Mundo de la partida</h1>
+        <span style="font-size: 12px; color: {{t.quiet}}">Arrastra para girar · los países en rojo tienen un evento activo</span>
+      </div>
+      <div ref="{{setWrap}}" style="position: relative; height: 560px; border-radius: 14px; overflow: hidden; background: {{t.sky}}">
+        <canvas ref="{{setCanvas}}" onPointerDown="{{down}}" onPointerMove="{{move}}" onPointerUp="{{up}}" onPointerLeave="{{up}}" role="img" aria-label="Globo 3D con puertos, rutas y buques de la partida" style="display: block; width: 100%; height: 100%; cursor: grab; touch-action: none"></canvas>
+        <div aria-live="polite" style="position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none">
+          <sc-for list="{{inPlay}}" as="ip" hint-placeholder-count="0">
+            <span style="font-size: 13px; font-weight: 600; color: #FFFFFF; background: #D62839; border-radius: 10px; padding: 6px 10px">{{ip.label}} · {{ip.left}}</span>
+          </sc-for>
+        </div>
+        <sc-if value="{{noGL}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: {{t.quiet}}; font-size: 14px">Este navegador no admite WebGL: el globo 3D no está disponible.</div>
+        </sc-if>
+      </div>
+    </section>
+
+    <aside aria-label="Empresas de Europa y Asia" style="display: flex; flex-direction: column; gap: 12px">
+      <sc-for list="{{right}}" as="co" hint-placeholder-count="3">
+        <article style="{{co.box}}">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+            <span style="font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700">{{co.name}}</span>
+            <span style="{{co.rankStyle}}">{{co.rank}}</span>
+          </div>
+          <span style="font-size: 12px; color: {{t.quiet}}">{{co.meta}}</span>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+            <sc-for list="{{co.kpis}}" as="kk" hint-placeholder-count="3">
+              <div style="{{kk.box}}"><span style="font-size: 12px; color: {{t.quiet}}">{{kk.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600">{{kk.value}}</span></div>
+            </sc-for>
+          </div>
+          <span style="font-size: 12px; font-weight: 600">{{co.op}}</span>
+          <div style="height: 8px; border-radius: 999px; background: {{t.soft}}; overflow: hidden"><div style="{{co.bar}}"></div></div>
+          <span style="font-size: 12px; color: {{t.quiet}}">{{co.cardsLine}}</span>
+          <div>
+            <sc-for list="{{co.causes}}" as="cz" hint-placeholder-count="0">
+              <span style="{{cz.style}}">{{cz.label}}</span>
+            </sc-for>
+          </div>
+        </article>
+      </sc-for>
+    </aside>
+  </main>
+
+  <footer style="position: sticky; bottom: 0; background: {{t.card}}; border-top: 2px solid {{t.border2}}; padding: 12px 24px 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 -8px 24px rgba(20, 33, 61, 0.08)">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px">
+      <div role="tablist" aria-label="Panel de control del Superusuario" style="display: flex; flex-wrap: wrap; gap: 6px">
+        <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="4">
+          <button type="button" role="tab" aria-selected="{{tb.sel}}" onClick="{{tb.pick}}" style="{{tb.style}}">{{tb.label}}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{actions}}" as="a" hint-placeholder-count="4">
+          <button type="button" onClick="{{a.run}}" aria-disabled="{{a.disabled}}" aria-pressed="{{a.pressed}}" style="{{a.style}}">{{a.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{confirmOpen}}" hint-placeholder-val="{{false}}">
+      <div role="group" aria-label="Confirmar evento" style="background: {{t.pRed}}; border: 2px solid #D62839; border-radius: 14px; padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px">
+        <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 420px">
+          <span style="font-size: 15px; font-weight: 700">{{confirm.title}}</span>
+          <span style="font-size: 13px; line-height: 1.45">{{confirm.hit}}</span>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <button type="button" onClick="{{confirmYes}}" style="font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid #D62839; background: #D62839; color: #FFFFFF; cursor: pointer">Confirmar y jugar</button>
+          <button type="button" onClick="{{confirmNo}}" style="font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid {{t.border2}}; background: {{t.card}}; color: {{t.text}}; cursor: pointer">Cancelar</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{undoOpen}}" hint-placeholder-val="{{false}}">
+      <div role="status" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; background: {{t.text}}; color: {{t.bg}}; border-radius: 14px; padding: 8px 8px 8px 14px">
+        <span style="font-size: 13px; font-weight: 600">{{undo.text}}</span>
+        <button type="button" onClick="{{undoDo}}" style="font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: {{t.bg}}; color: {{t.text}}; cursor: pointer">Deshacer ({{undo.left}} s)</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{hasMsg}}" hint-placeholder-val="{{false}}">
+      <div role="status" aria-live="polite" style="{{msgStyle}}">{{msg}}</div>
+    </sc-if>
+    <div style="display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px">
+      <sc-for list="{{cards}}" as="cd" hint-placeholder-count="5">
+        <button type="button" onClick="{{cd.pick}}" aria-pressed="{{cd.pressed}}" aria-label="{{cd.aria}}" style="{{cd.style}}">
+          <span style="{{cd.band}}"><span>{{cd.famLabel}}</span><span>{{cd.cost}}</span></span>
+          <span style="display: block; padding: 10px 12px 0; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; line-height: 1.2">{{cd.name}}</span>
+          <span style="display: block; padding: 6px 12px 0; font-size: 12px; line-height: 1.4">{{cd.text}}</span>
+          <span style="{{cd.foot}}">{{cd.tags}}</span>
+        </button>
+      </sc-for>
+      <sc-for list="{{log}}" as="lg" hint-placeholder-count="0">
+        <div style="{{lg.box}}"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{t.quiet}}">Ronda {{lg.round}}</span><span style="font-size: 13px; line-height: 1.45">{{lg.text}}</span></div>
+      </sc-for>
+      <sc-if value="{{rowEmpty}}" hint-placeholder-val="{{false}}">
+        <span style="font-size: 14px; color: {{t.quiet}}; padding: 20px 0">{{rowEmptyText}}</span>
+      </sc-if>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"rotar":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1080}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      round: 3, phase: 2, paused: false, noGL: false,
+      active: {}, dur: {},
+      hand: ['tormenta', 'flete', 'inspeccion', 'huelga', 'revaluacion'],
+      deck: ['devaluacion', 'marrojo', 'sequia', 'pandemia', 'congestion', 'alerta', 'ciber', 'impago'],
+      used: [], drewRound: 0,
+      tab: 'eventos', sel: null, confirm: null, undo: null, msg: null,
+      market: ['C-07', 'C-11', 'C-14'], hidden: ['C-18', 'C-21'],
+      log: [{ round: 3, text: 'Café Sinú S.A.S. firmó el contrato C-07: café verde CIF Rotterdam.' }, { round: 1, text: 'Se abre el mercado: 6 empresas, 4 países y 4 divisas.' }],
+      player: null
+    };
+    this.inited = false; this.tries = 0; this.drag = null;
+    this.setCanvas = (el) => { this.cv = el; this.tryInit(); };
+    this.setWrap = (el) => { this.wrap = el; this.tryInit(); };
+    this.down = (e) => {
+      if (!this.g) return;
+      this.drag = { x: e.clientX, y: e.clientY, ry: this.g.globe.rotation.y, rx: this.g.tilt.rotation.x };
+      if (e.currentTarget && e.currentTarget.setPointerCapture) { try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {} }
+    };
+    this.move = (e) => {
+      if (!this.drag || !this.g) return;
+      this.g.globe.rotation.y = this.drag.ry + (e.clientX - this.drag.x) * 0.006;
+      this.g.tilt.rotation.x = Math.max(-0.5, Math.min(0.9, this.drag.rx + (e.clientY - this.drag.y) * 0.004));
+    };
+    this.up = () => { this.drag = null; };
+    this.confirmNo = () => this.setState({ confirm: null });
+    this.confirmYes = () => { if (this.state.confirm) this.play(this.state.confirm); };
+    this.undoDo = () => { if (this.state.undo) this.revert(this.state.undo.key); };
+  }
+
+  componentDidMount() {
+    this.sec = setInterval(() => this.setState((s) => (s.undo ? { undo: s.undo.left <= 1 ? null : Object.assign({}, s.undo, { left: s.undo.left - 1 }) } : null)), 1000);
+    const read = (m) => { if (m && m.company) this.setState({ player: m }); };
+    try { const raw = window.localStorage.getItem('logiverse-jugador'); if (raw) read(JSON.parse(raw)); } catch (err) {}
+    try { this.inBc = new BroadcastChannel('logiverse-jugador'); this.inBc.onmessage = (e) => read(e.data); } catch (err) { this.inBc = null; }
+    this.tryInit();
+    this.send();
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.sec);
+    clearTimeout(this.retry);
+    if (this.raf) cancelAnimationFrame(this.raf);
+    if (this.ro) this.ro.disconnect();
+    if (this.renderer) this.renderer.dispose();
+    try { if (this.bc) this.bc.close(); } catch (err) {}
+    try { if (this.inBc) this.inBc.close(); } catch (err) {}
+  }
+
+  send(over) {
+    const s = Object.assign({}, this.state, over || {});
+    const msg = { active: s.active, paused: s.paused, round: s.round, phase: this.phaseList()[s.phase] };
+    try { window.localStorage.setItem('logiverse-mundo', JSON.stringify(msg)); } catch (err) {}
+    try {
+      if (!this.bc && window.BroadcastChannel) this.bc = new BroadcastChannel('logiverse-mundo');
+      if (this.bc) this.bc.postMessage(msg);
+    } catch (err) {}
+  }
+
+  isNight() { return this.props.nocturno === true; }
+
+  theme() {
+    if (this.isNight()) {
+      return {
+        bg: '#0B1320', card: '#0F1A2B', soft: '#13213A', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3',
+        accent: '#3DD6D0', accentInk: '#06201F', alert: '#F2A93B', alertText: '#F2A93B', pBlue: '#13213A', pYellow: '#13213A', pRed: '#13213A', okBg: '#0F2E33', sky: '#0B1320', selRing: '#3DD6D0',
+        g: { core: 0x0F2236, grat: 0x2A4A68, atm: 0x3DD6D0, route: 0x3DD6D0, port: 0x3DD6D0, ship: 0xFFFFFF, alert: 0xF2A93B }
+      };
+    }
+    return {
+      bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A',
+      accent: '#1F5EFF', accentInk: '#FFFFFF', alert: '#D62839', alertText: '#B01F2E', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', okBg: '#DDF4EA', sky: '#EEF4FF', selRing: '#1F5EFF',
+      g: { core: 0xCFE0FF, grat: 0x9DB8F0, atm: 0x1F5EFF, route: 0x1F5EFF, port: 0x1F5EFF, ship: 0x14213D, alert: 0xD62839 }
+    };
+  }
+
+  fmt(v, d) { return v.toFixed(d || 0).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+  phaseList() { return ['Mercado', 'Robo', 'Planeación', 'Visto del CEO', 'Evento', 'Reacción', 'Liquidación']; }
+
+  eventCards() {
+    return {
+      tormenta: { label: 'Tormenta tropical', dur: 1, sub: 'Cierra Cartagena', text: 'Puerto de Cartagena cerrado: los embarques se retrasan 3 días.', hit: 'Café Sinú, Acuícola del Sinú y Caribe Line: OTIF −9 pp.', counter: 'Ruta alterna: Santa Marta' },
+      flete: { label: 'Alza de fletes', dur: 3, sub: 'Marítimo +18 %', text: 'Escasez de contenedores: el flete marítimo sube 18 %.', hit: 'Caribe Line: margen +3 pp; Café Sinú, Acuícola del Sinú y Shenzhen Parts: margen −1,5 pp.', counter: 'Contratar flete antes (FOB traslada el costo)' },
+      inspeccion: { label: 'Inspección sorpresa', dur: 1, sub: 'Reto a Aduanas', text: 'La aduana revisa a una empresa: su rol de Aduanas responde un reto.', hit: 'Café Sinú: reto de Aduanas; si falla, 2 días de retención y USD 500.', counter: 'Operador OEA' },
+      huelga: { label: 'Huelga en Rotterdam', dur: 2, sub: 'Puerto detenido', text: 'Los estibadores paran Rotterdam: llegadas +6 días.', hit: 'Rotterdam Foods: OTIF −12 pp y margen −2 pp.', counter: 'Incoterm con entrega en origen' },
+      revaluacion: { label: 'Revaluación del peso', dur: 2, sub: 'USD/COP −8 %', text: 'El peso se fortalece: los dólares de los exportadores valen menos.', hit: 'Café Sinú y Acuícola del Sinú: margen −2 pp en pesos.', counter: 'Forward de venta USD' },
+      devaluacion: { label: 'Devaluación del peso', dur: 2, sub: 'USD/COP +12 %', text: 'El peso se debilita: las deudas en dólares suben.', hit: 'Café Sinú y Acuícola del Sinú: margen +2,5 pp.', counter: 'Forward de compra (importadores)' },
+      marrojo: { label: 'Ataques en el mar Rojo', dur: 3, sub: 'Suez cerrado · +12 días', text: 'Las rutas Asia–Europa rodean el Cabo de Buena Esperanza.', hit: 'Shenzhen Parts y Rotterdam Foods: OTIF −8 pp y margen −1,5 pp; Caribe Line: margen +1 pp.', counter: 'Doble fuente' },
+      sequia: { label: 'Sequía en Panamá', dur: 2, sub: '+4 días por tránsito', text: 'El canal reduce el calado y los tránsitos.', hit: 'Shenzhen Parts y Caribe Line: OTIF −5 pp.', counter: 'Ruta por Buenaventura' },
+      pandemia: { label: 'Pandemia', dur: 3, sub: 'Cuarentenas', text: 'Plantas al 70 % y cuarentena en todos los puertos.', hit: 'Las 6 empresas: OTIF −6 pp y margen −1,5 pp.', counter: 'Inventario de seguridad' },
+      congestion: { label: 'Congestión en Cartagena', dur: 1, sub: '+2 días de espera', text: 'Filas de buques en la bahía de Cartagena.', hit: 'Café Sinú, Acuícola del Sinú y Caribe Line: OTIF −4 pp.', counter: 'Ruta alterna: Santa Marta' },
+      alerta: { label: 'Alerta sanitaria en la UE', dur: 2, sub: 'Controles a alimentos', text: 'La UE exige certificados sanitarios en cada lote de alimentos.', hit: 'Café Sinú: OTIF −5 pp sin certificado fitosanitario; Rotterdam Foods: OTIF −3 pp.', counter: 'Certificado fitosanitario correcto' },
+      ciber: { label: 'Ciberataque a la naviera', dur: 1, sub: 'Sistemas caídos', text: 'Una naviera pierde sus sistemas: los buques se demoran.', hit: 'Caribe Line: OTIF −6 pp; Rotterdam Foods: OTIF −2 pp.', counter: 'Diversificar navieras' },
+      impago: { label: 'Retraso en el pago', dur: 2, sub: 'Cobro a 60 días', text: 'Un comprador pide 60 días para pagar.', hit: 'Café Sinú y Acuícola del Sinú: margen −1 pp por costo financiero.', counter: 'Carta de crédito confirmada' }
+    };
+  }
+
+  marketCards() {
+    return {
+      'C-07': { title: 'Café verde → Rotterdam', text: "2 × 40' · USD 48.100 CIF · embarque en 7 días.", owner: 'Café Sinú S.A.S.' },
+      'C-11': { title: 'Tilapia congelada → Miami', text: '22 t · USD 88.000 DAP · entrega en 10 días.', owner: '' },
+      'C-14': { title: 'Café tostado → Yokohama', text: "1 × 40' · USD 61.500 CIP · embarque en 12 días.", owner: '' },
+      'C-18': { title: 'Repuestos ← Shenzhen', text: '9,5 t · USD 140.000 FOB · llegada en 40 días.', owner: '' },
+      'C-21': { title: 'Banano → Amberes', text: "3 × 40' reefer · USD 39.600 FCA · embarque en 5 días.", owner: '' }
+    };
+  }
+
+  ask(key) {
+    this.setState({ confirm: key, undo: null, msg: null });
+  }
+
+  play(key) {
+    const s = this.state, E = this.eventCards();
+    const active = Object.assign({}, s.active, { [key]: true });
+    const dur = Object.assign({}, s.dur, { [key]: E[key].dur });
+    const patch = { active: active, dur: dur, hand: s.hand.filter((k) => k !== key), confirm: null, sel: null, undo: { key: key, left: 10 }, log: [{ round: s.round, text: 'Evento jugado: ' + E[key].label + '. ' + E[key].text }].concat(s.log).slice(0, 14) };
+    this.setState(patch);
+    this.send({ active: active });
+  }
+
+  revert(key) {
+    const s = this.state;
+    const active = Object.assign({}, s.active); delete active[key];
+    const dur = Object.assign({}, s.dur); delete dur[key];
+    this.setState({ active: active, dur: dur, hand: s.hand.concat([key]), undo: null, log: s.log.slice(1), msg: { text: 'Evento deshecho: la carta volvió a tu mano.', tone: 'info' } });
+    this.send({ active: active });
+  }
+
+  retire(key) {
+    const s = this.state, E = this.eventCards();
+    const active = Object.assign({}, s.active); delete active[key];
+    const dur = Object.assign({}, s.dur); delete dur[key];
+    this.setState({ active: active, dur: dur, used: s.used.concat([key]), sel: null, log: [{ round: s.round, text: 'Se normaliza: ' + E[key].label.toLowerCase() + '.' }].concat(s.log).slice(0, 14) });
+    this.send({ active: active });
+  }
+
+  drawEvent() {
+    const s = this.state;
+    if (s.drewRound === s.round) { this.setState({ msg: { text: 'Ya robaste un evento en esta ronda.', tone: 'warn' } }); return; }
+    if (s.hand.length >= 5) { this.setState({ msg: { text: 'Tu mano de eventos está llena (5 cartas).', tone: 'warn' } }); return; }
+    if (!s.deck.length) { this.setState({ msg: { text: 'El mazo de eventos está agotado.', tone: 'warn' } }); return; }
+    const k = s.deck[0];
+    this.setState({ hand: s.hand.concat([k]), deck: s.deck.slice(1), drewRound: s.round, tab: 'eventos', msg: { text: 'Robaste «' + this.eventCards()[k].label + '».', tone: 'ok' } });
+  }
+
+  nextPhase() {
+    const s = this.state, E = this.eventCards(), n = this.phaseList().length;
+    if (s.phase < n - 1) {
+      const nx = this.phaseList()[s.phase + 1];
+      const tips = { 'Robo': 'Los equipos roban 2 cartas.', 'Planeación': 'Tráfico, Aduanas, CFO y Riesgos juegan sus cartas.', 'Visto del CEO': 'Cada CEO aprueba o devuelve su operación.', 'Evento': 'Tu turno: juega una carta de evento desde tu mano.', 'Reacción': 'Riesgos y CFO pueden jugar coberturas.', 'Liquidación': 'Se liquidan las operaciones con visto del CEO.' };
+      this.setState({ phase: s.phase + 1, msg: { text: 'Fase ' + nx + ': ' + tips[nx], tone: nx === 'Evento' ? 'warn' : 'info' }, tab: nx === 'Evento' ? 'eventos' : s.tab });
+      this.send({ phase: s.phase + 1 });
+      return;
+    }
+    const active = Object.assign({}, s.active), dur = Object.assign({}, s.dur), used = s.used.slice(), log = s.log.slice();
+    Object.keys(dur).forEach((k) => {
+      dur[k] -= 1;
+      if (dur[k] <= 0) { delete dur[k]; delete active[k]; used.push(k); log.unshift({ round: s.round, text: 'Termina el efecto de ' + E[k].label.toLowerCase() + '.' }); }
+    });
+    this.setState({ round: s.round + 1, phase: 0, active: active, dur: dur, used: used, log: log.slice(0, 14), msg: { text: 'Empieza la ronda ' + (s.round + 1) + '. Los eventos que cumplieron su duración salen de juego.', tone: 'info' } });
+    this.send({ round: s.round + 1, phase: 0, active: active });
+  }
+
+  togglePause() {
+    const p = !this.state.paused;
+    this.setState({ paused: p });
+    this.send({ paused: p });
+  }
+
+  reveal() {
+    const s = this.state;
+    if (!s.hidden.length) { this.setState({ msg: { text: 'No quedan contratos por revelar.', tone: 'warn' } }); return; }
+    const k = s.hidden[0];
+    this.setState({ market: s.market.concat([k]), hidden: s.hidden.slice(1), log: [{ round: s.round, text: 'Nuevo contrato en el mercado: ' + this.marketCards()[k].title + '.' }].concat(s.log).slice(0, 14) });
+  }
+
+  companies() {
+    const act = this.state.active;
+    const base = [
+      { id: 'cafe', name: 'Café Sinú S.A.S.', meta: 'Colombia · productora · COP', m: 14.2, o: 92, x: 96, co: true, food: true, hand: 8, op: 'C-07 café → Rotterdam', filled: 2, req: 4 },
+      { id: 'acui', name: 'Acuícola del Sinú', meta: 'Colombia · productora · COP', m: 11.8, o: 88, x: 91, co: true, food: true, hand: 6, op: 'C-03 tilapia → Miami', filled: 3, req: 5 },
+      { id: 'caribe', name: 'Caribe Line', meta: 'Colombia · naviera · COP', m: 7.9, o: 86, x: 94, ship: true, hand: 7, op: 'Rotación Caribe–Europa', filled: 4, req: 4 },
+      { id: 'rot', name: 'Rotterdam Foods B.V.', meta: 'Países Bajos · importadora · EUR', m: 9.6, o: 95, x: 98, nl: true, hand: 5, op: 'Recibe C-07 en Rotterdam', filled: 1, req: 2 },
+      { id: 'shz', name: 'Shenzhen Parts Co.', meta: 'China · manufactura · CNY', m: 12.4, o: 90, x: 93, cn: true, hand: 7, op: 'C-18 repuestos → Cartagena', filled: 2, req: 4 },
+      { id: 'aero', name: 'AeroCarga Andina', meta: 'Colombia · aerolínea de carga · COP', m: 10.1, o: 97, x: 95, air: true, hand: 6, op: 'Chárter Bogotá–Miami', filled: 3, req: 3 }
+    ];
+    return base.map((c) => {
+      let m = c.m, o = c.o, x = c.x;
+      const why = [];
+      const hit = (label, sign) => why.push({ label: label, up: sign > 0 });
+      if (act.devaluacion && c.co) { m += 2.5; hit('Devaluación', 1); }
+      if (act.revaluacion && c.co) { m -= 2; hit('Revaluación', -1); }
+      if (act.tormenta && (c.co || c.ship)) { o -= 9; hit('Tormenta', -1); }
+      if (act.congestion && (c.co || c.ship)) { o -= 4; hit('Congestión', -1); }
+      if (act.huelga && c.nl) { o -= 12; m -= 2; hit('Huelga', -1); }
+      if (act.sequia && (c.cn || c.ship)) { o -= 5; hit('Sequía', -1); }
+      if (act.flete) { if (c.ship) { m += 3; hit('Fletes', 1); } else if (c.co || c.cn) { m -= 1.5; hit('Fletes', -1); } }
+      if (act.inspeccion && c.id === 'cafe') { x -= 4; hit('Inspección', -1); }
+      if (act.marrojo && (c.cn || c.nl)) { o -= 8; m -= 1.5; hit('Mar Rojo', -1); }
+      if (act.marrojo && c.ship) { m += 1; hit('Mar Rojo', 1); }
+      if (act.pandemia) { o -= 6; m -= 1.5; hit('Pandemia', -1); }
+      if (act.alerta && c.id === 'cafe') { o -= 5; hit('Alerta UE', -1); }
+      if (act.alerta && c.nl) { o -= 3; hit('Alerta UE', -1); }
+      if (act.ciber && c.ship) { o -= 6; hit('Ciberataque', -1); }
+      if (act.ciber && c.nl) { o -= 2; hit('Ciberataque', -1); }
+      if (act.impago && c.co) { m -= 1; hit('Impago', -1); }
+      let filled = c.filled, req = c.req, hand = c.hand, live = false, glosas = 0, days = null, inc = '', visto = '';
+      const p = this.state.player;
+      if (c.id === 'cafe' && p) { filled = p.filled; req = p.required; hand = p.hand; live = true; glosas = p.glosas; days = p.days; inc = p.incoterm || ''; visto = p.visto || ''; if (p.executed) filled = req; }
+      return { id: c.id, name: c.name, meta: c.meta, m: m, o: o, x: x, why: why, hand: hand, op: c.op, filled: filled, req: req, live: live, glosas: glosas, days: days, inc: inc, visto: visto, executed: c.id === 'cafe' && p ? p.executed : filled >= req };
+    });
+  }
+
+  cardView(key, from, t) {
+    const E = this.eventCards(), M = this.marketCards(), s = this.state;
+    const ev = from !== 'market';
+    const band = ev ? '#D62839' : '#1F5EFF', bg = ev ? (this.isNight() ? '#33141A' : '#FFE3E6') : (this.isNight() ? '#13213A' : '#E4ECFF');
+    const on = s.sel && s.sel.key === key && s.sel.from === from;
+    let name, text, tags, cost;
+    if (ev) {
+      const e = E[key];
+      name = e.label; text = e.text; cost = from === 'play' ? (s.dur[key] + ' ronda' + (s.dur[key] === 1 ? '' : 's')) : e.dur + ' ronda' + (e.dur === 1 ? '' : 's');
+      tags = 'Se mitiga con: ' + e.counter;
+    } else {
+      const m = M[key];
+      const p = s.player;
+      const wants = p && p.interest && p.interest.indexOf(key) >= 0;
+      name = m.title; text = m.text; cost = key; tags = m.owner ? 'Asignado a ' + m.owner : (wants ? 'Café Sinú marcó interés' : 'Disponible');
+    }
+    return {
+      name: name, text: text, tags: tags, cost: cost, famLabel: ev ? (from === 'play' ? 'EN JUEGO' : 'EVENTO') : 'CONTRATO',
+      pressed: on ? 'true' : 'false', aria: (ev ? 'Evento: ' : 'Contrato: ') + name,
+      style: 'flex: none; width: 176px; min-height: 214px; padding: 0; text-align: left; font: inherit; color: ' + t.text + '; background: ' + bg + '; border-radius: 16px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; ' + (on ? 'border: 3px solid ' + t.selRing + '; transform: translateY(-8px); box-shadow: 0 10px 22px rgba(31, 94, 255, 0.28)' : 'border: 2px solid ' + band + '; box-shadow: 0 4px 12px rgba(20, 33, 61, 0.10)'),
+      band: 'display: flex; justify-content: space-between; gap: 6px; padding: 7px 10px; font-size: 12px; font-weight: 700; color: #FFFFFF; background: ' + band,
+      foot: 'display: block; margin-top: auto; padding: 8px 12px 10px; font-size: 12px; font-weight: 600; color: ' + t.quiet,
+      pick: () => this.setState((st) => ({ sel: st.sel && st.sel.key === key && st.sel.from === from ? null : { key: key, from: from }, msg: null }))
+    };
+  }
+
+  renderVals() {
+    const t = this.theme(), s = this.state, E = this.eventCards(), act = s.active;
+    const night = this.isNight();
+    const phases = this.phaseList().map((p, i) => ({
+      n: i + 1, label: p, current: i === s.phase ? 'step' : 'false',
+      style: 'font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 999px; ' + (i === s.phase ? 'background: ' + t.accent + '; color: ' + t.accentInk : (i < s.phase ? 'background: ' + t.pBlue + '; color: ' + t.text : 'background: ' + t.soft + '; color: ' + t.quiet))
+    }));
+    const usd = 3200 * (act.devaluacion ? 1.12 : 1) * (act.revaluacion ? 0.92 : 1);
+    const tops = [
+      { label: 'USD/COP', value: this.fmt(usd), delta: act.devaluacion || act.revaluacion ? (usd > 3200 ? '+' : '−') + this.fmt(Math.abs(usd / 3200 - 1) * 100, 1) + ' %' : 'estable', warn: !!(act.devaluacion || act.revaluacion) },
+      { label: 'Índice de fletes', value: act.flete ? '118' : '100', delta: act.flete ? '+18 %' : 'base 100', warn: !!act.flete },
+      { label: 'Eventos en juego', value: String(Object.keys(act).length), delta: s.hand.length + ' en tu mano · ' + s.deck.length + ' en el mazo', warn: Object.keys(act).length > 0 },
+      { label: 'Contratos en el mercado', value: String(s.market.length), delta: s.hidden.length + ' por revelar', warn: false },
+      { label: 'Fase actual', value: this.phaseList()[s.phase], delta: 'Ronda ' + s.round, warn: false }
+    ].map((x) => ({ label: x.label, value: x.value, delta: x.delta, box: 'display: flex; flex-direction: column; gap: 1px; padding: 8px 12px; border-radius: 12px; min-width: 150px; background: ' + t.card + '; border: 1px solid ' + t.border, deltaStyle: 'font-size: 12px; font-weight: 600; color: ' + (x.warn ? t.alertText : t.quiet) }));
+
+    const rows = this.companies();
+    const ranked = rows.slice().sort((a, b) => b.m - a.m).map((r) => r.id);
+    const medal = night ? ['#3DD6D0', '#9FB0C3', '#F2A93B'] : ['#FFC93C', '#E4ECFF', '#FFE3E6'];
+    const view = (c) => {
+      const rank = ranked.indexOf(c.id);
+      const pct = Math.round(c.filled / Math.max(1, c.req) * 100);
+      return {
+        name: c.name, meta: c.meta, rank: rank + 1,
+        rankStyle: 'display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-family: \'IBM Plex Mono\', monospace; font-weight: 600; color: ' + (night && rank < 3 ? '#0B1320' : t.text) + '; background: ' + (rank < 3 ? medal[rank] : t.soft),
+        kpis: [['Margen', this.fmt(c.m, 1) + ' %', false], ['OTIF', c.o + ' %', c.o < 85], ['Exactitud', c.x + ' %', false]].map((k) => ({ label: k[0], value: k[1], box: 'display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-radius: 10px; background: ' + (k[2] ? t.pRed : t.soft) })),
+        op: (c.executed ? 'Ejecutada · ' : 'Operación · ') + c.op + ' · ' + c.filled + '/' + c.req + ' tramos' + (c.live ? ' · en vivo' : ''),
+        bar: 'height: 8px; border-radius: 999px; width: ' + pct + '%; background: ' + (c.executed ? '#0E7C55' : t.accent),
+        cardsLine: 'Mano: ' + c.hand + ' cartas' + (c.live ? ' · glosas: ' + c.glosas + (c.days !== null ? ' · a bordo en ' + c.days + ' días' : '') + (c.inc ? ' · ' + c.inc : '') + ' · visto del CEO: ' + ({ aprobada: 'aprobado', devuelta: 'devuelto' }[c.visto] || 'pendiente') : ''),
+        causes: c.why.map((w) => ({ label: w.label, style: 'display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin: 2px 4px 2px 0; color: ' + t.text + '; background: ' + (w.up ? t.pBlue : t.pRed) })),
+        box: 'background: ' + t.card + '; border: 1px solid ' + (c.why.some((w) => !w.up) ? '#D62839' : t.border) + '; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 6px'
+      };
+    };
+    const left = rows.slice(0, 3).map(view), right = rows.slice(3).map(view);
+
+    const inPlay = Object.keys(act).map((k) => ({ label: E[k].label, left: s.dur[k] + ' ronda' + (s.dur[k] === 1 ? '' : 's') }));
+
+    const tabs = [
+      { key: 'eventos', label: 'Mano de eventos ' + s.hand.length + '/5' },
+      { key: 'juego', label: 'En juego ' + Object.keys(act).length },
+      { key: 'mercado', label: 'Mercado ' + s.market.length },
+      { key: 'bitacora', label: 'Bitácora' }
+    ].map((tb) => ({
+      label: tb.label, sel: tb.key === s.tab ? 'true' : 'false',
+      style: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 12px; cursor: pointer; ' + (tb.key === s.tab ? 'background: ' + t.text + '; color: ' + t.bg + '; border: 1px solid ' + t.text : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+      pick: () => this.setState({ tab: tb.key, sel: null, msg: null })
+    }));
+
+    let cards = [], log = [];
+    if (s.tab === 'eventos') cards = s.hand.map((k) => this.cardView(k, 'hand', t));
+    else if (s.tab === 'juego') cards = Object.keys(act).map((k) => this.cardView(k, 'play', t));
+    else if (s.tab === 'mercado') cards = s.market.map((k) => this.cardView(k, 'market', t));
+    else log = s.log.map((l) => ({ round: l.round, text: l.text, box: 'flex: none; width: 240px; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 12px; background: ' + t.soft }));
+
+    const btn = (label, run, kind, disabled, pressed) => ({
+      label: label, run: run, disabled: disabled ? 'true' : 'false', pressed: pressed ? 'true' : 'false',
+      style: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; cursor: pointer; ' + (kind === 'danger' ? 'background: #D62839; color: #FFFFFF; border: 1px solid #D62839' : (kind === 'primary' ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2)) + (disabled ? '; opacity: 0.55' : '')
+    });
+    const sel = s.sel;
+    const actions = [];
+    if (s.tab === 'eventos') {
+      actions.push(btn('Jugar evento', () => { if (sel && sel.from === 'hand') this.ask(sel.key); else this.setState({ msg: { text: 'Selecciona una carta de evento.', tone: 'warn' } }); }, 'danger', !(sel && sel.from === 'hand')));
+      actions.push(btn('Robar evento', () => this.drawEvent(), 'ghost', s.drewRound === s.round || s.hand.length >= 5 || !s.deck.length));
+    } else if (s.tab === 'juego') {
+      actions.push(btn('Retirar evento', () => { if (sel && sel.from === 'play') this.retire(sel.key); else this.setState({ msg: { text: 'Selecciona un evento en juego.', tone: 'warn' } }); }, 'ghost', !(sel && sel.from === 'play')));
+    } else if (s.tab === 'mercado') {
+      actions.push(btn('Revelar contrato', () => this.reveal(), 'ghost', !s.hidden.length));
+    }
+    actions.push(btn(s.paused ? 'Reanudar' : 'Pausar', () => this.togglePause(), 'ghost', false, s.paused));
+    actions.push(btn(s.phase === this.phaseList().length - 1 ? 'Cerrar ronda' : 'Siguiente fase', () => this.nextPhase(), 'primary', false));
+
+    const cdef = s.confirm ? E[s.confirm] : null;
+    const u = s.undo, udef = u ? E[u.key] : null;
+    const m = s.msg;
+    const rowEmpty = !cards.length && !log.length;
+    return {
+      t: t, round: s.round, phases: phases, tops: tops, left: left, right: right, inPlay: inPlay,
+      live: { label: s.paused ? 'En pausa' : 'En vivo', style: 'display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 6px 4px; color: ' + (s.paused ? t.quiet : t.alertText), dot: 'width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: ' + (s.paused ? t.quiet : '#D62839') },
+      noGL: s.noGL, setCanvas: this.setCanvas, setWrap: this.setWrap, down: this.down, move: this.move, up: this.up,
+      tabs: tabs, actions: actions, cards: cards, log: log,
+      rowEmpty: rowEmpty, rowEmptyText: s.tab === 'juego' ? 'No hay eventos en juego.' : 'Sin cartas en tu mano de eventos.',
+      confirmOpen: !!cdef,
+      confirm: cdef ? { title: '¿Jugar «' + cdef.label + '» durante ' + cdef.dur + ' ronda' + (cdef.dur === 1 ? '' : 's') + '?', hit: 'Afecta a: ' + cdef.hit + ' Los jugadores pueden mitigarlo con: ' + cdef.counter + '.' } : { title: '', hit: '' },
+      confirmYes: this.confirmYes, confirmNo: this.confirmNo,
+      undoOpen: !!udef, undo: udef ? { text: 'Jugaste «' + udef.label + '».', left: u.left } : { text: '', left: 0 }, undoDo: this.undoDo,
+      hasMsg: !!m, msg: m ? m.text : '',
+      msgStyle: 'border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: ' + t.text + '; background: ' + (m && m.tone === 'warn' ? t.pRed : (m && m.tone === 'ok' ? t.okBg : t.pBlue))
+    };
+  }
+
+  tryInit() {
+    if (this.inited || !this.cv || !this.wrap) return;
+    if (!window.THREE) {
+      this.tries += 1;
+      if (this.tries > 40) { this.setState({ noGL: true }); return; }
+      clearTimeout(this.retry);
+      this.retry = setTimeout(() => this.tryInit(), 150);
+      return;
+    }
+    this.inited = true;
+    this.initGlobe();
+  }
+
+  ll(T, lat, lon, r) {
+    const p = (90 - lat) * Math.PI / 180, th = (lon + 180) * Math.PI / 180;
+    return new T.Vector3(-r * Math.sin(p) * Math.cos(th), r * Math.cos(p), r * Math.sin(p) * Math.sin(th));
+  }
+
+  slerp(a, b, t) {
+    const o = a.angleTo(b), s = Math.sin(o);
+    if (s < 1e-6) return a.clone();
+    return a.clone().multiplyScalar(Math.sin((1 - t) * o) / s).add(b.clone().multiplyScalar(Math.sin(t * o) / s));
+  }
+
+  initGlobe() {
+    const T = window.THREE, cv = this.cv, wrap = this.wrap;
+    let renderer;
+    try { renderer = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); }
+    catch (e) { this.setState({ noGL: true }); return; }
+    this.renderer = renderer;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(38, 1, 0.1, 100);
+    camera.position.set(0, 0, 3.05);
+    const tilt = new T.Group();
+    tilt.rotation.x = 0.32;
+    scene.add(tilt);
+    const globe = new T.Group();
+    globe.rotation.y = -0.87;
+    tilt.add(globe);
+    this.g = { globe: globe, tilt: tilt };
+    const R = 1;
+
+    const mapCanvas = document.createElement('canvas');
+    mapCanvas.width = 4096;
+    mapCanvas.height = 2048;
+    const mapTex = new T.CanvasTexture(mapCanvas);
+    mapTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    if (T.SRGBColorSpace) mapTex.colorSpace = T.SRGBColorSpace;
+    const coreMat = new T.MeshBasicMaterial({ map: mapTex });
+    globe.add(new T.Mesh(new T.SphereGeometry(R * 0.995, 128, 96), coreMat));
+    this.mapCanvas = mapCanvas;
+    this.mapTex = mapTex;
+    this.mapKey = '';
+    fetch('/_blob/95745034f2671a95fdfd7b16a93a4b05')
+      .then((r) => r.json())
+      .then((data) => { this.borders = data; this.mapKey = ''; })
+      .catch(() => {});
+    const atmMat = new T.MeshBasicMaterial({ color: 0x1F5EFF, transparent: true, opacity: 0.07, side: T.BackSide });
+    scene.add(new T.Mesh(new T.SphereGeometry(R * 1.07, 48, 32), atmMat));
+
+    const grat = new T.LineBasicMaterial({ color: 0x9DB8F0, transparent: true, opacity: 0.3 });
+    for (let lat = -75; lat <= 75; lat += 15) {
+      const pts = [];
+      for (let lon = -180; lon <= 180; lon += 3) pts.push(this.ll(T, lat, lon, R));
+      globe.add(new T.Line(new T.BufferGeometry().setFromPoints(pts), grat));
+    }
+    for (let lon = -180; lon < 180; lon += 15) {
+      const pts = [];
+      for (let lat = -90; lat <= 90; lat += 3) pts.push(this.ll(T, lat, lon, R));
+      globe.add(new T.Line(new T.BufferGeometry().setFromPoints(pts), grat));
+    }
+
+    const ports = { CTG: [10.39, -75.51], BUN: [3.88, -77.03], PAN: [9.08, -79.68], MIA: [25.77, -80.19], HOU: [29.76, -95.36], SHA: [31.23, 121.47], RTM: [51.92, 4.48], SUE: [29.97, 32.55] };
+    const portMeshes = {};
+    Object.keys(ports).forEach((k) => {
+      const m = new T.Mesh(new T.SphereGeometry(0.026, 16, 12), new T.MeshBasicMaterial({ color: 0x14213D }));
+      m.position.copy(this.ll(T, ports[k][0], ports[k][1], R * 1.004));
+      globe.add(m);
+      portMeshes[k] = m;
+    });
+
+    const routes = [['CTG', 'RTM'], ['CTG', 'MIA'], ['HOU', 'RTM'], ['BUN', 'SHA'], ['CTG', 'PAN'], ['PAN', 'SHA'], ['SHA', 'SUE'], ['SUE', 'RTM']];
+    const ships = [];
+    routes.forEach((rt, i) => {
+      const a = rt[0], b = rt[1];
+      const va = this.ll(T, ports[a][0], ports[a][1], R), vb = this.ll(T, ports[b][0], ports[b][1], R);
+      const ang = va.angleTo(vb), pts = [], n = 120;
+      for (let j = 0; j <= n; j++) {
+        const t = j / n;
+        pts.push(this.slerp(va, vb, t).multiplyScalar(R + Math.sin(Math.PI * t) * (0.03 + ang * 0.1)));
+      }
+      const line = new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: 0x1F5EFF, transparent: true, opacity: 0.85 }));
+      globe.add(line);
+      const count = ang > 1 ? 2 : 1;
+      for (let s = 0; s < count; s++) {
+        const m = new T.Mesh(new T.SphereGeometry(0.02, 12, 10), new T.MeshBasicMaterial({ color: 0xFFB703 }));
+        globe.add(m);
+        ships.push({ m: m, pts: pts, t: (s / count + i * 0.17) % 1, a: a, b: b, line: line, speed: 0.0016 / Math.max(ang, 0.3) * 0.6 + 0.0008 });
+      }
+    });
+
+    const resize = () => {
+      const w = wrap.clientWidth, h = wrap.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    if (window.ResizeObserver) { this.ro = new ResizeObserver(resize); this.ro.observe(wrap); }
+    resize();
+
+    let ph = 0, lastNight = null;
+    const C = (hex) => new T.Color(hex);
+    let pal = null;
+    const tick = () => {
+      this.raf = requestAnimationFrame(tick);
+      ph += 0.05;
+      const night = this.isNight();
+      if (night !== lastNight) {
+        lastNight = night;
+        const g = this.theme().g;
+        pal = { route: C(g.route), port: C(g.port), ship: C(g.ship), alert: C(g.alert) };
+        grat.color.setHex(g.grat);
+        atmMat.color.setHex(g.atm);
+      }
+      const act = this.state.active || {};
+      const alertIds = this.alertCountries(act);
+      const key = (night ? 'n' : 'd') + '|' + (this.borders ? 'b' : '-') + '|' + alertIds.join(',');
+      if (key !== this.mapKey) { this.mapKey = key; this.paintMap(night, alertIds); }
+      const alert = { CTG: !!act.tormenta || !!act.congestion, RTM: !!act.huelga, PAN: !!act.sequia, SUE: !!act.marrojo };
+      Object.keys(portMeshes).forEach((k) => {
+        const m = portMeshes[k];
+        if (alert[k]) { m.material.color.copy(pal.alert); m.scale.setScalar(1.5 + 0.6 * Math.sin(ph * 2)); }
+        else { m.material.color.copy(pal.port); m.scale.setScalar(1); }
+      });
+      ships.forEach((s) => {
+        const blocked = (alert.CTG && (s.a === 'CTG' || s.b === 'CTG')) || (alert.RTM && (s.a === 'RTM' || s.b === 'RTM')) || (alert.SUE && (s.a === 'SUE' || s.b === 'SUE'));
+        const slow = alert.PAN && (s.a === 'PAN' || s.b === 'PAN');
+        const spd = this.state.paused ? 0 : (blocked ? 0 : (slow ? s.speed * 0.25 : s.speed)) * (act.pandemia ? 0.5 : 1) * (act.ciber ? 0.6 : 1);
+        s.t = (s.t + spd) % 1;
+        const idx = Math.floor(s.t * (s.pts.length - 1));
+        s.m.position.copy(s.pts[idx]);
+        s.m.material.color.copy(blocked || slow ? pal.alert : pal.ship);
+        s.line.material.color.copy(blocked || slow ? pal.alert : pal.route);
+      });
+      if (!this.drag && this.props.rotar !== false) globe.rotation.y += 0.0012;
+      renderer.render(scene, camera);
+    };
+    tick();
+  }
+
+  gameCountries() {
+    return {
+      '170': { cont: 'América', name: 'Colombia', lon: -73.5, lat: 4.5 },
+      '484': { cont: 'América', name: 'México', lon: -102, lat: 23.8 },
+      '840': { cont: 'América', name: 'EE. UU.', lon: -99, lat: 39 },
+      '076': { cont: 'América', name: 'Brasil', lon: -52, lat: -10 },
+      '152': { cont: 'América', name: 'Chile', lon: -70.5, lat: -28 },
+      '528': { cont: 'Europa', name: 'P. Bajos', lon: 5.5, lat: 55.2 },
+      '276': { cont: 'Europa', name: 'Alemania', lon: 10.5, lat: 50.6 },
+      '710': { cont: 'África', name: 'Sudáfrica', lon: 24, lat: -29.5 },
+      '818': { cont: 'África', name: 'Egipto', lon: 29, lat: 24.5 },
+      '784': { cont: 'Asia', name: 'EAU', lon: 54.5, lat: 21.5 },
+      '156': { cont: 'Asia', name: 'China', lon: 103, lat: 35 },
+      '356': { cont: 'Asia', name: 'India', lon: 79, lat: 21 },
+      '392': { cont: 'Asia', name: 'Japón', lon: 141, lat: 40 },
+      '036': { cont: 'Oceanía', name: 'Australia', lon: 134, lat: -25 }
+    };
+  }
+
+  chokepoints() {
+    return [
+      { key: 'panama', name: 'Canal de Panamá', lon: -84, lat: 6, ev: 'sequia' },
+      { key: 'suez', name: 'Canal de Suez', lon: 36.5, lat: 33.5, ev: 'marrojo' },
+      { key: 'bab', name: 'Bab el-Mandeb', lon: 47, lat: 11, ev: 'marrojo' },
+      { key: 'ormuz', name: 'Estrecho de Ormuz', lon: 60, lat: 27.5, ev: '' },
+      { key: 'malaca', name: 'Estrecho de Malaca', lon: 94, lat: 3, ev: '' },
+      { key: 'taiwan', name: 'Estrecho de Taiwán', lon: 125, lat: 22, ev: '' },
+      { key: 'cabo', name: 'Cabo de Buena Esperanza', lon: 18, lat: -37.5, ev: '' }
+    ];
+  }
+
+  alertCountries(act) {
+    const ids = [];
+    if (act.tormenta || act.devaluacion || act.revaluacion || act.congestion) ids.push('170');
+    if (act.huelga) ids.push('528');
+    if (act.sequia) ids.push('591');
+    if (act.marrojo) ids.push('818');
+    return ids;
+  }
+
+  paintMap(night, alertIds) {
+    const cnv = this.mapCanvas, ctx = cnv.getContext('2d');
+    if (!ctx) return;
+    const W = cnv.width, H = cnv.height;
+    const pal = night
+      ? { ocean: '#0F2236', land: '#1C2C45', border: '#4A6A92', text: '#E6EDF5', halo: '#0B1320', alert: '#F2A93B', choke: '#8FD9D5', cont: { 'América': '#2A5578', 'Europa': '#2A5578', 'África': '#2A5578', 'Asia': '#2A5578', 'Oceanía': '#2A5578' } }
+      : { ocean: '#CFE0FF', land: '#FFFFFF', border: '#7C96C8', text: '#14213D', halo: '#FFFFFF', alert: '#D62839', choke: '#1446C8', cont: { 'América': '#FFD34D', 'Europa': '#7FA7FF', 'África': '#FF8E9B', 'Asia': '#B7A3FF', 'Oceanía': '#7FD8B4' } };
+    const game = this.gameCountries();
+    ctx.fillStyle = pal.ocean;
+    ctx.fillRect(0, 0, W, H);
+    const px = (lon) => (lon + 180) / 360 * W, py = (lat) => (90 - lat) / 180 * H;
+    if (this.borders) {
+      ctx.lineJoin = 'round';
+      this.borders.forEach((c) => {
+        const path = new Path2D();
+        let minX = Infinity, maxX = -Infinity;
+        c.r.forEach((ring) => {
+          let prev = null;
+          for (let i = 0; i < ring.length; i += 2) {
+            let lon = ring[i];
+            if (prev !== null) { while (lon - prev > 180) lon -= 360; while (lon - prev < -180) lon += 360; }
+            prev = lon;
+            const x = px(lon), y = py(ring[i + 1]);
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (i === 0) path.moveTo(x, y); else path.lineTo(x, y);
+          }
+          path.closePath();
+        });
+        const g = game[c.id];
+        const fill = alertIds.indexOf(c.id) >= 0 ? pal.alert : (g ? pal.cont[g.cont] : pal.land);
+        const offs = [0];
+        if (minX < 0) offs.push(W);
+        if (maxX > W) offs.push(-W);
+        offs.forEach((o) => {
+          ctx.save();
+          ctx.translate(o, 0);
+          ctx.fillStyle = fill;
+          ctx.fill(path, 'evenodd');
+          ctx.strokeStyle = pal.border;
+          ctx.lineWidth = g ? 2.4 : 1.4;
+          ctx.stroke(path);
+          ctx.restore();
+        });
+      });
+    }
+    const label = (text, lon, lat, size, weight, color, italic) => {
+      const k = 1 / Math.max(Math.cos(lat * Math.PI / 180), 0.35);
+      ctx.save();
+      ctx.translate(px(lon), py(lat));
+      ctx.scale(k, 1);
+      ctx.font = (italic ? 'italic ' : '') + weight + ' ' + size + 'px "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = pal.halo;
+      ctx.strokeText(text, 0, 0);
+      ctx.fillStyle = color;
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    };
+    Object.keys(game).forEach((id) => { const g = game[id]; label(g.name, g.lon, g.lat, 30, 700, pal.text, false); });
+    const act = this.state.active || {};
+    this.chokepoints().forEach((c) => label(c.name, c.lon, c.lat, 22, 600, c.ev && act[c.ev] ? pal.alert : pal.choke, true));
+    this.mapTex.needsUpdate = true;
+  }
+}
+</script>
+</body>
+</html>

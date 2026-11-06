@@ -1,0 +1,4 @@
+node_modules/
+tests/results.json
+tests/audit.json
+.DS_Store

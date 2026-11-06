@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Retos ECAES por eje temático</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto">
+  <div style="display: flex; justify-content: space-between; align-items: center">
+    <span style="font-size: 12px; font-weight: 600; color: {{t.text}}; background: {{t.pBlue}}; border-radius: 999px; padding: 6px 12px">Aduanas · Café Sinú S.A.S.</span>
+    <span role="timer" aria-label="Tiempo restante" style="{{timerStyle}}">{{clock}}</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 4px">
+    <span style="{{modeStyle}}">{{modeLabel}}</span>
+    <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 600; line-height: 1.2">{{q.title}}</h1>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+    <sc-for list="{{topics}}" as="tp" hint-placeholder-count="6">
+      <button type="button" onClick="{{tp.pick}}" aria-pressed="{{tp.pressed}}" aria-disabled="{{tp.locked}}" style="{{tp.style}}">{{tp.label}}</button>
+    </sc-for>
+  </div>
+  <span role="status" style="{{noteStyle}}">{{note}}</span>
+
+  <div style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 16px; padding: 14px; font-size: 14px; line-height: 1.5">{{q.context}}</div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <sc-for list="{{options}}" as="op" hint-placeholder-count="4">
+      <button type="button" onClick="{{op.pick}}" aria-pressed="{{op.pressed}}" style="{{op.style}}">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; flex: none">{{op.id}}</span>
+        <span>{{op.text}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{answered}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="{{fbStyle}}">
+      <span style="display: block; font-weight: 700; margin-bottom: 4px">{{fbTitle}}</span>
+      <span style="display: block">{{fbText}}</span>
+    </div>
+  </sc-if>
+
+  <div style="font-size: 12px; color: {{t.quiet}}; line-height: 1.4">Competencia: {{q.skill}}. El resultado alimenta la exactitud documental y los KPIs del rol.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const now = Date.now();
+    this.state = { topic: 'incoterms', insp: 'incoterms', picks: {}, started: { incoterms: now }, now: now, blocked: false, lastInsp: null };
+  }
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState({ now: Date.now() }), 1000);
+    const read = (m) => {
+      if (!m || !m.active) return;
+      const on = !!m.active.inspeccion;
+      if (on && this.state.lastInsp === false) this.newInspection();
+      this.setState({ lastInsp: on });
+    };
+    try { const raw = window.localStorage.getItem('logiverse-mundo'); if (raw) read(JSON.parse(raw)); } catch (err) {}
+    try { this.bc = new BroadcastChannel('logiverse-mundo'); this.bc.onmessage = (e) => read(e.data); } catch (err) { this.bc = null; }
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
+    try { if (this.bc) this.bc.close(); } catch (err) {}
+  }
+  left(k, s) {
+    const st = s || this.state;
+    if (!st.started[k]) return 90;
+    return Math.max(0, Math.min(90, 90 - Math.floor((st.now - st.started[k]) / 1000)));
+  }
+  inspDone(s) {
+    const st = s || this.state;
+    return !!st.picks[st.insp] || this.left(st.insp, st) <= 0;
+  }
+  newInspection() {
+    const s = this.state;
+    const keys = Object.keys(this.bank());
+    const start = keys.indexOf(s.insp);
+    let k = null;
+    for (let i = 1; i <= keys.length; i++) {
+      const c = keys[(start + i) % keys.length];
+      if (!s.picks[c]) { k = c; break; }
+    }
+    if (!k) return;
+    const now = Date.now();
+    this.setState({ insp: k, topic: k, now: now, blocked: false, started: Object.assign({}, s.started, { [k]: now }) });
+  }
+  theme() {
+    if (this.props.nocturno === true) {
+      return { bg: '#0B1320', card: '#0F1A2B', soft: '#13213A', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3', accent: '#3DD6D0', accentInk: '#06201F', accentText: '#3DD6D0', alert: '#F2A93B', alertInk: '#1A1206', alertText: '#F2A93B', pBlue: '#13213A', okBg: '#0F2E33', badBg: '#33260F' };
+    }
+    return { bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', accentInk: '#FFFFFF', accentText: '#1F5EFF', alert: '#D62839', alertInk: '#FFFFFF', alertText: '#D62839', pBlue: '#E4ECFF', okBg: '#E4ECFF', badBg: '#FFE3E6' };
+  }
+  bank() {
+    return {
+      aduanas: {
+        label: 'Aduanas', title: 'Liquidación de tributos en la importación', skill: 'regímenes aduaneros · nivel interpretación',
+        context: 'Importas a Colombia repuestos electrónicos desde Shenzhen. El agente de aduanas debe liquidar el arancel y el IVA. ¿Sobre qué base se calculan?',
+        ok: 'B',
+        options: [
+          { id: 'A', text: 'Sobre el valor FOB de la factura comercial.' },
+          { id: 'B', text: 'El arancel sobre el valor en aduana (mercancía + flete + seguro) y el IVA sobre ese valor más el arancel.' },
+          { id: 'C', text: 'Sobre el valor EXW en la fábrica del proveedor.' },
+          { id: 'D', text: 'Sobre el precio de venta al consumidor final en Montería.' }
+        ],
+        why: 'El valor en aduana incluye los costos de transporte y seguro hasta el lugar de importación; el IVA se liquida sobre ese valor más el arancel.'
+      },
+      incoterms: {
+        label: 'Incoterms', title: 'Póliza observada en Rotterdam', skill: 'Incoterms 2020 y seguro de carga · nivel argumentación',
+        context: 'Exportas café verde bajo CIF Rotterdam por USD 48.100. La aduana revisa la póliza y encuentra que cubre USD 44.000, el valor FOB. ¿Qué debes corregir antes del levante?',
+        ok: 'B',
+        options: [
+          { id: 'A', text: 'Nada: en CIF el seguro es responsabilidad del comprador.' },
+          { id: 'B', text: 'Ampliar la cobertura al menos al 110 % del valor del contrato (≈ USD 52.910).' },
+          { id: 'C', text: 'Cambiar el Incoterm a FOB para que el seguro deje de ser exigible.' },
+          { id: 'D', text: 'Asegurar solo el flete principal, pues la mercancía ya está a bordo.' }
+        ],
+        why: 'En CIF el vendedor contrata como mínimo Cláusulas (C) del Instituto por el 110 % del precio del contrato.'
+      },
+      geografia: {
+        label: 'Geografía', title: 'El puerto más cercano a Asia', skill: 'geografía económica y rutas comerciales · nivel interpretación',
+        context: 'Una empresa de Córdoba quiere importar desde China con el menor tiempo de tránsito marítimo. ¿Qué puerto colombiano evita el Canal de Panamá?',
+        ok: 'B',
+        options: [
+          { id: 'A', text: 'Cartagena, por ser el de mayor movimiento de contenedores.' },
+          { id: 'B', text: 'Buenaventura, sobre el océano Pacífico.' },
+          { id: 'C', text: 'Santa Marta, por su cercanía a la Sierra Nevada.' },
+          { id: 'D', text: 'Barranquilla, por su conexión con el río Magdalena.' }
+        ],
+        why: 'Buenaventura está en el Pacífico y recibe la ruta transpacífica sin cruzar el canal; a cambio, el acarreo terrestre hasta Córdoba es más largo.'
+      },
+      geopolitica: {
+        label: 'Geopolítica', title: 'Desvío por el mar Rojo', skill: 'riesgo geopolítico en rutas · nivel proposición',
+        context: 'Ataques a buques en el mar Rojo llevan a las navieras a evitar el Canal de Suez entre Asia y Europa. ¿Qué ruta alternativa usan y qué efecto tiene?',
+        ok: 'C',
+        options: [
+          { id: 'A', text: 'El Canal de Panamá, sin cambio en el tiempo de tránsito.' },
+          { id: 'B', text: 'El estrecho de Malaca, que acorta el viaje.' },
+          { id: 'C', text: 'El Cabo de Buena Esperanza, sumando del orden de 10 a 14 días y más combustible.' },
+          { id: 'D', text: 'El paso del Noroeste, abierto todo el año.' }
+        ],
+        why: 'Rodear África por el Cabo de Buena Esperanza alarga el viaje y encarece el flete; el Jefe de Tráfico debe recalcular lead time y costos.'
+      },
+      divisas: {
+        label: 'Divisas', title: 'Cobertura de un exportador', skill: 'gestión cambiaria · nivel proposición',
+        context: 'Exportas tilapia por USD 88.000 con pago a 60 días y temes que el peso se revalúe. ¿Qué instrumento fija hoy la tasa a la que venderás esos dólares?',
+        ok: 'B',
+        options: [
+          { id: 'A', text: 'Un forward de compra de dólares.' },
+          { id: 'B', text: 'Un forward de venta de dólares.' },
+          { id: 'C', text: 'Una carta de crédito confirmada.' },
+          { id: 'D', text: 'Una póliza de seguro ICC (A).' }
+        ],
+        why: 'El exportador recibirá dólares en el futuro: vender a plazo fija la tasa y lo protege de la revaluación del peso.'
+      },
+      transporte: {
+        label: 'Transporte', title: 'Peso facturable en carga aérea', skill: 'modos de transporte y cubicaje · nivel interpretación',
+        context: 'Importas por vía aérea 9.500 kg de repuestos que ocupan 62 m³. La aerolínea usa el factor 1:6.000 (≈ 166,7 kg por m³). ¿Qué peso se factura?',
+        ok: 'B',
+        options: [
+          { id: 'A', text: '9.500 kg, el peso real.' },
+          { id: 'B', text: '≈ 10.333 kg, el peso volumétrico, por ser mayor que el real.' },
+          { id: 'C', text: '62 kg, uno por cada metro cúbico.' },
+          { id: 'D', text: 'El promedio entre peso real y volumétrico.' }
+        ],
+        why: 'Se factura el mayor entre peso real y volumétrico: 62 m³ × 166,7 kg/m³ ≈ 10.333 kg.'
+      }
+    };
+  }
+  renderVals() {
+    const t = this.theme();
+    const bank = this.bank();
+    const s = this.state;
+    const key = s.topic, q = bank[key];
+    const pick = s.picks[key], left = this.left(key);
+    const inspecting = !this.inspDone();
+    const isInsp = key === s.insp;
+    const topics = Object.keys(bank).map((k) => {
+      const locked = inspecting && k !== s.insp;
+      return {
+        label: bank[k].label,
+        pressed: k === key ? 'true' : 'false',
+        locked: locked ? 'true' : 'false',
+        style: 'font: inherit; font-size: 12px; font-weight: 600; min-height: 44px; border-radius: 12px; cursor: pointer; ' + (k === key ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + (locked ? t.quiet : t.text) + '; border: 1px ' + (locked ? 'dashed ' : 'solid ') + t.border2),
+        pick: () => {
+          const st = this.state;
+          if (k === st.topic) return;
+          if (!this.inspDone(st)) { this.setState({ blocked: true }); return; }
+          const now = Date.now();
+          this.setState({ topic: k, blocked: false, now: now, started: st.started[k] ? st.started : Object.assign({}, st.started, { [k]: now }) });
+        }
+      };
+    });
+    const base = 'display: flex; gap: 12px; align-items: flex-start; text-align: left; font: inherit; font-size: 14px; line-height: 1.4; padding: 12px; min-height: 48px; border-radius: 14px; cursor: pointer; ';
+    const options = q.options.map((d) => {
+      let st = 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2;
+      if (pick && d.id === q.ok) st = 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent;
+      else if (pick && d.id === pick) st = 'background: ' + t.alert + '; color: ' + t.alertInk + '; border: 1px solid ' + t.alert;
+      return {
+        id: d.id, text: d.text,
+        pressed: d.id === pick ? 'true' : 'false',
+        style: base + st,
+        pick: () => {
+          if (this.state.picks[key] || this.left(key) <= 0) return;
+          this.setState((s) => ({ picks: Object.assign({}, s.picks, { [key]: d.id }) }));
+        }
+      };
+    });
+    const right = pick === q.ok, timeout = !pick && left <= 0;
+    const mm = Math.floor(left / 60), ss = left % 60;
+    return {
+      t: t, q: q, topics: topics, options: options,
+      answered: !!pick || timeout,
+      clock: '0' + mm + ':' + (ss < 10 ? '0' : '') + ss,
+      timerStyle: 'font-family: \'IBM Plex Mono\', monospace; font-size: 15px; font-weight: 600; padding: 6px 10px; border-radius: 999px; color: ' + (left <= 20 && !pick ? t.alertInk : t.text) + '; background: ' + (left <= 20 && !pick ? t.alert : (this.props.nocturno === true ? '#13213A' : '#FFF4CC')),
+      modeLabel: isInsp ? 'INSPECCIÓN SORPRESA · RETO TIPO SABER PRO' : 'PRÁCTICA · RETO TIPO SABER PRO',
+      modeStyle: 'font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: ' + (isInsp ? t.alertText : t.accentText),
+      note: inspecting
+        ? (s.blocked ? 'Hay una inspección en curso: respóndela antes de cambiar de eje.' : 'Los demás ejes se desbloquean al resolver la inspección.')
+        : 'El cronómetro de cada pregunta sigue corriendo aunque cambies de eje.',
+      noteStyle: 'font-size: 12px; line-height: 1.4; ' + (inspecting && s.blocked ? 'font-weight: 700; color: ' + t.alertText : 'color: ' + t.quiet),
+      fbTitle: isInsp
+        ? (right ? 'Correcto: levante inmediato' : (timeout ? 'Tiempo agotado: mercancía retenida' : 'Incorrecto: mercancía retenida'))
+        : (right ? 'Correcto' : (timeout ? 'Tiempo agotado' : 'Incorrecto')),
+      fbText: isInsp
+        ? (right ? q.why + ' La empresa suma puntos de exactitud documental.' : q.why + ' Sanción de la partida: multa y 2 días de retención; la respuesta correcta era ' + q.ok + '.')
+        : (right ? q.why : q.why + ' La respuesta correcta era ' + q.ok + '.'),
+      fbStyle: 'border-radius: 14px; padding: 14px; font-size: 13px; line-height: 1.5; color: ' + t.text + '; ' + (right ? 'background: ' + t.okBg + '; border: 1px solid ' + t.accent : 'background: ' + t.badBg + '; border: 1px solid ' + t.alert)
+    };
+  }
+}
+</script>
+</body>
+</html>

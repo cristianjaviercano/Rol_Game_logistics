@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Consola del Superusuario</title>
+<script src="./support.js"></script>
+<script src="/_blob/478300407335490ca021634fb285ef8f"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1160px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 24px 32px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+  <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 14px">
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true"><circle cx="22" cy="22" r="18" fill="{{t.pBlue}}" stroke="{{t.accent}}" stroke-width="2"></circle><ellipse cx="22" cy="22" rx="8" ry="18" stroke="{{t.accent}}" stroke-width="1.6"></ellipse><path d="M4 22h36" stroke="{{t.accent}}" stroke-width="1.6"></path><circle cx="31" cy="14" r="4" fill="{{t.alert}}"></circle><circle cx="13" cy="29" r="3.5" fill="{{t.warn}}"></circle></svg>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.01em">Logi<span style="color: {{t.accent}}">Verse</span></div>
+        <div style="font-size: 13px; color: {{t.quiet}}">Laboratorio Virtual de Gestión y Logística Internacional · UPB Montería</div>
+      </div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <div style="font-size: 13px; font-weight: 500; padding: 8px 12px; border-radius: 999px; background: {{t.pBlue}}; color: {{t.text}}">Partida 03 · Colombia – EE. UU. – China – Países Bajos</div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; padding: 8px 12px; border-radius: 999px; background: {{t.pYellow}}; color: {{t.text}}">Día {{day}} · Ronda 2</div>
+      <div style="font-size: 13px; font-weight: 500; padding: 8px 12px; border-radius: 999px; background: {{t.pRed}}; color: {{t.text}}">6 empresas · 36 jugadores</div>
+      <div role="status" style="{{live.style}}"><span style="{{live.dot}}"></span>{{live.label}}</div>
+      <button type="button" onClick="{{toggleNight}}" aria-pressed="{{nightPressed}}" style="font: inherit; font-size: 14px; font-weight: 600; color: {{t.text}}; background: {{t.card}}; border: 1px solid {{t.border2}}; border-radius: 12px; padding: 0 16px; min-height: 44px; cursor: pointer">{{nightLabel}}</button>
+      <button type="button" onClick="{{togglePause}}" aria-pressed="{{live.pressed}}" style="font: inherit; font-size: 14px; font-weight: 600; color: {{t.accentInk}}; background: {{t.accent}}; border: 0; border-radius: 12px; padding: 0 18px; min-height: 44px; cursor: pointer">{{live.cta}}</button>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch">
+    <section style="flex: 999 1 640px; min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px">
+        <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Mapa global en vivo</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: {{t.quiet}}">
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 3px; border-radius: 2px; background: {{t.route}}; display: inline-block"></span>Ruta activa</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 50%; background: {{t.ship}}; display: inline-block"></span>Buque en tránsito</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 50%; background: {{t.alert}}; display: inline-block"></span>Alerta del Superusuario</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 9px; border-radius: 2px; background: #FFD34D; display: inline-block"></span><span style="width: 14px; height: 9px; border-radius: 2px; background: #7FA7FF; display: inline-block"></span><span style="width: 14px; height: 9px; border-radius: 2px; background: #FF8E9B; display: inline-block"></span><span style="width: 14px; height: 9px; border-radius: 2px; background: #B7A3FF; display: inline-block"></span><span style="width: 14px; height: 9px; border-radius: 2px; background: #7FD8B4; display: inline-block"></span>Países del juego por continente</span>
+        </div>
+      </div>
+      <div ref="{{setWrap}}" style="position: relative; height: 540px; border-radius: 14px; overflow: hidden; background: {{t.sky}}">
+        <canvas ref="{{setCanvas}}" onPointerDown="{{down}}" onPointerMove="{{move}}" onPointerUp="{{up}}" onPointerLeave="{{up}}" role="img" aria-label="Globo 3D con puertos, rutas y buques en movimiento" style="display: block; width: 100%; height: 100%; cursor: grab; touch-action: none"></canvas>
+        <div aria-live="polite" style="position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 8px; pointer-events: none">
+          <sc-for list="{{alerts}}" as="al" hint-placeholder-count="0">
+            <div style="font-size: 13px; font-weight: 600; color: {{t.alertInk}}; background: {{t.alert}}; border-radius: 10px; padding: 7px 12px">{{al.text}}</div>
+          </sc-for>
+        </div>
+        <sc-if value="{{noGL}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: {{t.quiet}}; font-size: 14px">Este navegador no admite WebGL: el globo 3D no está disponible.</div>
+        </sc-if>
+        <div style="position: absolute; left: 14px; right: 14px; bottom: 12px; font-size: 12px; color: {{t.quiet}}; pointer-events: none">Puertos y pasos críticos: Cartagena · Buenaventura · Panamá · Miami · Houston · Shanghái · Suez · Rotterdam — arrastra para girar el globo</div>
+      </div>
+    </section>
+
+    <div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+      <section style="background: {{t.pYellow}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Lanzar evento global</h2>
+          <p style="margin: 0; font-size: 13px; color: {{t.quiet}}">Cada evento cambia el mundo para todas las empresas en el siguiente tick. Antes de lanzarlo ves a quién afecta, y después tienes 10 s para deshacerlo.</p>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <sc-for list="{{events}}" as="ev" hint-placeholder-count="6">
+            <button type="button" onClick="{{ev.fire}}" aria-pressed="{{ev.pressed}}" style="{{ev.style}}">
+              <span style="display: block; font-size: 14px; font-weight: 600">{{ev.label}}</span>
+              <span style="display: block; font-size: 12px; margin-top: 2px">{{ev.sub}}</span>
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{confirmOpen}}" hint-placeholder-val="{{false}}">
+          <div role="group" aria-label="Confirmar evento global" style="background: {{t.card}}; border: 2px solid {{t.alert}}; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 15px; font-weight: 700">{{confirm.title}}</span>
+            <span style="font-size: 13px; line-height: 1.45">{{confirm.hit}}</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <button type="button" onClick="{{confirmYes}}" style="font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid {{t.alert}}; background: {{t.alert}}; color: {{t.alertInk}}; cursor: pointer">{{confirm.cta}}</button>
+              <button type="button" onClick="{{confirmNo}}" style="font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid {{t.border2}}; background: {{t.card}}; color: {{t.text}}; cursor: pointer">Cancelar</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{undoOpen}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; background: {{t.text}}; color: {{t.bg}}; border-radius: 14px; padding: 8px 8px 8px 14px">
+            <span style="font-size: 13px; font-weight: 600">{{undo.text}}</span>
+            <button type="button" onClick="{{undoDo}}" style="font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: {{t.bg}}; color: {{t.text}}; cursor: pointer">Deshacer ({{undo.left}} s)</button>
+          </div>
+        </sc-if>
+      </section>
+
+      <section style="background: {{t.pBlue}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Tasas de cambio</h2>
+        <p style="margin: 0; font-size: 13px; color: {{t.quiet}}">Pesos colombianos por unidad de divisa</p>
+        <sc-for list="{{fx}}" as="r" hint-placeholder-count="3">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 12px; background: {{t.card}}">
+            <div style="display: flex; flex-direction: column"><span style="font-weight: 600">{{r.code}}</span><span style="font-size: 12px; color: {{t.quiet}}">{{r.name}}</span></div>
+            <div style="display: flex; align-items: baseline; gap: 12px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px">{{r.rate}}</span><span style="{{r.deltaStyle}}">{{r.delta}}</span></div>
+          </div>
+        </sc-for>
+      </section>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px">
+    <section style="flex: 1 1 400px; min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Noticias de última hora</h2>
+      <div aria-live="polite" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto">
+        <sc-for list="{{news}}" as="n" hint-placeholder-count="3">
+          <div style="{{n.box}}">
+            <span style="{{n.dot}}"></span>
+            <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{t.quiet}}">Día {{n.day}}</span><span style="font-size: 14px; line-height: 1.45">{{n.text}}</span></div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="flex: 2 1 640px; min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+        <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Ranking de empresas</h2>
+        <span style="font-size: 12px; color: {{t.quiet}}">Se recalcula en cada tick · variación frente al mercado sin eventos</span>
+      </div>
+      <div style="overflow-x: auto">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px">
+          <thead>
+            <tr style="color: {{t.quiet}}; font-size: 12px; text-align: left">
+              <th style="padding: 8px 10px; font-weight: 500">#</th>
+              <th style="padding: 8px 10px; font-weight: 500">Empresa</th>
+              <th style="padding: 8px 10px; font-weight: 500">País · giro</th>
+              <th style="padding: 8px 10px; font-weight: 500; text-align: right">Margen</th>
+              <th style="padding: 8px 10px; font-weight: 500; text-align: right">OTIF</th>
+              <th style="padding: 8px 10px; font-weight: 500; text-align: right">Exactitud documental</th>
+              <th style="padding: 8px 10px; font-weight: 500">Eventos que la afectan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{companies}}" as="c" hint-placeholder-count="6">
+              <tr style="border-top: 1px solid {{t.border}}">
+                <td style="padding: 10px"><span style="{{c.rankStyle}}">{{c.rank}}</span></td>
+                <td style="padding: 10px; font-weight: 600">{{c.name}}</td>
+                <td style="padding: 10px; color: {{t.quiet}}">{{c.meta}}</td>
+                <td style="padding: 10px; text-align: right; font-family: 'IBM Plex Mono', monospace">{{c.margen}}</td>
+                <td style="{{c.otifStyle}}">{{c.otif}}</td>
+                <td style="padding: 10px; text-align: right; font-family: 'IBM Plex Mono', monospace">{{c.exact}}</td>
+                <td style="padding: 8px 10px">
+                  <sc-for list="{{c.causes}}" as="cz" hint-placeholder-count="0">
+                    <span style="{{cz.style}}">{{cz.label}}</span>
+                  </sc-for>
+                  <sc-if value="{{c.noCause}}" hint-placeholder-val="{{true}}">
+                    <span style="font-size: 12px; color: {{t.quiet}}">Ninguno</span>
+                  </sc-if>
+                  <span style="{{c.deltaStyle}}">{{c.delta}}</span>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div style="font-size: 12px; color: {{t.quiet}}">Mock-up del PMV · datos de demostración · los eventos se pueden activar y desactivar</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"rotar":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      day: 14,
+      active: {},
+      noGL: false,
+      night: null,
+      paused: false,
+      confirm: null,
+      undo: null,
+      news: [
+        { day: 9, text: 'Rotterdam Foods B.V. y Café Sinú S.A.S. firman contrato CIF por 2 contenedores de 40 pies de café verde.', ev: false },
+        { day: 1, text: 'Se abre el mercado: 6 empresas en 4 países, 4 divisas y 3 modos de transporte.', ev: false }
+      ]
+    };
+    this.inited = false;
+    this.tries = 0;
+    this.drag = null;
+    this.setCanvas = (el) => { this.cv = el; this.tryInit(); };
+    this.setWrap = (el) => { this.wrap = el; this.tryInit(); };
+    this.down = (e) => {
+      if (!this.g) return;
+      this.drag = { x: e.clientX, y: e.clientY, ry: this.g.globe.rotation.y, rx: this.g.tilt.rotation.x };
+      if (e.currentTarget && e.currentTarget.setPointerCapture) { try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {} }
+    };
+    this.move = (e) => {
+      if (!this.drag || !this.g) return;
+      this.g.globe.rotation.y = this.drag.ry + (e.clientX - this.drag.x) * 0.006;
+      this.g.tilt.rotation.x = Math.max(-0.5, Math.min(0.9, this.drag.rx + (e.clientY - this.drag.y) * 0.004));
+    };
+    this.up = () => { this.drag = null; };
+    this.toggleNight = () => this.setState({ night: !this.isNight() });
+    this.togglePause = () => {
+      const p = !this.state.paused;
+      this.setState({ paused: p });
+      this.busSend({ active: this.state.active, paused: p });
+    };
+    this.confirmNo = () => this.setState({ confirm: null });
+    this.confirmYes = () => { if (this.state.confirm) this.apply(this.state.confirm, true); };
+    this.undoDo = () => { if (this.state.undo) this.apply(this.state.undo.key, false); };
+  }
+
+  busRead() {
+    try { const raw = window.localStorage.getItem('logiverse-mundo'); return raw ? JSON.parse(raw) : null; } catch (err) { return null; }
+  }
+
+  busSend(msg) {
+    try { window.localStorage.setItem('logiverse-mundo', JSON.stringify(msg)); } catch (err) {}
+    try {
+      if (!this.bc && window.BroadcastChannel) this.bc = new BroadcastChannel('logiverse-mundo');
+      if (this.bc) this.bc.postMessage(msg);
+    } catch (err) {}
+  }
+
+  isNight() {
+    return this.state.night === null ? this.props.nocturno === true : this.state.night;
+  }
+
+  theme() {
+    if (this.isNight()) {
+      return {
+        bg: '#0B1320', card: '#0F1A2B', soft: '#13213A', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3',
+        accent: '#3DD6D0', accentInk: '#06201F', alert: '#F2A93B', alertInk: '#1A1206', alertText: '#F2A93B', warn: '#F2A93B',
+        pBlue: '#13213A', pYellow: '#13213A', pRed: '#13213A', sky: '#0B1320', route: '#3DD6D0', ship: '#FFFFFF',
+        g: { core: 0x0F2236, grat: 0x2A4A68, atm: 0x3DD6D0, route: 0x3DD6D0, port: 0x3DD6D0, ship: 0xFFFFFF, alert: 0xF2A93B }
+      };
+    }
+    return {
+      bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A',
+      accent: '#1F5EFF', accentInk: '#FFFFFF', alert: '#D62839', alertInk: '#FFFFFF', alertText: '#D62839', warn: '#FFC93C',
+      pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', sky: '#EEF4FF', route: '#1F5EFF', ship: '#14213D',
+      g: { core: 0xCFE0FF, grat: 0x9DB8F0, atm: 0x1F5EFF, route: 0x1F5EFF, port: 0x1F5EFF, ship: 0x14213D, alert: 0xD62839 }
+    };
+  }
+
+  componentDidMount() {
+    const saved = this.busRead();
+    if (saved && saved.active) this.setState({ active: saved.active, paused: !!saved.paused });
+    this.timer = setInterval(() => this.setState((s) => (s.paused ? null : { day: s.day + 1 })), 6000);
+    this.sec = setInterval(() => this.setState((s) => (s.undo ? { undo: s.undo.left <= 1 ? null : Object.assign({}, s.undo, { left: s.undo.left - 1 }) } : null)), 1000);
+    this.tryInit();
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+    clearInterval(this.sec);
+    try { if (this.bc) this.bc.close(); } catch (err) {}
+    clearTimeout(this.retry);
+    if (this.raf) cancelAnimationFrame(this.raf);
+    if (this.ro) this.ro.disconnect();
+    if (this.renderer) this.renderer.dispose();
+  }
+
+  tryInit() {
+    if (this.inited || !this.cv || !this.wrap) return;
+    if (!window.THREE) {
+      this.tries += 1;
+      if (this.tries > 40) { this.setState({ noGL: true }); return; }
+      clearTimeout(this.retry);
+      this.retry = setTimeout(() => this.tryInit(), 150);
+      return;
+    }
+    this.inited = true;
+    this.initGlobe();
+  }
+
+  ll(T, lat, lon, r) {
+    const p = (90 - lat) * Math.PI / 180, th = (lon + 180) * Math.PI / 180;
+    return new T.Vector3(-r * Math.sin(p) * Math.cos(th), r * Math.cos(p), r * Math.sin(p) * Math.sin(th));
+  }
+
+  slerp(a, b, t) {
+    const o = a.angleTo(b), s = Math.sin(o);
+    if (s < 1e-6) return a.clone();
+    return a.clone().multiplyScalar(Math.sin((1 - t) * o) / s).add(b.clone().multiplyScalar(Math.sin(t * o) / s));
+  }
+
+  initGlobe() {
+    const T = window.THREE, cv = this.cv, wrap = this.wrap;
+    let renderer;
+    try { renderer = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); }
+    catch (e) { this.setState({ noGL: true }); return; }
+    this.renderer = renderer;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(38, 1, 0.1, 100);
+    camera.position.set(0, 0, 3.05);
+    const tilt = new T.Group();
+    tilt.rotation.x = 0.32;
+    scene.add(tilt);
+    const globe = new T.Group();
+    globe.rotation.y = -0.87;
+    tilt.add(globe);
+    this.g = { globe: globe, tilt: tilt };
+    const R = 1;
+
+    const mapCanvas = document.createElement('canvas');
+    mapCanvas.width = 4096;
+    mapCanvas.height = 2048;
+    const mapTex = new T.CanvasTexture(mapCanvas);
+    mapTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    if (T.SRGBColorSpace) mapTex.colorSpace = T.SRGBColorSpace;
+    const coreMat = new T.MeshBasicMaterial({ map: mapTex });
+    globe.add(new T.Mesh(new T.SphereGeometry(R * 0.995, 128, 96), coreMat));
+    this.mapCanvas = mapCanvas;
+    this.mapTex = mapTex;
+    this.mapKey = '';
+    fetch('/_blob/95745034f2671a95fdfd7b16a93a4b05')
+      .then((r) => r.json())
+      .then((data) => { this.borders = data; this.mapKey = ''; })
+      .catch(() => {});
+    const atmMat = new T.MeshBasicMaterial({ color: 0x1F5EFF, transparent: true, opacity: 0.07, side: T.BackSide });
+    scene.add(new T.Mesh(new T.SphereGeometry(R * 1.07, 48, 32), atmMat));
+
+    const grat = new T.LineBasicMaterial({ color: 0x9DB8F0, transparent: true, opacity: 0.3 });
+    for (let lat = -75; lat <= 75; lat += 15) {
+      const pts = [];
+      for (let lon = -180; lon <= 180; lon += 3) pts.push(this.ll(T, lat, lon, R));
+      globe.add(new T.Line(new T.BufferGeometry().setFromPoints(pts), grat));
+    }
+    for (let lon = -180; lon < 180; lon += 15) {
+      const pts = [];
+      for (let lat = -90; lat <= 90; lat += 3) pts.push(this.ll(T, lat, lon, R));
+      globe.add(new T.Line(new T.BufferGeometry().setFromPoints(pts), grat));
+    }
+
+    const ports = { CTG: [10.39, -75.51], BUN: [3.88, -77.03], PAN: [9.08, -79.68], MIA: [25.77, -80.19], HOU: [29.76, -95.36], SHA: [31.23, 121.47], RTM: [51.92, 4.48], SUE: [29.97, 32.55] };
+    const portMeshes = {};
+    Object.keys(ports).forEach((k) => {
+      const m = new T.Mesh(new T.SphereGeometry(0.026, 16, 12), new T.MeshBasicMaterial({ color: 0x14213D }));
+      m.position.copy(this.ll(T, ports[k][0], ports[k][1], R * 1.004));
+      globe.add(m);
+      portMeshes[k] = m;
+    });
+
+    const routes = [['CTG', 'RTM'], ['CTG', 'MIA'], ['HOU', 'RTM'], ['BUN', 'SHA'], ['CTG', 'PAN'], ['PAN', 'SHA'], ['SHA', 'SUE'], ['SUE', 'RTM']];
+    const ships = [];
+    routes.forEach((rt, i) => {
+      const a = rt[0], b = rt[1];
+      const va = this.ll(T, ports[a][0], ports[a][1], R), vb = this.ll(T, ports[b][0], ports[b][1], R);
+      const ang = va.angleTo(vb), pts = [], n = 120;
+      for (let j = 0; j <= n; j++) {
+        const t = j / n;
+        pts.push(this.slerp(va, vb, t).multiplyScalar(R + Math.sin(Math.PI * t) * (0.03 + ang * 0.1)));
+      }
+      const line = new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: 0x1F5EFF, transparent: true, opacity: 0.85 }));
+      globe.add(line);
+      const count = ang > 1 ? 2 : 1;
+      for (let s = 0; s < count; s++) {
+        const m = new T.Mesh(new T.SphereGeometry(0.02, 12, 10), new T.MeshBasicMaterial({ color: 0xFFB703 }));
+        globe.add(m);
+        ships.push({ m: m, pts: pts, t: (s / count + i * 0.17) % 1, a: a, b: b, line: line, speed: 0.0016 / Math.max(ang, 0.3) * 0.6 + 0.0008 });
+      }
+    });
+
+    const resize = () => {
+      const w = wrap.clientWidth, h = wrap.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    if (window.ResizeObserver) { this.ro = new ResizeObserver(resize); this.ro.observe(wrap); }
+    resize();
+
+    let ph = 0, lastNight = null;
+    const C = (hex) => new T.Color(hex);
+    let pal = null;
+    const tick = () => {
+      this.raf = requestAnimationFrame(tick);
+      ph += 0.05;
+      const night = this.isNight();
+      if (night !== lastNight) {
+        lastNight = night;
+        const g = this.theme().g;
+        pal = { route: C(g.route), port: C(g.port), ship: C(g.ship), alert: C(g.alert) };
+        grat.color.setHex(g.grat);
+        atmMat.color.setHex(g.atm);
+      }
+      const act = this.state.active || {};
+      const alertIds = this.alertCountries(act);
+      const key = (night ? 'n' : 'd') + '|' + (this.borders ? 'b' : '-') + '|' + alertIds.join(',');
+      if (key !== this.mapKey) { this.mapKey = key; this.paintMap(night, alertIds); }
+      const alert = { CTG: !!act.tormenta, RTM: !!act.huelga, PAN: !!act.sequia, SUE: !!act.marrojo };
+      Object.keys(portMeshes).forEach((k) => {
+        const m = portMeshes[k];
+        if (alert[k]) { m.material.color.copy(pal.alert); m.scale.setScalar(1.5 + 0.6 * Math.sin(ph * 2)); }
+        else { m.material.color.copy(pal.port); m.scale.setScalar(1); }
+      });
+      ships.forEach((s) => {
+        const blocked = (alert.CTG && (s.a === 'CTG' || s.b === 'CTG')) || (alert.RTM && (s.a === 'RTM' || s.b === 'RTM')) || (alert.SUE && (s.a === 'SUE' || s.b === 'SUE'));
+        const slow = alert.PAN && (s.a === 'PAN' || s.b === 'PAN');
+        const spd = this.state.paused ? 0 : (blocked ? 0 : (slow ? s.speed * 0.25 : s.speed)) * (act.pandemia ? 0.5 : 1);
+        s.t = (s.t + spd) % 1;
+        const idx = Math.floor(s.t * (s.pts.length - 1));
+        s.m.position.copy(s.pts[idx]);
+        s.m.material.color.copy(blocked || slow ? pal.alert : pal.ship);
+        s.line.material.color.copy(blocked || slow ? pal.alert : pal.route);
+      });
+      if (!this.drag && this.props.rotar !== false) globe.rotation.y += 0.0012;
+      renderer.render(scene, camera);
+    };
+    tick();
+  }
+
+  gameCountries() {
+    return {
+      '170': { cont: 'América', name: 'Colombia', lon: -73.5, lat: 4.5 },
+      '484': { cont: 'América', name: 'México', lon: -102, lat: 23.8 },
+      '840': { cont: 'América', name: 'EE. UU.', lon: -99, lat: 39 },
+      '076': { cont: 'América', name: 'Brasil', lon: -52, lat: -10 },
+      '152': { cont: 'América', name: 'Chile', lon: -70.5, lat: -28 },
+      '528': { cont: 'Europa', name: 'P. Bajos', lon: 5.5, lat: 55.2 },
+      '276': { cont: 'Europa', name: 'Alemania', lon: 10.5, lat: 50.6 },
+      '710': { cont: 'África', name: 'Sudáfrica', lon: 24, lat: -29.5 },
+      '818': { cont: 'África', name: 'Egipto', lon: 29, lat: 24.5 },
+      '784': { cont: 'Asia', name: 'EAU', lon: 54.5, lat: 21.5 },
+      '156': { cont: 'Asia', name: 'China', lon: 103, lat: 35 },
+      '356': { cont: 'Asia', name: 'India', lon: 79, lat: 21 },
+      '392': { cont: 'Asia', name: 'Japón', lon: 141, lat: 40 },
+      '036': { cont: 'Oceanía', name: 'Australia', lon: 134, lat: -25 }
+    };
+  }
+
+  chokepoints() {
+    return [
+      { key: 'panama', name: 'Canal de Panamá', lon: -84, lat: 6, ev: 'sequia' },
+      { key: 'suez', name: 'Canal de Suez', lon: 36.5, lat: 33.5, ev: 'marrojo' },
+      { key: 'bab', name: 'Bab el-Mandeb', lon: 47, lat: 11, ev: 'marrojo' },
+      { key: 'ormuz', name: 'Estrecho de Ormuz', lon: 60, lat: 27.5, ev: '' },
+      { key: 'malaca', name: 'Estrecho de Malaca', lon: 94, lat: 3, ev: '' },
+      { key: 'taiwan', name: 'Estrecho de Taiwán', lon: 125, lat: 22, ev: '' },
+      { key: 'cabo', name: 'Cabo de Buena Esperanza', lon: 18, lat: -37.5, ev: '' }
+    ];
+  }
+
+  alertCountries(act) {
+    const ids = [];
+    if (act.tormenta || act.devaluacion) ids.push('170');
+    if (act.huelga) ids.push('528');
+    if (act.sequia) ids.push('591');
+    if (act.marrojo) ids.push('818');
+    return ids;
+  }
+
+  paintMap(night, alertIds) {
+    const cnv = this.mapCanvas, ctx = cnv.getContext('2d');
+    if (!ctx) return;
+    const W = cnv.width, H = cnv.height;
+    const pal = night
+      ? { ocean: '#0F2236', land: '#1C2C45', border: '#4A6A92', text: '#E6EDF5', halo: '#0B1320', alert: '#F2A93B', choke: '#8FD9D5', cont: { 'América': '#2A5578', 'Europa': '#2A5578', 'África': '#2A5578', 'Asia': '#2A5578', 'Oceanía': '#2A5578' } }
+      : { ocean: '#CFE0FF', land: '#FFFFFF', border: '#7C96C8', text: '#14213D', halo: '#FFFFFF', alert: '#D62839', choke: '#1446C8', cont: { 'América': '#FFD34D', 'Europa': '#7FA7FF', 'África': '#FF8E9B', 'Asia': '#B7A3FF', 'Oceanía': '#7FD8B4' } };
+    const game = this.gameCountries();
+    ctx.fillStyle = pal.ocean;
+    ctx.fillRect(0, 0, W, H);
+    const px = (lon) => (lon + 180) / 360 * W, py = (lat) => (90 - lat) / 180 * H;
+    if (this.borders) {
+      ctx.lineJoin = 'round';
+      this.borders.forEach((c) => {
+        const path = new Path2D();
+        let minX = Infinity, maxX = -Infinity;
+        c.r.forEach((ring) => {
+          let prev = null;
+          for (let i = 0; i < ring.length; i += 2) {
+            let lon = ring[i];
+            if (prev !== null) { while (lon - prev > 180) lon -= 360; while (lon - prev < -180) lon += 360; }
+            prev = lon;
+            const x = px(lon), y = py(ring[i + 1]);
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (i === 0) path.moveTo(x, y); else path.lineTo(x, y);
+          }
+          path.closePath();
+        });
+        const g = game[c.id];
+        const fill = alertIds.indexOf(c.id) >= 0 ? pal.alert : (g ? pal.cont[g.cont] : pal.land);
+        const offs = [0];
+        if (minX < 0) offs.push(W);
+        if (maxX > W) offs.push(-W);
+        offs.forEach((o) => {
+          ctx.save();
+          ctx.translate(o, 0);
+          ctx.fillStyle = fill;
+          ctx.fill(path, 'evenodd');
+          ctx.strokeStyle = pal.border;
+          ctx.lineWidth = g ? 2.4 : 1.4;
+          ctx.stroke(path);
+          ctx.restore();
+        });
+      });
+    }
+    const label = (text, lon, lat, size, weight, color, italic) => {
+      const k = 1 / Math.max(Math.cos(lat * Math.PI / 180), 0.35);
+      ctx.save();
+      ctx.translate(px(lon), py(lat));
+      ctx.scale(k, 1);
+      ctx.font = (italic ? 'italic ' : '') + weight + ' ' + size + 'px "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = pal.halo;
+      ctx.strokeText(text, 0, 0);
+      ctx.fillStyle = color;
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    };
+    Object.keys(game).forEach((id) => { const g = game[id]; label(g.name, g.lon, g.lat, 30, 700, pal.text, false); });
+    const act = this.state.active || {};
+    this.chokepoints().forEach((c) => label(c.name, c.lon, c.lat, 22, 600, c.ev && act[c.ev] ? pal.alert : pal.choke, true));
+    this.mapTex.needsUpdate = true;
+  }
+
+  eventDefs() {
+    return [
+      { key: 'devaluacion', label: 'Devaluación del peso', sub: 'USD/COP +12 %', news: 'El peso colombiano se devalúa 12 % frente al dólar. Revisen coberturas y precios en COP.', hit: 'Café Sinú y Acuícola del Sinú: margen +2,5 pp; las deudas en USD de las empresas colombianas suben en pesos.' },
+      { key: 'tormenta', label: 'Tormenta tropical', sub: 'Cierra Cartagena', news: 'Tormenta tropical cierra el puerto de Cartagena. Buques en espera; evalúen desvío a Buenaventura.', hit: 'Café Sinú, Acuícola del Sinú y Caribe Line: OTIF −9 pp; los buques de Cartagena se detienen.' },
+      { key: 'sequia', label: 'Sequía en Panamá', sub: 'Calado reducido · +4 días', news: 'La sequía reduce el calado del Canal de Panamá: cada tránsito suma 4 días.', hit: 'Shenzhen Parts y Caribe Line: OTIF −5 pp; los tránsitos por Panamá suman 4 días.' },
+      { key: 'huelga', label: 'Huelga portuaria', sub: 'Rotterdam detenido', news: 'Huelga de estibadores detiene las operaciones en Rotterdam por tiempo indefinido.', hit: 'Rotterdam Foods: OTIF −12 pp y margen −2 pp; los buques hacia Rotterdam se detienen.' },
+      { key: 'flete', label: 'Alza de fletes', sub: 'Marítimo +18 %', news: 'Escasez de contenedores: las navieras suben el flete marítimo 18 %.', hit: 'Caribe Line: margen +3 pp; Café Sinú, Acuícola del Sinú y Shenzhen Parts: margen −1,5 pp.' },
+      { key: 'inspeccion', label: 'Inspección sorpresa', sub: 'Reto ECAES a Aduanas', news: 'Inspección aduanera sorpresa a Café Sinú S.A.S.: su rol de Aduanas debe responder un reto en 90 segundos.', hit: 'Café Sinú: su rol de Aduanas recibe un reto de 90 s; exactitud documental −4 pp mientras dure.' },
+      { key: 'marrojo', label: 'Ataques en el mar Rojo', sub: 'Suez cerrado · +12 días', news: 'Ataques a buques en el mar Rojo: las rutas Asia–Europa se desvían por el Cabo de Buena Esperanza (+12 días, flete +60 %).', hit: 'Shenzhen Parts y Rotterdam Foods: OTIF −8 pp y margen −1,5 pp; Caribe Line: margen +1 pp.' },
+      { key: 'pandemia', label: 'Pandemia', sub: 'Plantas −30 % · cuarentenas', news: 'Pandemia declarada: plantas al 70 % de capacidad y cuarentena de 5 días en todos los puertos.', hit: 'Las 6 empresas: OTIF −6 pp y margen −1,5 pp; los buques navegan a la mitad de velocidad.' }
+    ];
+  }
+
+  fire(def) {
+    this.setState({ confirm: def.key, undo: null });
+  }
+
+  apply(key, record) {
+    const s = this.state;
+    const def = this.eventDefs().filter((d) => d.key === key)[0];
+    const active = Object.assign({}, s.active);
+    const on = !active[key];
+    active[key] = on;
+    let news;
+    if (record) {
+      const item = on ? { day: s.day, text: def.news, ev: true } : { day: s.day, text: 'Se normaliza: ' + def.label.toLowerCase() + '.', ev: false };
+      news = [item].concat(s.news).slice(0, 12);
+    } else {
+      news = s.news.slice(1);
+    }
+    this.setState({ active: active, news: news, confirm: null, undo: record ? { key: key, on: on, left: 10 } : null });
+    this.busSend({ active: active, paused: s.paused });
+  }
+
+  fmt(v, d) {
+    return v.toFixed(d).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  renderVals() {
+    const t = this.theme(), night = this.isNight();
+    const act = this.state.active;
+    const btnBase = 'font: inherit; text-align: left; border-radius: 14px; padding: 12px; min-height: 64px; cursor: pointer; ';
+    const events = this.eventDefs().map((d) => ({
+      label: d.label,
+      sub: d.sub,
+      pressed: act[d.key] ? 'true' : 'false',
+      style: btnBase + (act[d.key] ? 'background: ' + t.alert + '; color: ' + t.alertInk + '; border: 1px solid ' + t.alert : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+      fire: () => this.fire(d)
+    }));
+
+    const dev = act.devaluacion;
+    const fx = [
+      { code: 'USD', name: 'Dólar estadounidense', base: 3200, k: 1.12 },
+      { code: 'EUR', name: 'Euro', base: 3580, k: 1.10 },
+      { code: 'CNY', name: 'Yuan chino', base: 450, k: 1.10 }
+    ].map((r) => ({
+      code: r.code,
+      name: r.name,
+      rate: this.fmt(dev ? r.base * r.k : r.base, 0),
+      delta: dev ? '+' + this.fmt((r.k - 1) * 100, 1) + ' %' : 'estable',
+      deltaStyle: dev ? 'font-size: 13px; font-weight: 600; color: ' + t.alertText : 'font-size: 13px; color: ' + t.quiet
+    }));
+
+    const base = [
+      { name: 'Café Sinú S.A.S.', meta: 'Colombia · productora', m: 14.2, o: 92, x: 96, co: true, ship: false, nl: false, cn: false },
+      { name: 'Acuícola del Sinú', meta: 'Colombia · productora', m: 11.8, o: 88, x: 91, co: true, ship: false, nl: false, cn: false },
+      { name: 'Rotterdam Foods B.V.', meta: 'Países Bajos · importadora', m: 9.6, o: 95, x: 98, co: false, ship: false, nl: true, cn: false },
+      { name: 'Shenzhen Parts Co.', meta: 'China · productora', m: 12.4, o: 90, x: 93, co: false, ship: false, nl: false, cn: true },
+      { name: 'Caribe Line', meta: 'Colombia · naviera', m: 7.9, o: 86, x: 94, co: false, ship: true, nl: false, cn: false },
+      { name: 'AeroCarga Andina', meta: 'Colombia · aerolínea de carga', m: 10.1, o: 97, x: 95, co: false, ship: false, nl: false, cn: false }
+    ];
+    const rows = base.map((c) => {
+      let m = c.m, o = c.o, x = c.x;
+      const why = [];
+      const hit = (label, sign) => why.push({ label: label, up: sign > 0 });
+      if (act.devaluacion && c.co) { m += 2.5; hit('Devaluación', 2.5); }
+      if (act.tormenta && (c.co || c.ship)) { o -= 9; hit('Tormenta', -1); }
+      if (act.huelga && c.nl) { o -= 12; m -= 2; hit('Huelga', -2); }
+      if (act.sequia && (c.cn || c.ship)) { o -= 5; hit('Sequía', -1); }
+      if (act.flete) { if (c.ship) { m += 3; hit('Fletes', 3); } else if (c.co || c.cn) { m -= 1.5; hit('Fletes', -1.5); } }
+      if (act.inspeccion && c.name === 'Café Sinú S.A.S.') { x -= 4; hit('Inspección', -1); }
+      if (act.marrojo && (c.cn || c.nl)) { o -= 8; m -= 1.5; hit('Mar Rojo', -1.5); }
+      if (act.marrojo && c.ship) { m += 1; hit('Mar Rojo', 1); }
+      if (act.pandemia) { o -= 6; m -= 1.5; hit('Pandemia', -1.5); }
+      return { name: c.name, meta: c.meta, m: m, o: o, x: x, dm: m - c.m, dox: o - c.o, why: why };
+    }).sort((a, b) => b.m - a.m);
+    const signed = (v, d) => (v > 0 ? '+' : (v < 0 ? '−' : '')) + this.fmt(Math.abs(v), d);
+    const medal = night ? ['#3DD6D0', '#9FB0C3', '#F2A93B'] : ['#FFC93C', '#E4ECFF', '#FFE3E6'];
+    const companies = rows.map((c, i) => ({
+      rank: i + 1,
+      rankStyle: 'display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-family: \'IBM Plex Mono\', monospace; font-weight: 600; color: ' + (night && i < 3 ? '#0B1320' : t.text) + '; background: ' + (i < 3 ? medal[i] : t.soft),
+      name: c.name,
+      meta: c.meta,
+      margen: this.fmt(c.m, 1) + ' %',
+      otif: c.o + ' %',
+      exact: c.x + ' %',
+      delta: c.why.length ? 'margen ' + signed(c.dm, 1) + ' pp · OTIF ' + signed(c.dox, 0) + ' pp' : 'sin cambios',
+      deltaStyle: 'display: block; font-size: 12px; margin-top: 2px; color: ' + (c.dm < 0 || c.dox < 0 ? t.alertText : t.quiet),
+      causes: c.why.map((w) => ({
+        label: w.label,
+        style: 'display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin: 2px 4px 2px 0; ' + (w.up ? 'color: ' + t.text + '; background: ' + t.pBlue : 'color: ' + t.text + '; background: ' + t.pRed)
+      })),
+      noCause: c.why.length === 0,
+      otifStyle: 'padding: 10px; text-align: right; font-family: \'IBM Plex Mono\', monospace; ' + (c.o < 85 ? 'color: ' + t.alertText + '; font-weight: 600' : 'color: ' + t.text)
+    }));
+
+    const alerts = [];
+    if (act.tormenta) alerts.push({ text: 'Cartagena cerrado por tormenta' });
+    if (act.huelga) alerts.push({ text: 'Rotterdam detenido por huelga' });
+    if (act.sequia) alerts.push({ text: 'Canal de Panamá: +4 días' });
+    if (act.marrojo) alerts.push({ text: 'Suez cerrado: desvío por el Cabo (+12 días)' });
+    if (act.pandemia) alerts.push({ text: 'Pandemia: cuarentena en todos los puertos' });
+
+    const news = this.state.news.map((n) => ({
+      day: n.day,
+      text: n.text,
+      box: 'display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: ' + (n.ev ? t.pRed : t.soft),
+      dot: 'flex: none; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: ' + (n.ev ? t.alert : t.accent)
+    }));
+
+    const defs = this.eventDefs();
+    const cdef = defs.filter((d) => d.key === this.state.confirm)[0];
+    const confirm = cdef
+      ? {
+          title: (act[cdef.key] ? '¿Normalizar «' : '¿Lanzar «') + cdef.label + '»?',
+          hit: (act[cdef.key] ? 'Se revierten los efectos sobre: ' : 'En el siguiente tick: ') + cdef.hit,
+          cta: act[cdef.key] ? 'Confirmar y normalizar' : 'Confirmar y lanzar'
+        }
+      : { title: '', hit: '', cta: '' };
+    const u = this.state.undo;
+    const udef = u ? defs.filter((d) => d.key === u.key)[0] : null;
+    const undo = udef ? { text: (u.on ? 'Lanzado: ' : 'Normalizado: ') + udef.label.toLowerCase(), left: u.left } : { text: '', left: 0 };
+    const paused = this.state.paused;
+    const live = {
+      label: paused ? 'En pausa' : 'En vivo',
+      cta: paused ? 'Reanudar partida' : 'Pausar partida',
+      pressed: paused ? 'true' : 'false',
+      style: 'display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 8px 4px; color: ' + (paused ? t.quiet : t.alertText),
+      dot: 'width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: ' + (paused ? t.quiet : t.alert)
+    };
+
+    return {
+      t: t,
+      day: this.state.day,
+      live: live,
+      togglePause: this.togglePause,
+      confirmOpen: !!cdef,
+      confirm: confirm,
+      confirmYes: this.confirmYes,
+      confirmNo: this.confirmNo,
+      undoOpen: !!udef,
+      undo: undo,
+      undoDo: this.undoDo,
+      noGL: this.state.noGL,
+      nightLabel: night ? 'Vista clara' : 'Vista nocturna',
+      nightPressed: night ? 'true' : 'false',
+      toggleNight: this.toggleNight,
+      setCanvas: this.setCanvas,
+      setWrap: this.setWrap,
+      down: this.down,
+      move: this.move,
+      up: this.up,
+      events: events,
+      fx: fx,
+      companies: companies,
+      alerts: alerts,
+      news: news
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>CFO · Tesorería multimoneda</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 20px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto">
+  <div style="display: flex; justify-content: space-between; align-items: center">
+    <span style="font-size: 12px; font-weight: 600; color: {{t.text}}; background: {{t.pBlue}}; border-radius: 999px; padding: 6px 12px">CFO · Café Sinú S.A.S.</span>
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; background: {{t.pYellow}}; border-radius: 999px; padding: 6px 10px">Día 14</span>
+  </div>
+
+  <div role="status" aria-live="polite" style="{{banner.style}}">
+    <span style="font-size: 14px; font-weight: 700">{{banner.title}}</span>
+    <span style="font-size: 13px; line-height: 1.4">{{banner.text}}</span>
+  </div>
+
+  <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Tesorería</h1>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+    <sc-for list="{{balances}}" as="b" hint-placeholder-count="4">
+      <div style="{{b.box}}">
+        <span style="font-size: 12px; font-weight: 600; color: {{t.quiet}}">{{b.code}}</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 500">{{b.value}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 6px">
+    <span style="font-size: 13px; font-weight: 600">Costeo DFI del contrato CIF Rotterdam (USD)</span>
+    <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Valor FOB Cartagena</span><span style="font-family: 'IBM Plex Mono', monospace">44.000</span></div>
+    <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Flete principal (Caribe Line)</span><span style="font-family: 'IBM Plex Mono', monospace">3.700</span></div>
+    <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Seguro (0,75 % sobre CIF + 10 %)</span><span style="font-family: 'IBM Plex Mono', monospace">397</span></div>
+    <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; border-top: 1px solid {{t.border}}; padding-top: 6px"><span>Costo CIF</span><span style="font-family: 'IBM Plex Mono', monospace; color: {{t.accentText}}">48.097</span></div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 2px">
+    <span style="font-size: 13px; font-weight: 600; margin-bottom: 4px">Obligaciones por pagar</span>
+    <sc-for list="{{bills}}" as="o" hint-placeholder-count="3">
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0; border-top: 1px solid {{t.border}}">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px">
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <span style="font-size: 14px">{{o.label}}</span>
+            <span style="font-size: 12px; color: {{t.quiet}}">{{o.meta}}</span>
+          </div>
+          <sc-if value="{{o.canPay}}" hint-placeholder-val="{{true}}">
+            <button type="button" onClick="{{o.pay}}" style="{{btn.pay}}">Pagar</button>
+          </sc-if>
+          <sc-if value="{{o.isPaid}}" hint-placeholder-val="{{false}}">
+            <span style="{{btn.paid}}">Pagado</span>
+          </sc-if>
+        </div>
+        <sc-if value="{{o.asking}}" hint-placeholder-val="{{false}}">
+          <div role="group" aria-label="Confirmar pago" style="background: {{t.pYellow}}; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 13px; line-height: 1.4">{{o.ask}}</span>
+            <div style="display: flex; gap: 8px">
+              <button type="button" onClick="{{o.yes}}" style="{{btn.primary}}">Confirmar pago</button>
+              <button type="button" onClick="{{o.no}}" style="{{btn.ghost}}">Cancelar</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{conv.open}}" hint-placeholder-val="{{false}}">
+    <div role="group" aria-label="Convertir divisas" style="background: {{t.card}}; border: 1px solid {{t.border2}}; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 13px; font-weight: 600">Vender USD y recibir COP a {{conv.rate}}</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{conv.amounts}}" as="a" hint-placeholder-count="3">
+          <button type="button" onClick="{{a.pick}}" aria-pressed="{{a.pressed}}" style="{{a.style}}">{{a.label}}</button>
+        </sc-for>
+      </div>
+      <span style="font-size: 13px; line-height: 1.4">{{conv.result}}</span>
+      <div style="display: flex; gap: 8px">
+        <button type="button" onClick="{{conv.yes}}" style="{{btn.primary}}">Confirmar conversión</button>
+        <button type="button" onClick="{{conv.no}}" style="{{btn.ghost}}">Cancelar</button>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{conv.done}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="background: {{t.pBlue}}; border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.4">{{conv.doneText}}</div>
+  </sc-if>
+
+  <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+    <button type="button" onClick="{{conv.toggle}}" aria-expanded="{{conv.expanded}}" style="font: inherit; font-size: 14px; font-weight: 600; min-height: 48px; border-radius: 14px; border: 0; background: {{t.accent}}; color: {{t.accentInk}}; cursor: pointer">Convertir divisas</button>
+    <span style="font-size: 12px; color: {{t.quiet}}; text-align: center">Cobertura con forward: disponible en la versión completa.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { paid: {}, asking: null, conv: false, amt: 10000, sold: [], lastConv: null, world: { active: {} } };
+    this.toggleConv = () => this.setState((s) => ({ conv: !s.conv, lastConv: null }));
+    this.cancelConv = () => this.setState({ conv: false });
+    this.doConv = () => {
+      const s = this.state, amt = s.amt;
+      if (amt > this.balances().usd) return;
+      const cop = amt * this.rate();
+      this.setState({ sold: s.sold.concat([{ usd: amt, cop: cop }]), conv: false, lastConv: { usd: amt, cop: cop } });
+    };
+  }
+  componentDidMount() {
+    const read = (m) => { if (m && m.active) this.setState({ world: m }); };
+    try { const raw = window.localStorage.getItem('logiverse-mundo'); if (raw) read(JSON.parse(raw)); } catch (err) {}
+    try { this.bc = new BroadcastChannel('logiverse-mundo'); this.bc.onmessage = (e) => read(e.data); } catch (err) { this.bc = null; }
+  }
+  componentWillUnmount() {
+    try { if (this.bc) this.bc.close(); } catch (err) {}
+  }
+  theme() {
+    if (this.props.nocturno === true) {
+      return { bg: '#0B1320', card: '#0F1A2B', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3', accent: '#3DD6D0', accentInk: '#06201F', accentText: '#3DD6D0', alert: '#F2A93B', alertInk: '#1A1206', pBlue: '#13213A', pYellow: '#13213A', pRed: '#13213A', tiles: ['#0F1A2B', '#0F1A2B', '#0F1A2B', '#0F1A2B'] };
+    }
+    return { bg: '#F7F8FC', card: '#FFFFFF', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', accentInk: '#FFFFFF', accentText: '#1F5EFF', alert: '#D62839', alertInk: '#FFFFFF', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', tiles: ['#FFF4CC', '#E4ECFF', '#FFE3E6', '#FFFFFF'] };
+  }
+  fmt(v) {
+    return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  act() {
+    return (this.state.world && this.state.world.active) || {};
+  }
+  rate() {
+    return this.act().devaluacion ? 3584 : 3200;
+  }
+  bills() {
+    return [
+      { key: 'flete', label: 'Flete marítimo · Caribe Line', meta: 'USD 3.700 · vence el día 16', cur: 'USD', amt: 3700 },
+      { key: 'prima', label: 'Prima de seguro de la póliza CIF', meta: 'USD 397 · vence el día 15', cur: 'USD', amt: 397 },
+      { key: 'embalaje', label: 'Embalaje y estiba en origen', meta: 'COP 4.200.000 · vence el día 15', cur: 'COP', amt: 4200000 }
+    ];
+  }
+  balances() {
+    const paid = this.state.paid;
+    let usd = 86400, cop = 412500000;
+    this.bills().forEach((d) => { if (paid[d.key]) { if (d.cur === 'USD') usd -= d.amt; else cop -= d.amt; } });
+    this.state.sold.forEach((x) => { usd -= x.usd; cop += x.cop; });
+    return { usd: usd, cop: cop };
+  }
+  renderVals() {
+    const t = this.theme(), s = this.state, act = this.act(), rate = this.rate();
+    const bal = this.balances();
+    const balances = [
+      { code: 'COP', value: this.fmt(bal.cop) },
+      { code: 'USD', value: this.fmt(bal.usd) },
+      { code: 'EUR', value: this.fmt(12300) },
+      { code: 'CNY', value: '0' }
+    ].map((b, i) => ({
+      code: b.code,
+      value: b.value,
+      box: 'background: ' + t.tiles[i] + '; border: 1px solid ' + t.border + '; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px'
+    }));
+    const btn = {
+      pay: 'flex: none; font: inherit; font-size: 13px; font-weight: 600; min-width: 84px; min-height: 44px; border-radius: 12px; cursor: pointer; background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent,
+      paid: 'flex: none; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; color: ' + t.accentText + '; border: 1px solid ' + t.accent,
+      primary: 'flex: 1; font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; border-radius: 12px; cursor: pointer; background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent,
+      ghost: 'flex: 1; font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; border-radius: 12px; cursor: pointer; background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2
+    };
+    const bills = this.bills().map((d) => {
+      const isPaid = !!s.paid[d.key], asking = s.asking === d.key && !isPaid;
+      return {
+        label: d.label,
+        meta: d.meta,
+        canPay: !isPaid && !asking,
+        isPaid: isPaid,
+        asking: asking,
+        ask: d.cur === 'USD'
+          ? '¿Pagar USD ' + this.fmt(d.amt) + ' (≈ COP ' + this.fmt(d.amt * rate) + ' a ' + this.fmt(rate) + ')? El pago no se puede revertir.'
+          : '¿Pagar COP ' + this.fmt(d.amt) + '? El pago no se puede revertir.',
+        pay: () => this.setState({ asking: d.key }),
+        yes: () => this.setState((st) => ({ paid: Object.assign({}, st.paid, { [d.key]: true }), asking: null })),
+        no: () => this.setState({ asking: null })
+      };
+    });
+    let banner;
+    if (act.devaluacion) {
+      banner = { title: 'Noticia: el peso se devalúa 12 % frente al dólar', text: 'USD/COP pasa de 3.200 a 3.584. Tus ingresos en USD valen más en pesos, pero tus obligaciones en USD también suben.', bg: t.alert, ink: t.alertInk };
+    } else if (act.flete) {
+      banner = { title: 'Noticia: alza de fletes marítimos (+18 %)', text: 'Tu flete con Caribe Line ya está contratado; los próximos embarques costarán más.', bg: t.pYellow, ink: t.text };
+    } else {
+      banner = { title: 'Sin alertas cambiarias', text: 'USD/COP a 3.200. Las noticias que lance la consola aparecerán aquí.', bg: t.pBlue, ink: t.text };
+    }
+    banner.style = 'background: ' + banner.bg + '; color: ' + banner.ink + '; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px';
+    const enough = s.amt <= bal.usd;
+    const conv = {
+      open: s.conv,
+      expanded: s.conv ? 'true' : 'false',
+      rate: this.fmt(rate) + ' COP por USD',
+      amounts: [5000, 10000, 20000].map((a) => ({
+        label: 'USD ' + this.fmt(a),
+        pressed: s.amt === a ? 'true' : 'false',
+        style: 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; border-radius: 12px; cursor: pointer; ' + (s.amt === a ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+        pick: () => this.setState({ amt: a })
+      })),
+      result: enough ? 'Recibes COP ' + this.fmt(s.amt * rate) + '.' : 'Saldo insuficiente: tienes USD ' + this.fmt(bal.usd) + '.',
+      yes: this.doConv,
+      no: this.cancelConv,
+      toggle: this.toggleConv,
+      done: !!s.lastConv && !s.conv,
+      doneText: s.lastConv ? 'Convertiste USD ' + this.fmt(s.lastConv.usd) + ' en COP ' + this.fmt(s.lastConv.cop) + '.' : ''
+    };
+    return { t: t, banner: banner, balances: balances, bills: bills, btn: btn, conv: conv };
+  }
+}
+</script>
+</body>
+</html>

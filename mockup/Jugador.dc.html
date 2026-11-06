@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mesa del jugador</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1180px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; background: {{t.card}}; border-bottom: 1px solid {{t.border}}">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Logi<span style="color: {{t.accent}}">Verse</span></span>
+      <span style="font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: {{t.pBlue}}">Café Sinú S.A.S. · Colombia · COP</span>
+      <span style="font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: {{t.soft}}; color: {{t.quiet}}">{{modeLabel}}</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+        <div style="{{k.box}}">
+          <span style="font-size: 12px; color: {{t.quiet}}">{{k.label}}</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600">{{k.value}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </header>
+
+  <section aria-label="Turno guiado" style="padding: 12px 24px; background: {{t.soft}}; border-bottom: 1px solid {{t.border}}; display: flex; flex-direction: column; gap: 10px">
+    <ol aria-label="Fases de la ronda" style="display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none">
+      <sc-for list="{{phases}}" as="ph" hint-placeholder-count="7">
+        <li style="{{ph.style}}" aria-current="{{ph.current}}">{{ph.n}}. {{ph.label}}</li>
+      </sc-for>
+    </ol>
+    <div role="status" aria-live="polite" style="{{guide.box}}">
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 520px; min-width: 0">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: {{t.quiet}}">{{guide.kicker}}</span>
+        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; line-height: 1.3">{{guide.title}}</span>
+        <span style="font-size: 13px; line-height: 1.45">{{guide.text}}</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+        <sc-for list="{{decisions}}" as="dz" hint-placeholder-count="2">
+          <button type="button" onClick="{{dz.run}}" aria-disabled="{{dz.disabled}}" style="{{dz.style}}">{{dz.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+      <span style="font-size: 13px; font-weight: 600; margin-right: 4px">Juegas como</span>
+      <sc-for list="{{roles}}" as="r" hint-placeholder-count="6">
+        <button type="button" onClick="{{r.pick}}" aria-pressed="{{r.pressed}}" aria-label="{{r.aria}}" style="{{r.style}}">{{r.label}} <span style="{{r.leftStyle}}">{{r.left}}</span></button>
+      </sc-for>
+      <span style="font-size: 12px; color: {{t.quiet}}; margin-left: 4px">{{roleHint}}</span>
+    </div>
+  </section>
+
+  <main style="flex: 1; padding: 16px 24px; display: flex; flex-direction: column; gap: 14px">
+    <sc-if value="{{hasEvents}}" hint-placeholder-val="{{false}}">
+      <section role="status" aria-live="polite" style="background: {{t.evBg}}; border: 2px solid {{t.evBand}}; border-radius: 16px; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: {{t.evInk}}">EVENTOS EN JUEGO · LANZADOS POR EL SUPERUSUARIO</span>
+        <sc-for list="{{evs}}" as="e" hint-placeholder-count="1">
+          <span style="font-size: 14px; line-height: 1.45"><span style="font-weight: 700">{{e.label}}: </span>{{e.text}}</span>
+        </sc-for>
+      </section>
+    </sc-if>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <article aria-label="Contrato en curso" style="flex: 0 0 236px; border-radius: 18px; overflow: hidden; background: {{t.fam.contrato.bg}}; border: 2px solid {{t.fam.contrato.band}}; box-shadow: 0 6px 18px rgba(20, 33, 61, 0.12)">
+        <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: {{t.fam.contrato.band}}; color: {{t.fam.contrato.ink}}; font-size: 12px; font-weight: 700"><span>CONTRATO</span><span>{{c.code}}</span></div>
+        <div style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; line-height: 1.2">{{c.title}}</span>
+          <span style="font-size: 13px">{{c.qty}} · {{c.buyer}}</span>
+          <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid {{t.border2}}; padding-top: 8px"><span style="font-size: 12px; color: {{t.quiet}}">Precio</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600">USD {{c.price}}</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 12px; color: {{t.quiet}}">Incoterm</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: {{t.fam.incoterm.band}}; color: {{t.fam.incoterm.ink}}">{{c.incoterm}}</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Entrega</span><span>{{c.delivery}}</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Plazo</span><span>{{c.plazoText}}</span></div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: {{t.quiet}}">Visto del CEO</span><span style="font-weight: 600">{{c.visto}}</span></div>
+          <span style="font-size: 12px; line-height: 1.4; color: {{t.quiet}}">{{c.riskText}}</span>
+        </div>
+      </article>
+
+      <section style="flex: 999 1 640px; min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+          <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Mesa de operación · Montería → Cartagena → Rotterdam</h1>
+          <span style="font-size: 13px; color: {{t.quiet}}">{{selHint}}</span>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="display: grid; grid-template-columns: repeat(6, minmax(132px, 1fr)); gap: 10px; min-width: 820px">
+            <sc-for list="{{slots}}" as="sl" hint-placeholder-count="6">
+              <button type="button" onClick="{{sl.pick}}" aria-label="{{sl.aria}}" style="{{sl.style}}">
+                <span style="display: block; font-size: 12px; font-weight: 700; color: {{t.quiet}}">{{sl.step}}</span>
+                <span style="display: block; font-size: 14px; font-weight: 600; margin-top: 2px">{{sl.label}}</span>
+                <span style="{{sl.badgeStyle}}">{{sl.badge}}</span>
+                <sc-for list="{{sl.cards}}" as="pc" hint-placeholder-count="1">
+                  <span style="{{pc.style}}">{{pc.name}}</span>
+                </sc-for>
+                <span style="{{sl.needStyle}}">{{sl.need}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <button type="button" onClick="{{cob.pick}}" aria-label="Zona de coberturas y mitigación" style="{{cob.style}}">
+          <span style="font-size: 13px; font-weight: 600">Coberturas y mitigación</span>
+          <sc-for list="{{cob.cards}}" as="cc" hint-placeholder-count="1">
+            <span style="{{cc.style}}">{{cc.name}}</span>
+          </sc-for>
+          <span style="font-size: 12px; color: {{t.quiet}}">{{cob.need}}</span>
+        </button>
+      </section>
+
+      <aside style="flex: 1 1 300px; min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0 0 4px; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{sumTitle}}</h2>
+        <sc-for list="{{sum}}" as="sr" hint-placeholder-count="8">
+          <div style="{{sr.style}}"><span>{{sr.label}}</span><span style="font-family: 'IBM Plex Mono', monospace">{{sr.value}}</span></div>
+        </sc-for>
+        <sc-for list="{{alerts}}" as="al" hint-placeholder-count="1">
+          <div style="{{al.style}}">{{al.text}}</div>
+        </sc-for>
+        <sc-if value="{{executed}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="{{resultStyle}}">
+            <span style="display: block; font-size: 14px; font-weight: 700">{{resultTitle}}</span>
+            <span style="display: block; font-size: 13px; line-height: 1.45; margin-top: 4px">{{resultText}}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 13px; font-weight: 700">Decisiones por rol</span>
+            <sc-for list="{{roleSum}}" as="rs" hint-placeholder-count="4">
+              <div style="{{rs.style}}"><span style="font-weight: 600">{{rs.role}}</span><span>{{rs.text}}</span></div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </aside>
+    </div>
+  </main>
+
+  <footer style="position: sticky; bottom: 0; background: {{t.panel}}; border-top: 2px solid {{t.border2}}; padding: 12px 24px 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 -8px 24px rgba(20, 33, 61, 0.08)">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px">
+      <div role="tablist" aria-label="Panel de control" style="display: flex; flex-wrap: wrap; gap: 6px">
+        <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="5">
+          <button type="button" role="tab" aria-selected="{{tb.sel}}" onClick="{{tb.pick}}" style="{{tb.style}}">{{tb.label}}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{actions}}" as="a" hint-placeholder-count="4">
+          <button type="button" onClick="{{a.run}}" aria-disabled="{{a.disabled}}" style="{{a.style}}">{{a.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{hasMsg}}" hint-placeholder-val="{{false}}">
+      <div role="status" aria-live="polite" style="{{msgStyle}}">{{msg}}</div>
+    </sc-if>
+    <sc-if value="{{quizOpen}}" hint-placeholder-val="{{false}}">
+      <div role="group" aria-label="Decisión o reto" style="background: {{t.card}}; border: 2px solid {{t.fam.reto.band}}; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: {{t.quiet}}">{{quiz.kicker}}</span>
+        <span style="font-size: 15px; font-weight: 600; line-height: 1.4">{{quiz.q}}</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{quiz.options}}" as="qo" hint-placeholder-count="2">
+            <button type="button" onClick="{{qo.pick}}" style="{{qo.style}}"><span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; margin-right: 8px">{{qo.id}}</span>{{qo.text}}</button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+    <div style="display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px">
+      <sc-for list="{{cards}}" as="cd" hint-placeholder-count="8">
+        <button type="button" onClick="{{cd.pick}}" aria-pressed="{{cd.pressed}}" aria-label="{{cd.aria}}" style="{{cd.style}}">
+          <span style="{{cd.band}}"><span>{{cd.famLabel}}</span><span>{{cd.cost}}</span></span>
+          <span style="display: block; padding: 10px 12px 0; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; line-height: 1.2">{{cd.name}}</span>
+          <span style="display: block; padding: 6px 12px 0; font-size: 12px; line-height: 1.4">{{cd.text}}</span>
+          <span style="{{cd.foot}}">{{cd.tags}}</span>
+        </button>
+      </sc-for>
+      <sc-for list="{{log}}" as="lg" hint-placeholder-count="0">
+        <div style="{{lg.box}}">
+          <span style="{{lg.chip}}">{{lg.role}} · ronda {{lg.round}} · {{lg.phase}}</span>
+          <span style="font-size: 13px; font-weight: 600; line-height: 1.35">{{lg.decision}}</span>
+          <span style="font-size: 12px; line-height: 1.4; color: {{t.quiet}}">Alternativa: {{lg.alt}}</span>
+          <span style="font-size: 12px; line-height: 1.4">{{lg.effect}}</span>
+        </div>
+      </sc-for>
+      <sc-if value="{{rowEmpty}}" hint-placeholder-val="{{false}}">
+        <span style="font-size: 14px; color: {{t.quiet}}; padding: 20px 0">{{rowEmptyText}}</span>
+      </sc-if>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      round: 3, phaseIdx: 0, connected: false,
+      role: 'Comercial',
+      tab: 'mano',
+      incoterm: 'CIF', incDecided: false,
+      visto: 'none', motivo: '',
+      hand: ['trs', 'trf', 'hc40', 'pmc', 'iccc', 'icca', 'fwd', 'smr'],
+      archive: ['oea'],
+      deck: ['cl', 'rf40'],
+      discard: [],
+      docs: { factura: 'pendiente', lista: 'pendiente', dex: 'pendiente', fito: 'pendiente', origen: 'pendiente' },
+      board: { origen: [], expo: [], flete: [], seguro: [], impo: [], destino: [], cobertura: [] },
+      history: [], log: [], seq: 0,
+      plays: {}, drew: false,
+      sel: null, quiz: null,
+      insp: 'none',
+      saber: { ok: 0, n: 0 },
+      interest: {},
+      executed: null,
+      msg: null,
+      world: { active: {} }
+    };
+  }
+
+  componentDidMount() {
+    const read = (m) => {
+      if (!m || !m.active) return;
+      const s = this.state;
+      const was = !!(s.world.active || {}).inspeccion;
+      const now = !!m.active.inspeccion;
+      const prevPhase = this.phaseName();
+      const prevRound = this.roundNow();
+      const patch = { world: m };
+      if (m.phase) patch.connected = true;
+      if (now && !was && s.insp !== 'ok' && s.insp !== 'fail') patch.insp = s.board.cobertura.indexOf('oea') >= 0 ? 'skipped' : 'pending';
+      this.setState(patch);
+      if (m.phase) {
+        const newRound = typeof m.round === 'number' && m.round !== prevRound && s.connected;
+        if (m.phase !== prevPhase || newRound) this.enterPhase(m.phase, newRound);
+      }
+    };
+    try { const raw = window.localStorage.getItem('logiverse-mundo'); if (raw) read(JSON.parse(raw)); } catch (err) {}
+    try { this.bc = new BroadcastChannel('logiverse-mundo'); this.bc.onmessage = (e) => read(e.data); } catch (err) { this.bc = null; }
+    this.sync();
+  }
+
+  componentWillUnmount() {
+    try { if (this.bc) this.bc.close(); } catch (err) {}
+    try { if (this.out) this.out.close(); } catch (err) {}
+  }
+
+  sync() {
+    const s = this.state, r = this.evaluate();
+    const msg = { company: 'cafe', filled: r.filled, required: r.required, glosas: r.glosas, days: r.days, plazo: r.plazo, executed: !!s.executed, otif: r.otif, margenPct: r.margenPct, hand: s.hand.length, incoterm: s.incoterm, visto: s.visto, decisions: s.log.length, interest: Object.keys(s.interest).filter((k) => s.interest[k]) };
+    try { window.localStorage.setItem('logiverse-jugador', JSON.stringify(msg)); } catch (err) {}
+    try {
+      if (!this.out && window.BroadcastChannel) this.out = new BroadcastChannel('logiverse-jugador');
+      if (this.out) this.out.postMessage(msg);
+    } catch (err) {}
+  }
+
+  later() {
+    try { setTimeout(() => this.sync(), 0); } catch (err) {}
+  }
+
+  theme() {
+    const light = {
+      bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', panel: '#FFFFFF', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A',
+      accent: '#1F5EFF', accentInk: '#FFFFFF', alert: '#D62839', alertText: '#B01F2E', ok: '#0E7C55', okBg: '#DDF4EA',
+      pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', evBg: '#FFE3E6', evBand: '#D62839', evInk: '#B01F2E', selRing: '#1F5EFF'
+    };
+    const night = {
+      bg: '#0B1320', card: '#0F1A2B', soft: '#13213A', panel: '#0F1A2B', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3',
+      accent: '#3DD6D0', accentInk: '#06201F', alert: '#F2A93B', alertText: '#F2A93B', ok: '#3DD6D0', okBg: '#0F2E33',
+      pBlue: '#13213A', pYellow: '#13213A', pRed: '#13213A', evBg: '#33260F', evBand: '#F2A93B', evInk: '#F2A93B', selRing: '#3DD6D0'
+    };
+    const n = this.props.nocturno === true;
+    const t = n ? night : light;
+    t.fam = {
+      contrato: { label: 'Contrato', band: '#1F5EFF', ink: '#FFFFFF', bg: n ? '#13213A' : '#E4ECFF' },
+      incoterm: { label: 'Incoterm', band: '#FFC93C', ink: '#14213D', bg: '#FFF4CC' },
+      transporte: { label: 'Transporte', band: '#0E7C55', ink: '#FFFFFF', bg: n ? '#0F2E26' : '#DDF4EA' },
+      documento: { label: 'Documento', band: '#6B4EE6', ink: '#FFFFFF', bg: n ? '#1E1A3A' : '#ECE6FF' },
+      finanzas: { label: 'Finanzas', band: '#FFB25E', ink: '#14213D', bg: n ? '#33260F' : '#FFEBD6' },
+      mitigacion: { label: 'Mitigación', band: '#08787A', ink: '#FFFFFF', bg: n ? '#0F2E33' : '#D9F6F5' },
+      evento: { label: 'Evento', band: '#D62839', ink: '#FFFFFF', bg: '#FFE3E6' },
+      reto: { label: 'Reto', band: '#14213D', ink: '#FFFFFF', bg: '#F1F4FB' }
+    };
+    return t;
+  }
+
+  fmt(v) { return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  pct(v) { return (Math.round(v * 10) / 10).toFixed(1).replace('.', ',') + ' %'; }
+
+  phaseList() { return ['Mercado', 'Robo', 'Planeación', 'Visto del CEO', 'Evento', 'Reacción', 'Liquidación']; }
+
+  phaseRoles() {
+    return {
+      'Mercado': ['Comercial'],
+      'Robo': ['Tráfico', 'Aduanas', 'CFO', 'Riesgos'],
+      'Planeación': ['Tráfico', 'Aduanas', 'CFO', 'Riesgos'],
+      'Visto del CEO': ['CEO'],
+      'Evento': [],
+      'Reacción': ['CFO', 'Riesgos'],
+      'Liquidación': []
+    };
+  }
+
+  phaseName() {
+    const s = this.state;
+    if (s.connected && s.world && s.world.phase) return s.world.phase;
+    return this.phaseList()[s.phaseIdx];
+  }
+
+  roundNow() {
+    const s = this.state;
+    return s.connected && s.world && typeof s.world.round === 'number' ? s.world.round : s.round;
+  }
+
+  isActive(role) {
+    return this.phaseRoles()[this.phaseName()].indexOf(role) >= 0;
+  }
+
+  contract() {
+    const inc = this.state.incoterm;
+    return {
+      code: 'C-07', title: 'Café verde especial', buyer: 'Rotterdam Foods B.V.', qty: "2 × 40' · 38 t",
+      price: inc === 'FOB' ? 44000 : 48100, cogs: 38000,
+      incoterm: inc, plazo: 7, transit: 14, cargo: 'seca', origin: 'Montería', port: 'Cartagena', dest: 'Rotterdam'
+    };
+  }
+
+  catalog() {
+    return {
+      trs: { fam: 'transporte', sub: 'terrestre', name: 'Tractomula seca', cost: 1700, days: 1, reefer: false, text: '2 viajes Montería → Cartagena · USD 850 por viaje.', tags: 'Terrestre · carga seca' },
+      trf: { fam: 'transporte', sub: 'terrestre', name: 'Tractomula refrigerada', cost: 2500, days: 1, reefer: true, text: '2 viajes · USD 1.250 por viaje · mantiene −18 °C.', tags: 'Terrestre · refrigerada' },
+      hc40: { fam: 'transporte', sub: 'principal', mode: 'mar', name: "2 × 40' High Cube", cost: 3700, days: 14, reefer: false, text: 'Caribe Line · Cartagena → Rotterdam · incluye el BL.', tags: 'Marítimo · carga seca' },
+      rf40: { fam: 'transporte', sub: 'principal', mode: 'mar', name: "2 × 40' Reefer", cost: 8200, days: 14, reefer: true, text: 'Cartagena → Rotterdam · incluye el BL.', tags: 'Marítimo · refrigerada' },
+      pmc: { fam: 'transporte', sub: 'principal', mode: 'air', name: 'Carga aérea en pallets', cost: 76000, days: 1, reefer: true, text: 'USD 1,90 por kg facturable · 40 t · incluye la AWB.', tags: 'Aéreo' },
+      iccc: { fam: 'finanzas', sub: 'poliza', cover: 'C', rate: 0.0075, name: 'Póliza ICC (C)', text: 'Riesgos mayores · asegura el 110 % del valor CIF.', tags: 'Seguro · 0,75 %' },
+      icca: { fam: 'finanzas', sub: 'poliza', cover: 'A', rate: 0.011, name: 'Póliza ICC (A)', text: 'Todo riesgo · asegura el 110 % del valor CIF.', tags: 'Seguro · 1,1 %' },
+      fwd: { fam: 'finanzas', sub: 'cobertura', costRate: 0.003, name: 'Forward de venta USD', text: 'Fija hoy la tasa (3.200) de los dólares que cobrarás.', tags: 'Divisas · 0,3 %' },
+      cl: { fam: 'finanzas', sub: 'cobertura', costRate: 0.008, name: 'Carta de crédito confirmada', text: 'El banco garantiza el pago contra documentos correctos.', tags: 'Medio de pago · 0,8 %' },
+      smr: { fam: 'mitigacion', sub: 'cobertura', cost: 0, useCost: 600, name: 'Ruta alterna: Santa Marta', text: 'Si Cartagena cierra o se congestiona, embarcas por Santa Marta sin retraso (USD 600 si se usa).', tags: 'Puerto alterno' },
+      oea: { fam: 'mitigacion', sub: 'cobertura', cost: 250, name: 'Operador OEA', text: 'Operador económico autorizado: evita la próxima inspección sorpresa.', tags: 'Aduana · USD 250' }
+    };
+  }
+
+  alternatives() {
+    return { trs: 'trf', trf: 'trs', hc40: 'rf40', rf40: 'hc40', pmc: 'hc40', iccc: 'icca', icca: 'iccc' };
+  }
+
+  docDefs() {
+    return {
+      factura: { name: 'Factura comercial', req: true, q: '¿Qué valor declara la factura comercial en esta venta?', options: [{ id: 'A', text: 'El precio pactado con el Incoterm del contrato' }, { id: 'B', text: 'Solo el costo de producción' }], ok: 'A' },
+      lista: { name: 'Lista de empaque', req: true, q: '¿Qué información es indispensable en la lista de empaque?', options: [{ id: 'A', text: 'El precio unitario y el margen' }, { id: 'B', text: 'Pesos bruto y neto, volumen y marcas por bulto' }], ok: 'B' },
+      dex: { name: 'Declaración de exportación', req: true, q: '¿Ante quién se presenta la declaración de exportación en Colombia?', options: [{ id: 'A', text: 'La DIAN, por el sistema aduanero' }, { id: 'B', text: 'La Cámara de Comercio' }], ok: 'A' },
+      fito: { name: 'Certificado fitosanitario', req: true, q: '¿Qué entidad certifica la condición fitosanitaria del café de exportación?', options: [{ id: 'A', text: 'El Invima' }, { id: 'B', text: 'El ICA' }], ok: 'B' },
+      origen: { name: 'Certificado de origen', req: false, q: '¿Para qué sirve el certificado de origen ante el comprador europeo?', options: [{ id: 'A', text: 'Para aplicar la preferencia arancelaria del acuerdo UE–Colombia' }, { id: 'B', text: 'Para reemplazar la factura comercial' }], ok: 'A' }
+    };
+  }
+
+  marketDefs() {
+    return [
+      { id: 'C-07', title: 'Café verde especial → Rotterdam', text: "2 × 40' · USD 48.100 CIF o 44.000 FOB · embarque en 7 días.", tags: 'En curso' },
+      { id: 'C-11', title: 'Tilapia congelada → Miami', text: '22 t · USD 88.000 DAP · entrega en 10 días · cadena de frío.', tags: 'Disponible' },
+      { id: 'C-14', title: 'Café tostado → Yokohama', text: "1 × 40' · USD 61.500 CIP · embarque en 12 días.", tags: 'Disponible' }
+    ];
+  }
+
+  slotDefs() {
+    return [
+      { key: 'origen', step: '1', label: 'Acarreo en origen', need: 'Transporte terrestre' },
+      { key: 'expo', step: '2', label: 'Aduana de exportación', need: 'Documentos de exportación' },
+      { key: 'flete', step: '3', label: 'Flete principal', need: 'Transporte principal' },
+      { key: 'seguro', step: '4', label: 'Seguro', need: 'Póliza de seguro' },
+      { key: 'impo', step: '5', label: 'Aduana de importación', need: 'Documentos de importación' },
+      { key: 'destino', step: '6', label: 'Entrega final', need: 'Transporte terrestre' }
+    ];
+  }
+
+  matrix() {
+    return {
+      EXW: ['C', 'C', 'C', 'C', 'C', 'C'],
+      FCA: ['V', 'V', 'C', 'C', 'C', 'C'],
+      FOB: ['V', 'V', 'C', 'C', 'C', 'C'],
+      CIF: ['V', 'V', 'V', 'V', 'C', 'C'],
+      CIP: ['V', 'V', 'V', 'V', 'C', 'C'],
+      DAP: ['V', 'V', 'V', 'O', 'C', 'V']
+    };
+  }
+
+  resp(slot) {
+    const i = this.slotDefs().map((s) => s.key).indexOf(slot);
+    return this.matrix()[this.contract().incoterm][i];
+  }
+
+  roleOf(fam) {
+    return { transporte: 'Tráfico', documento: 'Aduanas', finanzas: 'CFO', mitigacion: 'Riesgos' }[fam];
+  }
+
+  playsLeft(role) {
+    return 3 - (this.state.plays[role] || 0);
+  }
+
+  say(text, tone) {
+    this.setState({ msg: { text: text, tone: tone || 'info' } });
+  }
+
+  entry(role, decision, alt, effect, delta) {
+    const s = this.state;
+    return { seq: s.seq + 1, round: this.roundNow(), phase: this.phaseName(), role: role, decision: decision, alt: alt, effect: effect, delta: delta || 0 };
+  }
+
+  waitText() {
+    const ph = this.phaseName(), who = this.phaseRoles()[ph];
+    return who.length ? 'En la fase ' + ph + ' deciden: ' + who.join(', ') + '.' : 'En la fase ' + ph + ' no decide ningún rol del equipo.';
+  }
+
+  cardCost(id) {
+    const k = this.catalog()[id], c = this.contract();
+    if (k.sub === 'poliza') return Math.round(k.rate * 1.1 * c.price);
+    if (k.costRate) return Math.round(k.costRate * c.price);
+    return k.cost || 0;
+  }
+
+  canPlace(id, slot) {
+    const s = this.state, k = this.catalog()[id], c = this.contract(), ph = this.phaseName();
+    if (!k) return { ok: false, why: 'Esa carta no se puede jugar en la mesa.' };
+    if (s.executed) return { ok: false, why: 'La operación ya se liquidó.' };
+    const role = this.roleOf(k.fam);
+    if (s.role !== role) return { ok: false, why: 'Esta carta la juega el rol ' + role + '. Cambia de rol arriba.' };
+    if (!this.isActive(role)) return { ok: false, why: role + ' está en espera. ' + this.waitText() };
+    if (ph === 'Reacción' && k.sub !== 'cobertura') return { ok: false, why: 'En Reacción solo se juegan coberturas y mitigaciones.' };
+    if (ph !== 'Planeación' && ph !== 'Reacción') return { ok: false, why: 'Las cartas se juegan en Planeación (y las coberturas también en Reacción).' };
+    if (s.visto === 'aprobada' && k.sub !== 'cobertura') return { ok: false, why: 'La operación ya tiene el visto del CEO: solo admite coberturas.' };
+    if (this.playsLeft(role) <= 0) return { ok: false, why: role + ' ya usó sus 3 jugadas de esta ronda.' };
+    const fits = (k.sub === 'terrestre' && (slot === 'origen' || slot === 'destino')) || (k.sub === 'principal' && slot === 'flete') || (k.sub === 'poliza' && slot === 'seguro') || (k.sub === 'cobertura' && slot === 'cobertura');
+    if (!fits) return { ok: false, why: k.name + ' no va en ese tramo.' };
+    if (slot !== 'cobertura' && this.resp(slot) === 'C') return { ok: false, why: 'En ' + c.incoterm + ' ese tramo lo contrata y paga el comprador.' };
+    if (k.sub === 'principal' && k.mode !== 'mar' && (c.incoterm === 'CIF' || c.incoterm === 'FOB')) return { ok: false, why: c.incoterm + ' solo aplica al transporte marítimo: para carga aérea se negocia CIP o FCA.' };
+    if (c.cargo === 'refrigerada' && (k.sub === 'terrestre' || k.sub === 'principal') && !k.reefer) return { ok: false, why: 'La carga refrigerada exige equipo refrigerado.' };
+    if (k.sub === 'poliza' && c.incoterm === 'CIP' && k.cover !== 'A') return { ok: false, why: 'CIP exige cobertura ICC (A).' };
+    return { ok: true };
+  }
+
+  placeEntry(id, role) {
+    const K = this.catalog(), k = K[id], alt = this.alternatives()[id];
+    const cost = this.cardCost(id);
+    if (k.sub === 'cobertura') {
+      const fx = {
+        smr: ['Sin ruta alterna', 'Si hay tormenta evita 3 días de retraso (2 por congestión); cuesta USD 600 solo si se usa.'],
+        oea: ['Sin operador OEA', 'Paga USD 250 para evitar una inspección; si la falla, perdería USD 500 y 2 días.'],
+        fwd: ['Quedar expuesto a la tasa', 'Paga USD ' + this.fmt(cost) + ' para cobrar a 3.200 pase lo que pase con el peso.'],
+        cl: ['Cobrar sin garantía', 'Paga USD ' + this.fmt(cost) + ' para asegurar el cobro; sin carta, un retraso costaría USD 480.']
+      }[id];
+      return this.entry(role, 'Jugó «' + k.name + '» en coberturas', fx[0], fx[1], cost);
+    }
+    const altCost = alt ? this.cardCost(alt) : cost;
+    const d = cost - altCost;
+    const effect = 'USD ' + this.fmt(cost) + (d < 0 ? ': ahorra USD ' + this.fmt(-d) + ' frente a la alternativa.' : (d > 0 ? ': cuesta USD ' + this.fmt(d) + ' más que la alternativa.' : '.'));
+    return this.entry(role, 'Jugó «' + k.name + '»', alt ? K[alt].name + ' (USD ' + this.fmt(altCost) + ')' : 'Ninguna en la mano', effect, d);
+  }
+
+  place(slot) {
+    const s = this.state, sel = s.sel;
+    if (!sel || (sel.from !== 'hand' && sel.from !== 'archive')) {
+      const d = this.slotDefs().filter((x) => x.key === slot)[0];
+      const r = slot === 'cobertura' ? 'V' : this.resp(slot);
+      this.say(slot === 'cobertura' ? 'Aquí van forwards, cartas de crédito y cartas de mitigación. Selecciona una carta de tu mano.' : (d.label + ': ' + (r === 'C' ? 'lo asume el comprador en ' + this.contract().incoterm + '.' : 'necesita ' + d.need.toLowerCase() + '. Selecciona una carta de tu mano.')));
+      return;
+    }
+    const chk = this.canPlace(sel.id, slot);
+    if (!chk.ok) { this.say(chk.why, 'warn'); return; }
+    const k = this.catalog()[sel.id], role = this.roleOf(k.fam);
+    const board = Object.assign({}, s.board);
+    let hand = s.hand.slice(), archive = s.archive.slice();
+    if (sel.from === 'hand') hand = hand.filter((x) => x !== sel.id); else archive = archive.filter((x) => x !== sel.id);
+    let back = null;
+    if (slot !== 'cobertura' && board[slot].length) { back = board[slot][0]; hand.push(back); }
+    board[slot] = slot === 'cobertura' ? board.cobertura.concat([sel.id]) : [sel.id];
+    const plays = Object.assign({}, s.plays, { [role]: (s.plays[role] || 0) + 1 });
+    const e = this.placeEntry(sel.id, role);
+    const patch = {
+      board: board, hand: hand, archive: archive, plays: plays, sel: null, seq: e.seq, log: s.log.concat([e]),
+      history: s.history.concat([{ seq: e.seq, id: sel.id, slot: slot, from: sel.from, back: back, role: role }]),
+      msg: { text: k.name + ' quedó en «' + (slot === 'cobertura' ? 'Coberturas' : this.slotDefs().filter((x) => x.key === slot)[0].label) + '».' + (back ? ' La carta anterior volvió a tu mano.' : ''), tone: 'ok' }
+    };
+    if (sel.id === 'oea' && s.insp === 'pending') patch.insp = 'skipped';
+    this.setState(patch);
+    this.later();
+  }
+
+  undo() {
+    const s = this.state, h = s.history[s.history.length - 1];
+    if (!h || s.executed) { this.say('No hay jugadas para deshacer.', 'warn'); return; }
+    const board = Object.assign({}, s.board);
+    let hand = s.hand.slice(), archive = s.archive.slice();
+    const plays = Object.assign({}, s.plays, { [h.role]: Math.max(0, (s.plays[h.role] || 0) - 1) });
+    const patch = { history: s.history.slice(0, -1), plays: plays, log: s.log.filter((x) => x.seq !== h.seq), msg: { text: 'Jugada deshecha.', tone: 'info' } };
+    if (h.doc) {
+      board.expo = board.expo.filter((x) => x !== h.doc);
+      patch.docs = Object.assign({}, s.docs, { [h.doc]: 'pendiente' });
+    } else {
+      board[h.slot] = board[h.slot].filter((x) => x !== h.id);
+      if (h.back) { hand = hand.filter((x) => x !== h.back); board[h.slot] = [h.back]; }
+      if (h.from === 'hand') hand.push(h.id); else archive.push(h.id);
+    }
+    patch.board = board; patch.hand = hand; patch.archive = archive;
+    this.setState(patch);
+    this.later();
+  }
+
+  draw() {
+    const s = this.state;
+    if (this.phaseName() !== 'Robo') { this.say('Se roba en la fase Robo.', 'warn'); return; }
+    if (!this.isActive(s.role)) { this.say(s.role + ' está en espera. ' + this.waitText(), 'warn'); return; }
+    if (s.drew) { this.say('El equipo ya robó en esta ronda: se roba una vez por ronda.', 'warn'); return; }
+    if (!s.deck.length) { this.say('El mazo de operaciones está agotado.', 'warn'); return; }
+    const got = s.deck.slice(0, 2);
+    const names = got.map((id) => this.catalog()[id].name).join(' y ');
+    const hand = s.hand.concat(got);
+    const e = this.entry(s.role, 'Robó 2 cartas: ' + names, 'No robar y conservar la mano', hand.length > 8 ? 'La mano queda en ' + hand.length + ': hay que guardar o descartar.' : 'La mano queda en ' + hand.length + ' cartas.', 0);
+    this.setState({ deck: s.deck.slice(2), hand: hand, drew: true, tab: 'mano', seq: e.seq, log: s.log.concat([e]), msg: { text: 'Robaste ' + names + '.' + (hand.length > 8 ? ' Tu mano supera 8 cartas: guarda o descarta antes de seguir.' : ''), tone: hand.length > 8 ? 'warn' : 'ok' } });
+    this.later();
+  }
+
+  toArchive() {
+    const s = this.state, sel = s.sel;
+    if (!sel || sel.from !== 'hand') { this.say('Selecciona una carta de tu mano para guardarla.', 'warn'); return; }
+    this.setState({ hand: s.hand.filter((x) => x !== sel.id), archive: s.archive.concat([sel.id]), sel: null, msg: { text: this.catalog()[sel.id].name + ' quedó guardada en tu archivo.', tone: 'ok' } });
+    this.later();
+  }
+
+  toHand() {
+    const s = this.state, sel = s.sel;
+    if (!sel || sel.from !== 'archive') { this.say('Selecciona una carta guardada.', 'warn'); return; }
+    if (s.hand.length >= 8) { this.say('Tu mano está llena (8 cartas).', 'warn'); return; }
+    this.setState({ archive: s.archive.filter((x) => x !== sel.id), hand: s.hand.concat([sel.id]), sel: null, tab: 'mano', msg: { text: this.catalog()[sel.id].name + ' volvió a tu mano.', tone: 'ok' } });
+  }
+
+  discardSel() {
+    const s = this.state, sel = s.sel;
+    if (!sel || sel.from !== 'hand') { this.say('Selecciona una carta de tu mano para descartarla.', 'warn'); return; }
+    this.setState({ hand: s.hand.filter((x) => x !== sel.id), discard: s.discard.concat([sel.id]), sel: null, msg: { text: this.catalog()[sel.id].name + ' fue al descarte.', tone: 'info' } });
+    this.later();
+  }
+
+  chooseIncoterm() {
+    const s = this.state;
+    if (this.phaseName() !== 'Mercado' || s.role !== 'Comercial') { this.say('El Incoterm lo decide el Comercial en la fase Mercado.', 'warn'); return; }
+    if (s.visto === 'aprobada' || s.executed) { this.say('La operación ya tiene el visto del CEO: el Incoterm no se puede cambiar.', 'warn'); return; }
+    if (s.incDecided) { this.say('El Incoterm ya se decidió en esta ronda.', 'info'); return; }
+    this.setState({ quiz: { kind: 'incoterm' } });
+  }
+
+  setIncoterm(term) {
+    const s = this.state;
+    const board = Object.assign({}, s.board);
+    let hand = s.hand.slice();
+    const moved = [];
+    if (term === 'FOB') ['flete', 'seguro'].forEach((k) => { board[k].forEach((id) => { hand.push(id); moved.push(this.catalog()[id].name); }); board[k] = []; });
+    const e = term === 'CIF'
+      ? this.entry('Comercial', 'Confirmó CIF a USD 48.100', 'Renegociar FOB a USD 44.000', 'Ingresa USD 4.100 más, pero paga flete y seguro (≈ USD 4.100) y asume el alza de fletes.', 0)
+      : this.entry('Comercial', 'Renegoció FOB a USD 44.000', 'Mantener CIF a USD 48.100', 'Ingresa USD 4.100 menos y deja flete, seguro y alza de fletes al comprador.' + (moved.length ? ' Volvieron a la mano: ' + moved.join(', ') + '.' : ''), 0);
+    this.setState({ incoterm: term, incDecided: true, board: board, hand: hand, quiz: null, seq: e.seq, log: s.log.concat([e]), msg: { text: 'Contrato C-07 en ' + term + '.', tone: 'ok' } });
+    this.later();
+  }
+
+  giveVisto() {
+    const s = this.state;
+    if (this.phaseName() !== 'Visto del CEO' || s.role !== 'CEO') { this.say('El visto lo da el CEO en la fase Visto del CEO.', 'warn'); return; }
+    if (s.visto === 'aprobada' || s.executed) { this.say('La operación ya tiene el visto.', 'info'); return; }
+    const r = this.evaluate();
+    if (r.missing.length) { this.say('No puedes aprobar: faltan ' + r.missing.join(', ') + '. Puedes devolverla al equipo.', 'warn'); return; }
+    if (s.insp === 'pending') { this.say('Hay una inspección sin responder: Aduanas debe resolverla antes del visto.', 'warn'); return; }
+    const e = this.entry('CEO', 'Dio el visto a la operación', 'Devolverla al equipo', 'Margen estimado ' + this.pct(r.margenPct) + ' y entrega a bordo en ' + r.days + ' de ' + r.plazo + ' días; se liquida al final de la ronda.', 0);
+    this.setState({ visto: 'aprobada', seq: e.seq, log: s.log.concat([e]), msg: { text: 'Visto dado: la operación se liquida en la fase Liquidación.', tone: 'ok' } });
+    this.later();
+  }
+
+  startReturn() {
+    const s = this.state;
+    if (this.phaseName() !== 'Visto del CEO' || s.role !== 'CEO') { this.say('El visto lo da el CEO en la fase Visto del CEO.', 'warn'); return; }
+    if (s.visto === 'aprobada' || s.executed) { this.say('La operación ya tiene el visto.', 'info'); return; }
+    this.setState({ quiz: { kind: 'motivo' } });
+  }
+
+  returnWith(text) {
+    const s = this.state, r = this.evaluate();
+    const e = this.entry('CEO', 'Devolvió la operación: ' + text.toLowerCase(), 'Dar el visto', 'La operación vuelve a Planeación en la ronda siguiente' + (r.days + 0 > r.plazo - 2 ? '; ojo: quedan pocos días de plazo.' : '.'), 0);
+    this.setState({ visto: 'devuelta', motivo: text, quiz: null, seq: e.seq, log: s.log.concat([e]), msg: { text: 'Operación devuelta al equipo: ' + text.toLowerCase() + '.', tone: 'info' } });
+    this.later();
+  }
+
+  startEmit() {
+    const s = this.state, sel = s.sel;
+    if (s.executed) { this.say('La operación ya se liquidó.', 'info'); return; }
+    if (!sel || sel.from !== 'doc') { this.say('Selecciona un documento por emitir.', 'warn'); return; }
+    if (s.role !== 'Aduanas') { this.say('Los documentos los emite el rol Aduanas.', 'warn'); return; }
+    if (this.phaseName() !== 'Planeación') { this.say('Los documentos se emiten en Planeación. ' + this.waitText(), 'warn'); return; }
+    if (s.visto === 'aprobada') { this.say('La operación ya tiene el visto del CEO.', 'warn'); return; }
+    if (this.playsLeft('Aduanas') <= 0) { this.say('Aduanas ya usó sus 3 jugadas de esta ronda.', 'warn'); return; }
+    if (s.docs[sel.id] === 'ok') { this.say('Ese documento ya está correcto en la mesa.', 'info'); return; }
+    this.setState({ quiz: { kind: 'doc', id: sel.id } });
+  }
+
+  answer(id) {
+    const s = this.state, q = s.quiz;
+    if (!q) return;
+    if (q.kind === 'incoterm') { this.setIncoterm(id === 'A' ? 'CIF' : 'FOB'); return; }
+    if (q.kind === 'motivo') { this.returnWith({ A: 'Faltan tramos o documentos', B: 'El costo es demasiado alto', C: 'Hay un riesgo sin cubrir' }[id]); return; }
+    const saber = { ok: s.saber.ok, n: s.saber.n + 1 };
+    if (q.kind === 'doc') {
+      const d = this.docDefs()[q.id], right = id === d.ok;
+      if (right) saber.ok += 1;
+      const fix = s.docs[q.id] === 'error';
+      const docs = Object.assign({}, s.docs, { [q.id]: right ? 'ok' : 'error' });
+      const board = Object.assign({}, s.board, { expo: s.board.expo.indexOf(q.id) >= 0 ? s.board.expo : s.board.expo.concat([q.id]) });
+      const plays = Object.assign({}, s.plays, { Aduanas: (s.plays.Aduanas || 0) + 1 });
+      const e = this.entry('Aduanas', (fix ? 'Corrigió' : 'Emitió') + ' «' + d.name + '»', 'Responder el reto correctamente', right ? 'Documento sin errores.' : 'Documento con error: glosa de USD 500 y 2 días si no se corrige.', right ? 0 : 500);
+      this.setState({ docs: docs, board: board, plays: plays, saber: saber, quiz: null, sel: null, seq: e.seq, log: s.log.concat([e]), history: fix ? s.history : s.history.concat([{ seq: e.seq, doc: q.id, role: 'Aduanas' }]),
+        msg: { text: right ? d.name + ' emitido sin errores.' : d.name + ' emitido con un error: la aduana lo glosará (USD 500 y 2 días) si no lo corriges.', tone: right ? 'ok' : 'warn' } });
+    } else {
+      const right = id === 'B';
+      if (right) saber.ok += 1;
+      const e = this.entry('Aduanas', 'Respondió la inspección sorpresa', 'Contratar un operador OEA', right ? 'Levante inmediato.' : 'Mercancía retenida 2 días y multa de USD 500.', right ? 0 : 500);
+      this.setState({ insp: right ? 'ok' : 'fail', saber: saber, quiz: null, seq: e.seq, log: s.log.concat([e]), msg: { text: right ? 'Inspección superada: levante inmediato.' : 'Respuesta incorrecta: la mercancía queda retenida 2 días y hay multa de USD 500.', tone: right ? 'ok' : 'warn' } });
+    }
+    this.later();
+  }
+
+  startInspection() {
+    const s = this.state;
+    if (s.insp !== 'pending') { this.say(s.insp === 'none' ? 'No hay inspecciones pendientes.' : 'La inspección ya se resolvió.', 'info'); return; }
+    if (s.role !== 'Aduanas') { this.say('La inspección la responde el rol Aduanas, en cualquier fase.', 'warn'); return; }
+    this.setState({ quiz: { kind: 'insp' } });
+  }
+
+  enterPhase(name, newRound) {
+    const s = this.state;
+    const patch = { sel: null, quiz: null };
+    if (newRound) {
+      patch.plays = {}; patch.drew = false; patch.history = []; patch.incDecided = false;
+      if (s.visto === 'devuelta') patch.visto = 'none';
+    }
+    if (name === 'Liquidación' && s.visto === 'aprobada' && !s.executed) {
+      const r = this.evaluate();
+      patch.executed = r;
+      patch.msg = { text: 'Operación liquidada con el visto del CEO.', tone: 'ok' };
+    } else if (name === 'Liquidación' && !s.executed) {
+      patch.msg = { text: s.visto === 'devuelta' ? 'La operación fue devuelta: no se liquida en esta ronda.' : 'La operación no tiene visto del CEO: no se liquida en esta ronda.', tone: 'warn' };
+    } else if (newRound) {
+      patch.msg = { text: 'Empieza una nueva ronda: cada rol recupera 3 jugadas.', tone: 'info' };
+    }
+    this.setState(patch);
+    this.later();
+  }
+
+  advance() {
+    const s = this.state;
+    if (s.connected) { this.say('Las fases las avanza el Superusuario.', 'info'); return; }
+    const ph = this.phaseName();
+    if ((ph === 'Robo' || ph === 'Liquidación') && s.hand.length > 8) { this.say('Tu mano tiene ' + s.hand.length + ' cartas: guarda o descarta hasta quedar con 8.', 'warn'); return; }
+    if (s.insp === 'pending' && ph === 'Visto del CEO') { this.say('Responde primero la inspección pendiente (Aduanas, pestaña Retos).', 'warn'); return; }
+    const n = this.phaseList().length;
+    if (s.phaseIdx < n - 1) {
+      const next = this.phaseList()[s.phaseIdx + 1];
+      this.setState({ phaseIdx: s.phaseIdx + 1 });
+      this.enterPhase(next, false);
+      return;
+    }
+    this.setState({ phaseIdx: 0, round: s.round + 1 });
+    this.enterPhase('Mercado', true);
+  }
+
+  toggleInterest(id) {
+    if (id === 'C-07') { this.say('Este contrato ya está en curso en tu mesa.', 'info'); return; }
+    this.setState((s) => ({ interest: Object.assign({}, s.interest, { [id]: !s.interest[id] }), msg: { text: s.interest[id] ? 'Retiraste tu interés en ' + id + '.' : 'Marcaste interés en ' + id + ': el Superusuario lo verá en la fase de Mercado.', tone: 'info' } }));
+    this.later();
+  }
+
+  eventEffects() {
+    const act = (this.state.world && this.state.world.active) || {}, cob = this.state.board.cobertura, c = this.contract();
+    const has = (id) => cob.indexOf(id) >= 0;
+    const payFreight = this.resp('flete') === 'V';
+    const fleteCard = this.catalog()[this.state.board.flete[0]];
+    const out = [];
+    const add = (key, label, o) => { if (act[key]) out.push(Object.assign({ key: key, label: label, days: 0, cost: 0, arrival: 0 }, o)); };
+    add('tormenta', 'Tormenta tropical', has('smr') ? { cost: 600, text: 'Cartagena cerró, pero embarcas por Santa Marta sin retraso (USD 600).' } : { days: 3, text: 'Cartagena cerrado: tu embarque se retrasa 3 días. Riesgos puede jugar «Ruta alterna: Santa Marta».' });
+    add('congestion', 'Congestión en Cartagena', has('smr') ? { cost: 600, text: 'Desvías por Santa Marta sin retraso (USD 600).' } : { days: 2, text: 'Espera de 2 días para cargar el buque.' });
+    add('huelga', 'Huelga en Rotterdam', { arrival: 6, text: 'En ' + c.incoterm + ' el riesgo pasó al comprador cuando la carga quedó a bordo: no afecta tu entrega, aunque la llegada se demora 6 días.' });
+    add('flete', 'Alza de fletes', payFreight ? { cost: fleteCard ? Math.round(fleteCard.cost * 0.18) : 0, text: fleteCard ? 'En ' + c.incoterm + ' tú pagas el flete: +18 % (USD ' + this.fmt(fleteCard.cost * 0.18) + ').' : 'En ' + c.incoterm + ' tú pagas el flete: subirá 18 % cuando lo contrates.' } : { text: 'En FOB el flete lo contrata el comprador: el alza no toca tu margen.' });
+    add('marrojo', 'Ataques en el mar Rojo', { text: 'Tu ruta cruza el Atlántico: no pasa por Suez. Sin efecto.' });
+    add('sequia', 'Sequía en Panamá', { text: 'Tu ruta no cruza el Canal de Panamá. Sin efecto.' });
+    add('pandemia', 'Pandemia', { days: 2, cost: 400, text: 'Cuarentena en puerto: 2 días y USD 400 de sobrecosto logístico.' });
+    add('devaluacion', 'Devaluación del peso', { text: has('fwd') ? 'Tu forward fija la tasa en 3.200: renuncias a la ganancia cambiaria a cambio de certeza.' : 'Cobras en USD: tu margen en pesos sube 12 %.' });
+    add('revaluacion', 'Revaluación del peso', { text: has('fwd') ? 'Tu forward te protege: cobras a 3.200.' : 'Cobras en USD: tu margen en pesos cae 8 %. El CFO puede jugar «Forward de venta USD».' });
+    add('alerta', 'Alerta sanitaria en la UE', this.state.docs.fito === 'ok' ? { text: 'Tu certificado fitosanitario cubre la alerta.' } : { days: 5, cost: 900, text: 'Sin certificado fitosanitario válido la carga queda retenida 5 días (USD 900).' });
+    add('ciber', 'Ciberataque a la naviera', { arrival: 3, text: 'Afecta el tránsito después del embarque: la llegada se demora 3 días; tu entrega no cambia.' });
+    add('impago', 'El comprador retrasa el pago', has('cl') ? { text: 'Tu carta de crédito garantiza el cobro contra documentos.' } : { cost: 480, text: 'Cobro a 60 días: costo financiero de USD 480. El CFO puede jugar «Carta de crédito confirmada».' });
+    if (act.inspeccion) {
+      const st = this.state.insp;
+      const txt = { pending: 'Aduanas debe responder un reto antes de que la carga salga (pestaña Retos).', ok: 'Inspección superada: levante inmediato.', fail: 'Inspección fallida: 2 días de retención y USD 500 de multa.', skipped: 'Tu operador OEA evitó la inspección.', none: 'Aduanas debe responder un reto antes de que la carga salga (pestaña Retos).' }[st];
+      out.push({ key: 'inspeccion', label: 'Inspección sorpresa', days: st === 'fail' ? 2 : 0, cost: st === 'fail' ? 500 : 0, arrival: 0, text: txt });
+    }
+    return out;
+  }
+
+  evaluate() {
+    const s = this.state, c = this.contract(), K = this.catalog(), D = this.docDefs();
+    const act = (s.world && s.world.active) || {};
+    const b = s.board;
+    const card = (slot) => (b[slot][0] ? K[b[slot][0]] : null);
+    const missing = [];
+    let filled = 0, required = 0;
+    this.slotDefs().forEach((sd) => {
+      if (this.resp(sd.key) !== 'V') return;
+      required += 1;
+      if (sd.key === 'expo') {
+        const lack = Object.keys(D).filter((d) => D[d].req && s.docs[d] === 'pendiente').map((d) => D[d].name);
+        if (lack.length) missing.push('documentos (' + lack.join(', ') + ')'); else filled += 1;
+      } else if (b[sd.key].length) filled += 1; else missing.push(sd.label.toLowerCase());
+    });
+    const origen = card('origen'), flete = this.resp('flete') === 'V' ? card('flete') : null, seguro = this.resp('seguro') !== 'C' ? card('seguro') : null;
+    const docsPlaced = Object.keys(D).filter((d) => s.docs[d] !== 'pendiente');
+    const glosas = docsPlaced.filter((d) => s.docs[d] === 'error').length;
+    const ev = this.eventEffects();
+    const evCost = ev.reduce((a, e) => a + e.cost, 0), evDays = ev.reduce((a, e) => a + e.days, 0), evArr = ev.reduce((a, e) => a + e.arrival, 0);
+    const costs = {
+      acarreo: origen ? origen.cost : 0,
+      aduana: docsPlaced.length ? 350 : 0,
+      flete: flete ? flete.cost : 0,
+      seguro: seguro ? Math.round(seguro.rate * 1.1 * c.price) : 0,
+      cobertura: b.cobertura.reduce((a, id) => a + (K[id].cost || 0) + Math.round((K[id].costRate || 0) * c.price), 0),
+      eventos: evCost + glosas * 500
+    };
+    const total = costs.acarreo + costs.aduana + costs.flete + costs.seguro + costs.cobertura + costs.eventos;
+    const bonus = s.docs.origen === 'ok' ? Math.round(c.price * 0.01) : 0;
+    const margen = c.price - c.cogs - total + bonus;
+    const margenPct = margen / c.price * 100;
+    const days = (origen ? origen.days : 0) + (docsPlaced.length ? 1 : 0) + evDays + glosas * 2 + (this.resp('destino') === 'V' && flete ? flete.days : 0);
+    const arrival = days + (card('flete') ? card('flete').days : c.transit) + evArr;
+    const fwd = b.cobertura.indexOf('fwd') >= 0;
+    const rate = fwd ? 3200 : 3200 * (act.devaluacion ? 1.12 : 1) * (act.revaluacion ? 0.92 : 1);
+    const reqDocs = Object.keys(D).filter((d) => D[d].req).length;
+    const okDocs = docsPlaced.filter((d) => s.docs[d] === 'ok').length;
+    const exact = Math.round(okDocs / Math.max(reqDocs, docsPlaced.length) * 100);
+    const otif = missing.length === 0 && days <= c.plazo && s.insp !== 'pending';
+    const saberPct = s.saber.n ? Math.round(s.saber.ok / s.saber.n * 100) : 0;
+    const score = Math.round(40 * Math.max(0, Math.min(1, margenPct / 15)) + 25 * (otif ? 1 : 0) + 20 * exact / 100 + 15 * saberPct / 100);
+    const warn = [];
+    if (origen && origen.reefer && c.cargo === 'seca') warn.push('Tractomula refrigerada para carga seca: sobrecosto de USD 800 frente a la seca.');
+    if (flete && flete.reefer && c.cargo === 'seca') warn.push("Contenedores reefer para carga seca: sobrecosto de USD 4.500 frente a los 40' HC.");
+    if (seguro && seguro.cover === 'A' && c.incoterm === 'CIF') warn.push('CIF solo exige ICC (C); la ICC (A) protege más al comprador pero cuesta más.');
+    if (glosas) warn.push(glosas + ' documento(s) con error: glosa de USD 500 y 2 días por cada uno. Aduanas puede corregirlos desde el archivo.');
+    if (days > c.plazo) warn.push('Entregas a bordo en ' + days + ' días: superas el plazo de ' + c.plazo + ' y pierdes el OTIF.');
+    return { missing: missing, filled: filled, required: required, glosas: glosas, costs: costs, total: total, bonus: bonus, margen: margen, margenPct: margenPct, days: days, plazo: c.plazo, arrival: arrival, rate: rate, exact: exact, otif: otif, saberPct: saberPct, score: score, warn: warn, events: ev };
+  }
+
+  roleSummary(t) {
+    const s = this.state;
+    return ['Comercial', 'Tráfico', 'Aduanas', 'CFO', 'Riesgos', 'CEO'].map((role) => {
+      const items = s.log.filter((x) => x.role === role);
+      const extra = items.reduce((a, x) => a + x.delta, 0);
+      let text = items.length ? items.length + ' decisión' + (items.length === 1 ? '' : 'es') : 'Sin decisiones';
+      if (items.length && extra > 0) text += ' · USD ' + this.fmt(extra) + ' en costos evitables o primas';
+      else if (items.length && extra < 0) text += ' · ahorró USD ' + this.fmt(-extra) + ' frente a las alternativas';
+      return { role: role, text: text, style: 'display: flex; justify-content: space-between; gap: 8px; font-size: 12px; padding: 6px 8px; border-radius: 8px; background: ' + t.soft };
+    });
+  }
+
+  cardView(id, from, t) {
+    const K = this.catalog(), D = this.docDefs(), s = this.state;
+    let fam, name, text, tags, cost;
+    if (from === 'doc') {
+      const st = s.docs[id];
+      fam = 'documento'; name = D[id].name; text = st === 'error' ? 'Emitido con error: corrígelo antes del visto.' : (D[id].req ? 'Obligatorio para exportar café.' : 'Opcional: el comprador paga 1 % más por la preferencia arancelaria.');
+      tags = st === 'error' ? 'Con error · Aduanas' : 'Por emitir · Aduanas'; cost = 'Emitir';
+    } else if (from === 'market') {
+      const m = this.marketDefs().filter((x) => x.id === id)[0];
+      fam = 'contrato'; name = m.title; text = m.text; tags = s.interest[id] ? 'Interés marcado' : m.tags; cost = m.id;
+    } else {
+      const k = K[id];
+      fam = k.fam; name = k.name; text = k.text; tags = k.tags + ' · ' + this.roleOf(k.fam);
+      cost = k.cost ? 'USD ' + this.fmt(k.cost) : (k.rate ? (k.rate * 100).toFixed(2).replace('.', ',').replace(/0$/, '') + ' %' : (k.costRate ? (k.costRate * 100).toFixed(1).replace('.', ',') + ' %' : 'Si se usa'));
+    }
+    const f = t.fam[fam];
+    const on = s.sel && s.sel.id === id && s.sel.from === from;
+    const owner = from === 'hand' || from === 'archive' ? this.roleOf(K[id].fam) : (from === 'doc' ? 'Aduanas' : null);
+    const playable = owner ? owner === s.role && this.isActive(owner) : true;
+    return {
+      name: name, text: text, tags: tags, cost: cost, famLabel: f.label.toUpperCase(),
+      pressed: on ? 'true' : 'false',
+      aria: f.label + ': ' + name + (playable ? '' : ' (no se puede jugar ahora)'),
+      style: 'flex: none; width: 168px; min-height: 214px; padding: 0; text-align: left; font: inherit; color: ' + t.text + '; background: ' + f.bg + '; border-radius: 16px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; transition: transform 120ms; ' + (on ? 'border: 3px solid ' + t.selRing + '; transform: translateY(-8px); box-shadow: 0 10px 22px rgba(31, 94, 255, 0.28)' : 'border: 2px solid ' + f.band + '; box-shadow: 0 4px 12px rgba(20, 33, 61, 0.10)') + (playable ? '' : '; opacity: 0.6'),
+      band: 'display: flex; justify-content: space-between; gap: 6px; padding: 7px 10px; font-size: 12px; font-weight: 700; background: ' + f.band + '; color: ' + f.ink,
+      foot: 'display: block; margin-top: auto; padding: 8px 12px 10px; font-size: 12px; font-weight: 600; color: ' + t.quiet,
+      pick: () => this.setState((st) => ({ sel: st.sel && st.sel.id === id && st.sel.from === from ? null : { from: from, id: id }, msg: null }))
+    };
+  }
+
+  guideFor(t) {
+    const s = this.state, ph = this.phaseName(), who = this.phaseRoles()[ph], c = this.contract();
+    const idx = this.phaseList().indexOf(ph);
+    const btn = (label, run, kind, disabled) => ({
+      label: label, run: run, disabled: disabled ? 'true' : 'false',
+      style: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; cursor: pointer; ' + (kind === 'primary' ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : (kind === 'dark' ? 'background: ' + t.text + '; color: ' + t.bg + '; border: 1px solid ' + t.text : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2)) + (disabled ? '; opacity: 0.55' : '')
+    });
+    const texts = {
+      'Mercado': ['Comercial: confirma el Incoterm del contrato C-07', s.incDecided || s.visto === 'aprobada' ? 'Incoterm decidido: ' + c.incoterm + '. Avanza a Robo.' : 'CIF paga más (USD 48.100) pero te obliga a contratar flete y seguro; FOB (USD 44.000) los deja al comprador.'],
+      'Robo': ['El equipo roba 2 cartas del mazo de operaciones', s.drew ? 'Ya robaron en esta ronda. Si la mano supera 8, guarden o descarten.' : 'Cualquier rol operativo puede robar; se roba una vez por ronda.'],
+      'Planeación': ['Tráfico, Aduanas, CFO y Riesgos cubren los tramos a su cargo', 'Cada rol tiene 3 jugadas. Faltan: ' + (this.evaluate().missing.join(', ') || 'nada, la operación está completa') + '.'],
+      'Visto del CEO': ['CEO: revisa el resumen y decide', s.visto === 'aprobada' ? 'Visto dado: la operación se liquida al final de la ronda.' : (s.visto === 'devuelta' ? 'Devuelta: ' + s.motivo.toLowerCase() + '.' : 'Da el visto si la operación está completa o devuélvela con un motivo.')],
+      'Evento': ['Turno del Superusuario: juega un evento', s.connected ? 'Espera la carta de evento; luego podrán reaccionar.' : 'En modo práctica puedes avanzar sin evento o lanzarlo desde la mesa del Superusuario.'],
+      'Reacción': ['Riesgos y CFO reaccionan a los eventos', 'Solo se juegan coberturas y mitigaciones, con las jugadas que les queden.'],
+      'Liquidación': ['Se liquida la operación', s.executed ? 'Revisa el resultado y la bitácora de decisiones por rol.' : 'Sin visto del CEO no hay liquidación en esta ronda.']
+    }[ph];
+    const decisions = [];
+    if (ph === 'Mercado') decisions.push(btn('Decidir Incoterm', () => this.chooseIncoterm(), 'primary', s.incDecided || s.visto === 'aprobada' || !!s.executed));
+    if (ph === 'Robo') decisions.push(btn('Robar 2 cartas', () => this.draw(), 'primary', s.drew || !s.deck.length));
+    if (ph === 'Visto del CEO') {
+      decisions.push(btn('Dar visto', () => this.giveVisto(), 'primary', s.visto === 'aprobada' || !!s.executed));
+      decisions.push(btn('Devolver con motivo', () => this.startReturn(), 'ghost', s.visto === 'aprobada' || !!s.executed));
+    }
+    if (!s.connected) decisions.push(btn(idx < 6 ? 'Avanzar a ' + this.phaseList()[idx + 1] : 'Cerrar ronda', () => this.advance(), 'dark', false));
+    const mine = who.indexOf(s.role) >= 0;
+    return {
+      kicker: 'RONDA ' + this.roundNow() + ' · FASE ' + (idx + 1) + ' DE 7 · ' + (who.length ? 'TURNO DE ' + who.join(', ').toUpperCase() : 'SIN TURNO DEL EQUIPO'),
+      title: texts[0], text: texts[1] + (who.length && !mine ? ' Tú (' + s.role + ') estás en espera.' : ''),
+      box: 'display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 16px; background: ' + (mine ? t.pBlue : t.card) + '; border: 2px solid ' + (mine ? t.selRing : t.border2),
+      decisions: decisions
+    };
+  }
+
+  renderVals() {
+    const t = this.theme(), s = this.state, c = this.contract(), K = this.catalog(), D = this.docDefs();
+    const r = this.evaluate();
+    const shown = s.executed || r;
+    const ph = this.phaseName();
+    const roles = ['CEO', 'Comercial', 'Tráfico', 'Aduanas', 'CFO', 'Riesgos'].map((ro) => {
+      const on = ro === s.role, act = this.isActive(ro), left = ro === 'CEO' || ro === 'Comercial' ? '' : String(this.playsLeft(ro));
+      return {
+        label: ro, left: left,
+        pressed: on ? 'true' : 'false',
+        aria: ro + (act ? ', tiene turno' : ', en espera') + (left ? ', ' + left + ' jugadas' : ''),
+        leftStyle: left === '' ? 'display: none' : 'display: inline-block; min-width: 18px; margin-left: 6px; padding: 1px 6px; border-radius: 999px; font-size: 12px; font-family: \'IBM Plex Mono\', monospace; ' + (on ? 'background: ' + t.accentInk + '; color: ' + t.accent : 'background: ' + t.soft + '; color: ' + t.text),
+        style: 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer; ' + (on ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : (act ? 'background: ' + t.card + '; color: ' + t.text + '; border: 2px solid ' + t.selRing : 'background: ' + t.card + '; color: ' + t.quiet + '; border: 1px dashed ' + t.border2)),
+        pick: () => this.setState({ role: ro, sel: null, msg: null })
+      };
+    });
+    const roleHints = { CEO: 'Da el visto o devuelve la operación.', Comercial: 'Decide el Incoterm en Mercado.', 'Tráfico': 'Juega transporte en Planeación.', Aduanas: 'Emite documentos y responde inspecciones.', CFO: 'Juega pólizas, forwards y cartas de crédito.', Riesgos: 'Juega mitigación en Planeación y Reacción.' };
+    const phases = this.phaseList().map((p, i) => ({
+      n: i + 1, label: p, current: p === ph ? 'step' : 'false',
+      style: 'font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 999px; ' + (p === ph ? 'background: ' + t.accent + '; color: ' + t.accentInk : (i < this.phaseList().indexOf(ph) ? 'background: ' + t.pBlue + '; color: ' + t.text : 'background: ' + t.card + '; color: ' + t.quiet))
+    }));
+    const guide = this.guideFor(t);
+
+    const kpis = [
+      { label: 'Margen estimado', value: this.pct(shown.margenPct), bg: t.pBlue },
+      { label: 'Entrega a bordo', value: shown.days + ' / ' + c.plazo + ' días', bg: shown.days > c.plazo ? t.pRed : t.pYellow },
+      { label: 'Exactitud documental', value: shown.exact + ' %', bg: t.okBg },
+      { label: 'Saber Pro', value: s.saber.ok + ' / ' + s.saber.n, bg: t.soft },
+      { label: 'Puntaje', value: shown.score + ' / 100', bg: t.pYellow }
+    ].map((k) => ({ label: k.label, value: k.value, box: 'display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-radius: 12px; min-width: 112px; background: ' + k.bg }));
+
+    const selCard = s.sel && (s.sel.from === 'hand' || s.sel.from === 'archive') ? s.sel.id : null;
+    const slots = this.slotDefs().map((sd) => {
+      const rr = this.resp(sd.key);
+      const ids = s.board[sd.key];
+      const valid = selCard ? this.canPlace(selCard, sd.key).ok : false;
+      let need, needColor = t.quiet;
+      if (rr === 'C') need = 'Lo asume el comprador';
+      else if (sd.key === 'expo') {
+        const lack = Object.keys(D).filter((d) => D[d].req && s.docs[d] === 'pendiente').length;
+        const errs = Object.keys(D).filter((d) => s.docs[d] === 'error').length;
+        need = lack ? 'Faltan ' + lack + ' documentos obligatorios' : (errs ? errs + ' con error' : 'Completo');
+        needColor = lack || errs ? t.alertText : t.ok;
+      } else if (ids.length) { need = 'Listo'; needColor = t.ok; }
+      else { need = 'Necesita: ' + sd.need.toLowerCase(); needColor = t.alertText; }
+      const placed = ids.map((id) => {
+        const isDoc = sd.key === 'expo';
+        const f = t.fam[isDoc ? 'documento' : K[id].fam];
+        const err = isDoc && s.docs[id] === 'error';
+        return { name: (isDoc ? D[id].name : K[id].name) + (err ? ' · con error' : ''), style: 'display: block; margin-top: 6px; padding: 5px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; background: ' + f.bg + '; color: ' + t.text + '; border: 1px ' + (err ? 'dashed ' + t.alert : 'solid ' + f.band) };
+      });
+      return {
+        step: 'TRAMO ' + sd.step, label: sd.label, cards: placed, need: need,
+        badge: rr === 'V' ? 'A tu cargo' : (rr === 'O' ? 'Opcional' : 'Comprador'),
+        badgeStyle: 'display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; ' + (rr === 'C' ? 'background: ' + t.fam.incoterm.bg + '; color: #6B4E00' : 'background: ' + t.accent + '; color: ' + t.accentInk),
+        needStyle: 'display: block; margin-top: 8px; font-size: 12px; font-weight: 600; color: ' + needColor,
+        aria: sd.label + ', ' + (rr === 'V' ? 'a tu cargo' : 'lo asume el comprador') + ', ' + need,
+        style: 'text-align: left; font: inherit; color: ' + t.text + '; min-height: 176px; padding: 10px; border-radius: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; ' + (valid ? 'background: ' + t.pBlue + '; border: 3px solid ' + t.selRing : (rr === 'C' ? 'background: ' + t.soft + '; border: 1px dashed ' + t.border2 : 'background: ' + t.card + '; border: 2px solid ' + t.border2)),
+        pick: () => this.place(sd.key)
+      };
+    });
+    const cobValid = selCard ? this.canPlace(selCard, 'cobertura').ok : false;
+    const cob = {
+      cards: s.board.cobertura.map((id) => ({ name: K[id].name, style: 'display: inline-block; margin: 6px 6px 0 0; padding: 5px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; background: ' + t.fam[K[id].fam].bg + '; color: ' + t.text + '; border: 1px solid ' + t.fam[K[id].fam].band })),
+      need: s.board.cobertura.length ? 'Se activan solas cuando el evento correspondiente entra en juego.' : 'Vacía: forwards, cartas de crédito y mitigaciones se juegan aquí en Planeación o Reacción.',
+      style: 'text-align: left; font: inherit; color: ' + t.text + '; padding: 10px 12px; border-radius: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; ' + (cobValid ? 'background: ' + t.pBlue + '; border: 3px solid ' + t.selRing : 'background: ' + t.soft + '; border: 1px dashed ' + t.border2),
+      pick: () => this.place('cobertura')
+    };
+
+    const evs = r.events.map((e) => ({ label: e.label, text: e.text }));
+    const R = shown;
+    const sum = [
+      ['Precio ' + c.incoterm, c.price, false],
+      ['Costo de la mercancía', -c.cogs, false],
+      ['Acarreo en origen', -R.costs.acarreo, false],
+      ['Agente y documentos', -R.costs.aduana, false],
+      ['Flete principal', -R.costs.flete, false],
+      ['Seguro', -R.costs.seguro, false],
+      ['Coberturas', -R.costs.cobertura, false],
+      ['Eventos y glosas', -R.costs.eventos, false],
+      ['Preferencia arancelaria', R.bonus, false],
+      ['Margen', R.margen, true]
+    ].map((x) => ({ label: x[0], value: (x[1] < 0 ? '−' : '') + 'USD ' + this.fmt(Math.abs(x[1])), style: 'display: flex; justify-content: space-between; gap: 8px; font-size: ' + (x[2] ? '15px; font-weight: 700; border-top: 1px solid ' + t.border2 + '; padding-top: 8px; margin-top: 2px' : '13px') + '; color: ' + t.text }));
+    sum.push({ label: 'Margen en COP a ' + this.fmt(R.rate), value: 'COP ' + this.fmt(R.margen * R.rate), style: 'display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: ' + t.quiet });
+    sum.push({ label: 'Llegada estimada a Rotterdam', value: 'día ' + R.arrival, style: 'display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: ' + t.quiet });
+    const alerts = R.warn.map((w) => ({ text: w, style: 'font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 10px; background: ' + t.pYellow + '; color: ' + t.text }));
+    if (R.missing.length) alerts.unshift({ text: 'Faltan: ' + R.missing.join(', ') + '.', style: 'font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 10px; background: ' + t.pRed + '; color: ' + t.text });
+
+    const ex = s.executed;
+    const inspBadge = s.insp === 'pending' ? ' · 1' : '';
+    const tabs = [
+      { key: 'mano', label: 'Mano ' + s.hand.length + '/8' },
+      { key: 'archivo', label: 'Archivo ' + (s.archive.length + Object.keys(D).filter((d) => s.docs[d] !== 'ok').length) },
+      { key: 'mercado', label: 'Mercado 3' },
+      { key: 'retos', label: 'Retos' + inspBadge },
+      { key: 'bitacora', label: 'Bitácora ' + s.log.length }
+    ].map((tb) => ({
+      label: tb.label, sel: tb.key === s.tab ? 'true' : 'false',
+      style: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 12px; cursor: pointer; ' + (tb.key === s.tab ? 'background: ' + t.text + '; color: ' + t.bg + '; border: 1px solid ' + t.text : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+      pick: () => this.setState({ tab: tb.key, sel: null, msg: null, quiz: null })
+    }));
+
+    let cards = [], log = [];
+    if (s.tab === 'mano') cards = s.hand.map((id) => this.cardView(id, 'hand', t));
+    else if (s.tab === 'archivo') cards = s.archive.map((id) => this.cardView(id, 'archive', t)).concat(Object.keys(D).filter((d) => s.docs[d] !== 'ok').map((d) => this.cardView(d, 'doc', t)));
+    else if (s.tab === 'mercado') cards = this.marketDefs().map((m) => this.cardView(m.id, 'market', t));
+    else if (s.tab === 'bitacora') log = s.log.slice().reverse().map((x) => ({
+      role: x.role, round: x.round, phase: x.phase, decision: x.decision, alt: x.alt, effect: x.effect,
+      box: 'flex: none; width: 250px; display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 14px; background: ' + t.card + '; border: 1px solid ' + (x.delta > 0 ? t.alert : t.border2),
+      chip: 'align-self: flex-start; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: ' + t.pBlue + '; color: ' + t.text
+    }));
+
+    const btn = (label, run, kind, disabled) => ({
+      label: label, run: run, disabled: disabled ? 'true' : 'false',
+      style: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; cursor: pointer; ' + (kind === 'primary' ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2) + (disabled ? '; opacity: 0.55' : '')
+    });
+    const actions = [];
+    if (s.tab === 'mano') {
+      actions.push(btn('Guardar en archivo', () => this.toArchive(), 'ghost', !selCard));
+      actions.push(btn('Descartar', () => this.discardSel(), 'ghost', !selCard));
+    } else if (s.tab === 'archivo') {
+      actions.push(btn(s.sel && s.sel.from === 'doc' && s.docs[s.sel.id] === 'error' ? 'Corregir documento' : 'Emitir documento', () => this.startEmit(), 'primary', !(s.sel && s.sel.from === 'doc')));
+      actions.push(btn('Tomar a la mano', () => this.toHand(), 'ghost', !(s.sel && s.sel.from === 'archive')));
+    } else if (s.tab === 'mercado') {
+      actions.push(btn('Marcar interés', () => { if (s.sel) this.toggleInterest(s.sel.id); else this.say('Selecciona un contrato del mercado.', 'warn'); }, 'ghost', !s.sel));
+    } else if (s.tab === 'retos') {
+      actions.push(btn('Responder inspección', () => this.startInspection(), 'primary', s.insp !== 'pending'));
+    }
+    actions.push(btn('Deshacer jugada', () => this.undo(), 'ghost', !s.history.length || !!ex));
+
+    let quiz = { kicker: '', q: '', options: [] };
+    if (s.quiz) {
+      if (s.quiz.kind === 'doc') {
+        const d = D[s.quiz.id];
+        quiz = { kicker: 'EMITIR · ' + d.name.toUpperCase() + ' · RETO TIPO SABER PRO', q: d.q, options: d.options };
+      } else if (s.quiz.kind === 'incoterm') {
+        quiz = { kicker: 'DECISIÓN DEL COMERCIAL · FASE MERCADO', q: '¿Con qué Incoterm cierras el contrato C-07 con Rotterdam Foods?', options: [{ id: 'A', text: 'CIF a USD 48.100: contratas flete y seguro hasta Rotterdam' }, { id: 'B', text: 'FOB a USD 44.000: el comprador contrata flete y seguro' }] };
+      } else if (s.quiz.kind === 'motivo') {
+        quiz = { kicker: 'DECISIÓN DEL CEO · DEVOLVER LA OPERACIÓN', q: '¿Por qué devuelves la operación al equipo?', options: [{ id: 'A', text: 'Faltan tramos o documentos' }, { id: 'B', text: 'El costo es demasiado alto' }, { id: 'C', text: 'Hay un riesgo sin cubrir' }] };
+      } else {
+        quiz = { kicker: 'INSPECCIÓN SORPRESA · RETO TIPO SABER PRO', q: 'La aduana revisa tu póliza: cubre USD 44.000, el valor FOB, en una venta CIF. ¿Qué debes corregir antes del levante?', options: [{ id: 'A', text: 'Nada: en CIF el seguro es del comprador' }, { id: 'B', text: 'Asegurar al menos el 110 % del valor del contrato' }, { id: 'C', text: 'Cambiar el Incoterm a FOB' }] };
+      }
+      quiz.options = quiz.options.map((o) => ({ id: o.id, text: o.text, pick: () => this.answer(o.id), style: 'font: inherit; font-size: 14px; text-align: left; min-height: 44px; padding: 8px 14px; border-radius: 12px; cursor: pointer; background: ' + t.soft + '; color: ' + t.text + '; border: 1px solid ' + t.border2 }));
+    }
+
+    let rowEmptyText = '';
+    if (!cards.length && !log.length) rowEmptyText = s.tab === 'retos' ? (s.insp === 'pending' ? 'Hay una inspección sorpresa pendiente: el rol Aduanas debe responderla.' : 'Sin retos pendientes. Llevas ' + s.saber.ok + ' de ' + s.saber.n + ' respuestas correctas.') : (s.tab === 'bitacora' ? 'Aún no hay decisiones registradas.' : 'No hay cartas aquí.');
+
+    let selHint = 'Selecciona una carta de tu mano y luego el tramo donde la juegas.';
+    if (selCard) selHint = 'Tramos resaltados: donde puedes jugar «' + K[selCard].name + '» ahora.';
+    else if (s.sel && s.sel.from === 'doc') selHint = 'Pulsa «Emitir documento» para responder el reto y colocarlo en la aduana.';
+
+    const vistoTxt = { none: 'Pendiente', aprobada: 'Aprobado', devuelta: 'Devuelto' }[s.visto];
+    const m = s.msg;
+    return {
+      t: t, modeLabel: s.connected ? 'Fases controladas por el Superusuario' : 'Modo práctica: el equipo avanza las fases',
+      kpis: kpis, phases: phases, guide: guide, decisions: guide.decisions,
+      roles: roles, roleHint: roleHints[s.role],
+      hasEvents: evs.length > 0, evs: evs,
+      c: { code: c.code, title: c.title, buyer: c.buyer, qty: c.qty, price: this.fmt(c.price), incoterm: c.incoterm, delivery: 'A bordo en ' + c.port, plazoText: 'Embarque en ' + c.plazo + ' días', visto: vistoTxt, riskText: c.incoterm === 'CIF' ? 'El riesgo pasa al comprador cuando la carga queda a bordo; tú pagas flete y seguro hasta Rotterdam.' : 'El riesgo pasa al comprador a bordo en Cartagena; él contrata y paga flete y seguro.' },
+      slots: slots, cob: cob, selHint: selHint,
+      sumTitle: ex ? 'Liquidación de la operación' : 'Resumen en vivo',
+      sum: sum, alerts: alerts,
+      executed: !!ex,
+      resultTitle: ex ? (ex.otif ? 'Entregada a tiempo y completa · ' : 'Entregada fuera de plazo · ') + ex.score + ' / 100 puntos' : '',
+      resultText: ex ? 'Margen ' + this.pct(ex.margenPct) + ' · exactitud documental ' + ex.exact + ' % · Saber Pro ' + ex.saberPct + ' %. Puntaje = 40 % margen + 25 % OTIF + 20 % exactitud + 15 % Saber Pro.' : '',
+      resultStyle: 'border-radius: 14px; padding: 12px; color: ' + t.text + '; background: ' + (ex && ex.otif ? t.okBg : t.pRed),
+      roleSum: this.roleSummary(t),
+      tabs: tabs, actions: actions,
+      hasMsg: !!m, msg: m ? m.text : '',
+      msgStyle: 'border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.45; color: ' + t.text + '; background: ' + (m && m.tone === 'warn' ? t.pRed : (m && m.tone === 'ok' ? t.okBg : t.pBlue)),
+      quizOpen: !!s.quiz, quiz: quiz,
+      cards: cards, log: log, rowEmpty: cards.length === 0 && log.length === 0, rowEmptyText: rowEmptyText
+    };
+  }
+}
+</script>
+</body>
+</html>

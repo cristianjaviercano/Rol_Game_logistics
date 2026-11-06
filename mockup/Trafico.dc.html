@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Planificador de transporte multimodal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1250px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; padding: 24px 32px 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+  <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="align-self: flex-start; font-size: 12px; font-weight: 600; background: {{t.pBlue}}; border-radius: 999px; padding: 6px 12px">Jefe de Tráfico y Operaciones DFI</span>
+      <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700">Planificador de transporte multimodal</h1>
+      <p style="margin: 0; font-size: 14px; color: {{t.quiet}}">Elige el caso, el Incoterm y cada detalle del transporte: el sistema cubica, costea y advierte errores en tiempo real.</p>
+    </div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; background: {{t.pYellow}}; border-radius: 999px; padding: 8px 12px">TRM de la partida: COP 3.200</div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 16px">
+    <sc-for list="{{cases}}" as="cs" hint-placeholder-count="2">
+      <button type="button" onClick="{{cs.pick}}" aria-pressed="{{cs.pressed}}" style="{{cs.style}}">
+        <span style="display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: {{cs.kickerColor}}">{{cs.kicker}}</span>
+        <span style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; margin-top: 4px">{{cs.product}}</span>
+        <span style="display: block; font-size: 13px; margin-top: 4px">{{cs.route}}</span>
+        <span style="display: block; font-size: 13px; margin-top: 2px; font-family: 'IBM Plex Mono', monospace">{{cs.specs}}</span>
+      </button>
+    </sc-for>
+    <div style="flex: 1 1 360px; min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 14px; font-weight: 600">Incoterm 2020 del contrato · tú eres el {{role}}</span>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{terms}}" as="tm" hint-placeholder-count="6">
+          <button type="button" onClick="{{tm.pick}}" aria-pressed="{{tm.pressed}}" style="{{tm.style}}">{{tm.code}}</button>
+        </sc-for>
+      </div>
+      <span style="font-size: 12px; color: {{t.quiet}}; line-height: 1.4">{{termNote}}</span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+    <div style="flex: 999 1 720px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <sc-for list="{{steps}}" as="st" hint-placeholder-count="5">
+        <section style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px">
+            <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{st.title}}</h2>
+            <span style="{{st.badgeStyle}}">{{st.badge}}</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px">
+            <sc-for list="{{st.options}}" as="op" hint-placeholder-count="3">
+              <button type="button" onClick="{{op.pick}}" aria-pressed="{{op.pressed}}" style="{{op.style}}">
+                <span style="display: block; font-size: 14px; font-weight: 600">{{op.label}}</span>
+                <span style="display: block; font-size: 12px; margin-top: 3px; line-height: 1.4; color: {{t.quiet}}">{{op.detail}}</span>
+                <sc-if value="{{op.hasNote}}" hint-placeholder-val="{{false}}">
+                  <span style="display: block; font-size: 12px; font-weight: 600; margin-top: 6px; color: {{t.alertText}}">{{op.note}}</span>
+                </sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+    </div>
+
+    <aside style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <section style="background: {{t.pBlue}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">Resultado de la operación</h2>
+        <div style="font-size: 14px; font-weight: 600">{{r.chain}}</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <div style="background: {{t.card}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">Lead time</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 500">{{r.days}} días</span></div>
+          <div style="background: {{t.card}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">Costo DFI total</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 500; color: {{t.accentText}}">USD {{r.total}}</span></div>
+          <div style="background: {{t.card}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">A tu cargo según Incoterm</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 500">USD {{r.mine}}</span></div>
+          <div style="background: {{t.card}}; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; color: {{t.quiet}}">DFI / valor mercancía</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 500">{{r.pct}} %</span></div>
+        </div>
+        <div style="background: {{t.card}}; border-radius: 14px; padding: 12px; font-size: 13px; line-height: 1.5"><span style="font-weight: 600">Cubicaje: </span>{{r.cubicaje}}</div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <sc-for list="{{r.lines}}" as="ln" hint-placeholder-count="5">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-top: 1px solid {{t.border}}"><span>{{ln.label}}</span><span style="font-family: 'IBM Plex Mono', monospace">USD {{ln.value}}</span></div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="background: {{t.pYellow}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">Divisas</h2>
+        <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Costo en pesos hoy</span><span style="font-family: 'IBM Plex Mono', monospace">COP {{r.cop}}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Si el peso se devalúa 12 %</span><span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: {{t.alertText}}">COP {{r.copDev}}</span></div>
+        <span style="font-size: 12px; color: {{t.quiet}}; line-height: 1.4">El CFO puede fijar la tasa con un forward antes de pagar los fletes en dólares.</span>
+      </section>
+
+      <section style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">Alertas de la configuración</h2>
+        <sc-if value="{{r.clean}}" hint-placeholder-val="{{false}}">
+          <div style="font-size: 13px; padding: 10px 12px; border-radius: 12px; background: {{t.pBlue}}">Sin errores: la configuración cumple con la carga y el Incoterm.</div>
+        </sc-if>
+        <sc-for list="{{r.warnings}}" as="w" hint-placeholder-count="1">
+          <div style="{{w.style}}">{{w.text}}</div>
+        </sc-for>
+      </section>
+
+      <section style="background: {{t.pRed}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">Factores geográficos y geopolíticos</h2>
+        <sc-for list="{{r.geo}}" as="g" hint-placeholder-count="3">
+          <div style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.45"><span style="flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: {{t.alert}}"></span><span>{{g.text}}</span></div>
+        </sc-for>
+      </section>
+    </aside>
+  </div>
+  <div style="font-size: 12px; color: {{t.quiet}}">Mock-up del PMV · tarifas, tiempos y capacidades de demostración</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      caseId: 'expo',
+      terms: { expo: 'FCA', impo: 'FOB' },
+      sel: {
+        expo: { mode: 'mar', unit: '40rf', node: 'ctg', haul: 'trf', ins: 'a' },
+        impo: { mode: 'mar', unit: '40hc', node: 'ctg', haul: 'trs', ins: 'a' }
+      }
+    };
+  }
+
+  theme() {
+    if (this.props.nocturno === true) {
+      return { bg: '#0B1320', card: '#0F1A2B', soft: '#13213A', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3', accent: '#3DD6D0', accentInk: '#06201F', accentText: '#3DD6D0', alert: '#F2A93B', alertInk: '#1A1206', alertText: '#F2A93B', pBlue: '#13213A', pYellow: '#13213A', pRed: '#13213A', selBg: '#13213A', mineBg: '#3DD6D0', mineInk: '#06201F', otherBg: 'transparent', otherInk: '#C9D6E3', otherLine: '#4A6384' };
+    }
+    return { bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', accentInk: '#FFFFFF', accentText: '#1F5EFF', alert: '#D62839', alertInk: '#FFFFFF', alertText: '#D62839', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', selBg: '#E4ECFF', mineBg: '#1F5EFF', mineInk: '#FFFFFF', otherBg: '#FFF4CC', otherInk: '#6B4E00', otherLine: '#FFC93C' };
+  }
+
+  data() {
+    return {
+      expo: {
+        kicker: 'CASO DE EXPORTACIÓN', product: 'Tilapia congelada · Acuícola del Sinú', origin: 'Montería', dest: 'Miami',
+        weight: 22, vol: 40, value: 88000, frozen: true, role: 'vendedor', haulCat: 'pre', haulTitle: '4. Acarreo Montería → nodo de salida', nodeTitle: '3. Nodo de salida', customs: 350,
+        modes: [
+          { id: 'mar', label: 'Marítimo', detail: 'Portacontenedores · 4 días a Miami', days: 4 },
+          { id: 'air', label: 'Aéreo', detail: 'Carguero · 1 día a Miami · USD 1,90 por kg facturable', days: 1, perKg: 1.9 }
+        ],
+        units: [
+          { id: '20dv', mode: 'mar', label: '20 pies Dry', cap: 21.7, vol: 33, usd: 1900, reefer: false },
+          { id: '40hc', mode: 'mar', label: '40 pies High Cube', cap: 26.5, vol: 76, usd: 2600, reefer: false },
+          { id: '20rf', mode: 'mar', label: '20 pies Reefer', cap: 21, vol: 28, usd: 3200, reefer: true },
+          { id: '40rf', mode: 'mar', label: '40 pies Reefer', cap: 27, vol: 59, usd: 4100, reefer: true },
+          { id: 'pmc', mode: 'air', label: 'Pallet PMC isotérmico', cap: 4.5, vol: 10, usd: 0, reefer: true }
+        ],
+        nodes: [
+          { id: 'ctg', mode: 'mar', label: 'Puerto de Cartagena', detail: 'Acarreo 1 día · USD 450 por contenedor en terminal', days: 1, usd: 450, mult: 1, geo: 'Cartagena concentra la mayor oferta de servicios regulares hacia EE. UU.' },
+          { id: 'baq', mode: 'mar', label: 'Puerto de Barranquilla', detail: 'Acarreo 1,5 días · USD 400 por contenedor', days: 1.5, usd: 400, mult: 1.15, geo: 'Barranquilla es puerto fluvial: su calado depende de la sedimentación del Magdalena.' },
+          { id: 'mde', mode: 'air', label: 'Aeropuerto de Rionegro (MDE)', detail: 'Acarreo 1 día por vía de montaña · USD 300 en terminal', days: 1, usd: 300, mult: 1.4, geo: 'El acarreo a Rionegro cruza la cordillera: más tiempo de cadena de frío en carretera.' },
+          { id: 'baqa', mode: 'air', label: 'Aeropuerto de Barranquilla (BAQ)', detail: 'Acarreo 1,5 días por vía plana · USD 280 en terminal', days: 1.5, usd: 280, mult: 1.15, geo: 'Barranquilla ofrece una ruta terrestre plana desde Córdoba.' }
+        ],
+        hauls: [
+          { id: 'trf', label: 'Tractomula refrigerada', detail: 'USD 1.250 por viaje · mantiene –18 °C', usd: 1250, reefer: true },
+          { id: 'trs', label: 'Tractomula seca', detail: 'USD 850 por viaje', usd: 850, reefer: false }
+        ],
+        geoMode: { mar: 'Caribe: temporada de huracanes de junio a noviembre.', air: 'Aéreo: cadena de frío más corta, pero mayor huella de carbono por kilo.' }
+      },
+      impo: {
+        kicker: 'CASO DE IMPORTACIÓN', product: 'Repuestos electrónicos · Distribuidora Córdoba', origin: 'Shenzhen', dest: 'Montería',
+        weight: 9.5, vol: 62, value: 140000, frozen: false, role: 'comprador', haulCat: 'post', haulTitle: '4. Acarreo nodo de llegada → Montería', nodeTitle: '3. Nodo de llegada', customs: 450,
+        modes: [
+          { id: 'mar', label: 'Marítimo', detail: 'Transpacífico · 22 a 32 días según el puerto' },
+          { id: 'air', label: 'Aéreo', detail: 'Carguero con conexión · 3 días · USD 5,20 por kg facturable', days: 3, perKg: 5.2 }
+        ],
+        units: [
+          { id: '20dv', mode: 'mar', label: '20 pies Dry', cap: 21.7, vol: 33, usd: 2400, reefer: false },
+          { id: '40dv', mode: 'mar', label: '40 pies Dry', cap: 26.5, vol: 67, usd: 3300, reefer: false },
+          { id: '40hc', mode: 'mar', label: '40 pies High Cube', cap: 26.5, vol: 76, usd: 3500, reefer: false },
+          { id: '40rf', mode: 'mar', label: '40 pies Reefer', cap: 27, vol: 59, usd: 6800, reefer: true },
+          { id: 'pmc', mode: 'air', label: 'Pallet PMC', cap: 4.5, vol: 10.5, usd: 0, reefer: false }
+        ],
+        nodes: [
+          { id: 'ctg', mode: 'mar', label: 'Puerto de Cartagena', detail: '32 días vía Canal de Panamá · acarreo 1 día a Montería', mainDays: 32, days: 1, usd: 450, mult: 1, geo: 'La ruta cruza el Canal de Panamá: su calado se restringe en épocas de sequía.' },
+          { id: 'bun', mode: 'mar', label: 'Puerto de Buenaventura', detail: '22 días directo por el Pacífico · acarreo 3 días a Montería', mainDays: 22, days: 3, usd: 420, mult: 2.6, geo: 'Buenaventura evita el canal, pero la vía al interior es vulnerable a cierres por derrumbes.' },
+          { id: 'bog', mode: 'air', label: 'Aeropuerto El Dorado (BOG)', detail: 'Acarreo 2 días a Montería · USD 300 en terminal', days: 2, usd: 300, mult: 1.9, geo: 'El Dorado es la principal terminal de carga aérea del país.' },
+          { id: 'mde', mode: 'air', label: 'Aeropuerto de Rionegro (MDE)', detail: 'Acarreo 1 día a Montería · USD 280 en terminal', days: 1, usd: 280, mult: 1.2, geo: 'Rionegro queda más cerca de Córdoba, con menos frecuencias desde Asia.' }
+        ],
+        hauls: [
+          { id: 'trs', label: 'Tractomula seca', detail: 'USD 1.100 por viaje desde Cartagena', usd: 1100, reefer: false },
+          { id: 'trf', label: 'Tractomula refrigerada', detail: 'USD 1.600 por viaje desde Cartagena', usd: 1600, reefer: true }
+        ],
+        geoMode: { mar: 'Ruta Asia–Colombia: los eventos de la partida pueden encarecer fletes o cerrar puertos.', air: 'Aéreo: se factura el mayor entre peso real y peso volumétrico.' }
+      }
+    };
+  }
+
+  fmt(v) { return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  fmt1(v) { return v.toFixed(1).replace('.', ',').replace(',0', ''); }
+
+  bestUnit(c, mode) {
+    const inMode = c.units.filter((u) => u.mode === mode);
+    const apt = inMode.filter((u) => !c.frozen || u.reefer);
+    const pool = apt.length ? apt : inMode;
+    const cost = (u) => Math.ceil(Math.max(c.weight / u.cap, c.vol / u.vol)) * u.usd;
+    return pool.slice().sort((a, b) => cost(a) - cost(b))[0].id;
+  }
+
+  setSel(caseId, key, id) {
+    const c = this.data()[caseId];
+    this.setState((s) => {
+      const cur = Object.assign({}, s.sel[caseId]);
+      cur[key] = id;
+      if (key === 'mode') {
+        cur.unit = this.bestUnit(c, id);
+        cur.node = c.nodes.filter((n) => n.mode === id)[0].id;
+      }
+      return { sel: Object.assign({}, s.sel, { [caseId]: cur }) };
+    });
+  }
+
+  renderVals() {
+    const t = this.theme();
+    const all = this.data();
+    const caseId = this.state.caseId, c = all[caseId], s = this.state.sel[caseId], term = this.state.terms[caseId];
+    const mode = c.modes.filter((m) => m.id === s.mode)[0];
+    const unit = c.units.filter((u) => u.id === s.unit)[0];
+    const node = c.nodes.filter((n) => n.id === s.node)[0];
+    const haul = c.hauls.filter((h) => h.id === s.haul)[0];
+    const insList = [{ id: 'a', label: 'ICC (A) · todo riesgo', detail: 'Prima 0,45 % sobre CIF + 10 %', rate: 0.0045 }, { id: 'c', label: 'ICC (C) · riesgos mayores', detail: 'Prima 0,18 % sobre CIF + 10 %', rate: 0.0018 }];
+    const ins = insList.filter((i) => i.id === s.ins)[0];
+    const isAir = s.mode === 'air';
+
+    const units = Math.ceil(Math.max(c.weight / unit.cap, c.vol / unit.vol));
+    const byWeight = c.weight / unit.cap >= c.vol / unit.vol;
+    const chargeKg = Math.max(c.weight * 1000, c.vol * 166.67);
+    const freight = isAir ? chargeKg * mode.perKg : units * unit.usd;
+    const trips = isAir ? Math.max(Math.ceil(c.weight / 17), Math.ceil(c.vol / 60)) : units;
+    const haulCost = trips * haul.usd * node.mult;
+    const terminal = isAir ? node.usd : units * node.usd;
+    const insCost = ins.rate * 1.1 * (c.value + freight);
+    const total = freight + haulCost + terminal + c.customs + insCost;
+    const mainDays = isAir ? mode.days : (caseId === 'expo' ? mode.days : node.mainDays);
+    const days = caseId === 'expo' ? node.days + 1 + mainDays + 1 : mainDays + 2 + node.days;
+
+    const sellerSets = { EXW: [], FCA: ['pre'], FOB: ['pre'], CIF: ['pre', 'main', 'seg'], CIP: ['pre', 'main', 'seg'], DAP: ['pre', 'main', 'seg', 'post'] };
+    const sellerSet = sellerSets[term];
+    const mineCat = (cat) => (c.role === 'vendedor' ? sellerSet.indexOf(cat) >= 0 : sellerSet.indexOf(cat) < 0);
+    const customsMine = c.role === 'vendedor' ? term !== 'EXW' : true;
+    const mine = (mineCat('main') ? freight + terminal : 0) + (mineCat(c.haulCat) ? haulCost : 0) + (mineCat('seg') ? insCost : 0) + (customsMine ? c.customs : 0);
+
+    const warnings = [];
+    const warn = (text) => warnings.push({ text: text, style: 'font-size: 13px; line-height: 1.45; padding: 10px 12px; border-radius: 12px; color: ' + t.alertInk + '; background: ' + t.alert });
+    const info = (text) => warnings.push({ text: text, style: 'font-size: 13px; line-height: 1.45; padding: 10px 12px; border-radius: 12px; background: ' + t.pBlue });
+    if (c.frozen && !unit.reefer) warn('La tilapia congelada exige contenedor refrigerado a –18 °C: la carga sería rechazada.');
+    if (c.frozen && !haul.reefer) warn('La tractomula seca rompe la cadena de frío en el acarreo.');
+    if (!c.frozen && unit.reefer) info('Contenedor refrigerado innecesario para carga seca: sobrecosto de flete.');
+    if (!c.frozen && haul.reefer) info('Tractomula refrigerada innecesaria: sobrecosto de acarreo.');
+    if (isAir && (term === 'FOB' || term === 'CIF')) warn(term + ' solo aplica a transporte marítimo y fluvial: en aéreo usa FCA o CIP.');
+    if (term === 'CIP' && s.ins === 'c') warn('En CIP (Incoterms 2020) el vendedor debe contratar cobertura ICC (A).');
+    if (isAir && chargeKg > c.weight * 1000) info('Se factura por peso volumétrico: ' + this.fmt(chargeKg) + ' kg frente a ' + this.fmt(c.weight * 1000) + ' kg reales.');
+
+    const geo = [{ text: c.geoMode[s.mode] }, { text: node.geo }, { text: 'El Superusuario puede lanzar eventos (tormentas, huelgas, devaluaciones) que alteren esta ruta en cualquier tick.' }];
+
+    const optStyle = (on) => 'flex: 1 1 200px; min-width: 0; text-align: left; font: inherit; color: ' + t.text + '; padding: 12px 14px; min-height: 64px; border-radius: 14px; cursor: pointer; ' + (on ? 'background: ' + t.selBg + '; border: 2px solid ' + t.accent : 'background: ' + t.card + '; border: 1px solid ' + t.border2);
+    const mk = (key, list, noteFn) => list.map((o) => {
+      const note = noteFn ? noteFn(o) : '';
+      return { label: o.label, detail: o.detail, note: note, hasNote: note !== '', pressed: s[key] === o.id ? 'true' : 'false', style: optStyle(s[key] === o.id), pick: () => this.setSel(caseId, key, o.id) };
+    });
+    const badge = (cat) => {
+      const m = mineCat(cat);
+      const other = c.role === 'vendedor' ? 'Contrata el comprador' : 'Contrata el vendedor';
+      return {
+        badge: m ? 'Contratas tú' : other,
+        badgeStyle: 'font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px; ' + (m ? 'color: ' + t.mineInk + '; background: ' + t.mineBg + '; border: 1px solid ' + t.mineBg : 'color: ' + t.otherInk + '; background: ' + t.otherBg + '; border: 1px solid ' + t.otherLine)
+      };
+    };
+    const unitList = c.units.filter((u) => u.mode === s.mode).map((u) => ({
+      id: u.id, label: u.label, reefer: u.reefer,
+      detail: (u.mode === 'air' ? 'Hasta ' : '') + this.fmt1(u.cap) + ' t · ' + this.fmt1(u.vol) + ' m³' + (u.usd ? ' · USD ' + this.fmt(u.usd) + ' por unidad' : ' por pallet')
+    }));
+    const steps = [
+      Object.assign({ title: '1. Modo de transporte principal', options: mk('mode', c.modes) }, badge('main')),
+      Object.assign({ title: '2. Unidad de carga', options: mk('unit', unitList, (u) => (c.frozen && !u.reefer ? 'No apto para carga congelada' : '')) }, badge('main')),
+      Object.assign({ title: c.nodeTitle, options: mk('node', c.nodes.filter((n) => n.mode === s.mode)) }, badge('main')),
+      Object.assign({ title: c.haulTitle, options: mk('haul', c.hauls, (h) => (c.frozen && !h.reefer ? 'Rompe la cadena de frío' : '')) }, badge(c.haulCat)),
+      Object.assign({ title: '5. Seguro de carga', options: mk('ins', insList) }, badge('seg'))
+    ];
+
+    const cases = ['expo', 'impo'].map((k) => {
+      const d = all[k], on = k === caseId;
+      return {
+        kicker: d.kicker, product: d.product,
+        route: d.origin + ' → ' + d.dest,
+        specs: this.fmt1(d.weight) + ' t · ' + d.vol + ' m³ · USD ' + this.fmt(d.value),
+        pressed: on ? 'true' : 'false',
+        kickerColor: on ? t.accentText : t.alertText,
+        style: 'flex: 1 1 300px; min-width: 0; text-align: left; font: inherit; color: ' + t.text + '; padding: 16px; border-radius: 20px; cursor: pointer; ' + (on ? 'background: ' + t.selBg + '; border: 2px solid ' + t.accent : 'background: ' + t.card + '; border: 1px solid ' + t.border2),
+        pick: () => this.setState({ caseId: k })
+      };
+    });
+    const terms = ['EXW', 'FCA', 'FOB', 'CIF', 'CIP', 'DAP'].map((code) => ({
+      code: code,
+      pressed: code === term ? 'true' : 'false',
+      style: 'font-family: \'IBM Plex Mono\', monospace; font-size: 14px; font-weight: 500; min-height: 44px; border-radius: 12px; cursor: pointer; ' + (code === term ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2),
+      pick: () => this.setState((st) => ({ terms: Object.assign({}, st.terms, { [caseId]: code }) }))
+    }));
+    const termNotes = {
+      EXW: 'EXW: el comprador asume todos los tramos, incluso la aduana de exportación.',
+      FCA: 'FCA: el vendedor entrega al transportista designado en el lugar convenido; sirve para cualquier modo.',
+      FOB: 'FOB: entrega a bordo del buque; exclusivo de transporte marítimo y fluvial.',
+      CIF: 'CIF: el vendedor paga flete y seguro mínimo (C), pero el riesgo pasa a bordo en origen; solo marítimo.',
+      CIP: 'CIP: como CIF pero para cualquier modo, con seguro obligatorio ICC (A).',
+      DAP: 'DAP: el vendedor lleva la carga hasta destino; la aduana de importación sigue a cargo del comprador.'
+    };
+
+    const r = {
+      chain: c.origin + ' → ' + node.label + ' → ' + c.dest,
+      days: this.fmt1(days),
+      total: this.fmt(total),
+      mine: this.fmt(mine),
+      pct: this.fmt1(total / c.value * 100),
+      cop: this.fmt(total * 3200),
+      copDev: this.fmt(total * 3200 * 1.12),
+      cubicaje: isAir
+        ? units + ' pallets; peso facturable ' + this.fmt(chargeKg) + ' kg (' + (chargeKg > c.weight * 1000 ? 'manda el volumen' : 'manda el peso') + ').'
+        : units + ' × ' + unit.label + ', limitado por ' + (byWeight ? 'peso' : 'volumen') + '; aprovechamiento de volumen ' + Math.round(c.vol / (units * unit.vol) * 100) + ' %.',
+      lines: [
+        { label: isAir ? 'Flete aéreo' : 'Flete marítimo', value: this.fmt(freight) },
+        { label: 'Acarreo terrestre (' + trips + (trips === 1 ? ' viaje)' : ' viajes)'), value: this.fmt(haulCost) },
+        { label: 'Manejo en terminal', value: this.fmt(terminal) },
+        { label: 'Agenciamiento aduanero', value: this.fmt(c.customs) },
+        { label: 'Seguro ' + (s.ins === 'a' ? 'ICC (A)' : 'ICC (C)'), value: this.fmt(insCost) }
+      ],
+      warnings: warnings,
+      clean: warnings.length === 0,
+      geo: geo
+    };
+
+    return { t: t, role: c.role, cases: cases, terms: terms, termNote: termNotes[term], steps: steps, r: r };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "rol-game-logistics",
+  "version": "0.2.0",
+  "private": true,
+  "description": "LogiVerse: laboratorio virtual de comercio exterior jugado por roles y cartas (mock-up y pruebas en vacío).",
+  "scripts": {
+    "test": "node tests/harness.js mockup && node tests/cards_harness.js mockup && node tests/holes.js mockup",
+    "audit": "node tests/audit.js mockup",
+    "build:mesa": "python3 tools/build_mesa.py"
+  }
+}
