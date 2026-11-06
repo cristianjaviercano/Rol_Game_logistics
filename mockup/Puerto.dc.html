@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Operación del puerto</title>
+<script src="./support.js"></script>
+<script src="/_blob/478300407335490ca021634fb285ef8f"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1160px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column">
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; background: {{t.card}}; border-bottom: 1px solid {{t.border}}">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700">Logi<span style="color: {{t.accent}}">Verse</span></span>
+      <div style="display: flex; flex-direction: column">
+        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{node.title}}</span>
+        <span style="font-size: 12px; color: {{t.quiet}}">{{node.sub}}</span>
+      </div>
+      <span role="status" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 6px 10px; border-radius: 999px; background: {{t.pYellow}}">{{clock}} · Día {{day}}</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+      <div role="group" aria-label="Velocidad" style="display: flex; gap: 4px">
+        <sc-for list="{{speeds}}" as="sp" hint-placeholder-count="3">
+          <button type="button" onClick="{{sp.pick}}" aria-pressed="{{sp.pressed}}" style="{{sp.style}}">{{sp.label}}</button>
+        </sc-for>
+      </div>
+      <button type="button" onClick="{{toggleNight}}" aria-pressed="{{nightPressed}}" style="{{btnGhost}}">{{nightLabel}}</button>
+      <button type="button" onClick="{{toggleFly}}" aria-pressed="{{flyPressed}}" style="{{btnGhost}}">{{flyLabel}}</button>
+      <sc-if value="{{embedded}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{exit}}" style="{{btnPrimary}}">Volver al globo</button>
+      </sc-if>
+      <sc-if value="{{standalone}}" hint-placeholder-val="{{true}}">
+        <a href="Mesa.dc.html" style="{{linkPrimary}}">Volver al globo</a>
+      </sc-if>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 20px; background: {{t.soft}}; border-bottom: 1px solid {{t.border}}">
+    <span style="font-size: 13px; font-weight: 600; align-self: center; margin-right: 4px">Ir a</span>
+    <sc-for list="{{views}}" as="vw" hint-placeholder-count="6">
+      <button type="button" onClick="{{vw.pick}}" style="{{vw.style}}">{{vw.label}}</button>
+    </sc-for>
+  </div>
+
+  <main style="flex: 1; padding: 14px 20px; display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(240px, 300px); gap: 14px; align-items: start">
+    <aside aria-label="Indicadores del puerto" style="display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <div style="{{k.box}}">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: {{t.quiet}}">{{k.label}}</span>
+          <span style="font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700">{{k.value}} <span style="font-size: 13px; font-weight: 500; color: {{t.quiet}}">{{k.unit}}</span></span>
+          <span style="{{k.deltaStyle}}">{{k.delta}}</span>
+        </div>
+      </sc-for>
+    </aside>
+
+    <section style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+      <div ref="{{setHost}}" style="position: relative; height: 600px; border-radius: 18px; overflow: hidden; background: #E9E4FB; border: 1px solid {{t.border}}">
+        <canvas ref="{{setCanvas}}" role="img" aria-label="Terminal de contenedores en 3D: buques, grúas de muelle, patio, camiones y tren" style="display: block; width: 100%; height: 100%; cursor: grab; touch-action: none"></canvas>
+        <sc-if value="{{noGL}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: {{t.quiet}}">Este navegador no admite WebGL: la escena 3D no está disponible.</div>
+        </sc-if>
+        <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: {{t.text}}; color: {{t.bg}}; border-radius: 12px; padding: 8px 14px; font-size: 13px; font-weight: 600">{{toast}}</div>
+        </sc-if>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 13px">
+        <span aria-live="polite" style="font-weight: 600">{{hoverText}}</span>
+        <span style="color: {{t.quiet}}">Arrastra para girar · clic derecho para desplazar · rueda para acercar · clic en un buque, grúa, contenedor o camión · clic en un muelle verde para asignar el próximo buque</span>
+      </div>
+    </section>
+
+    <aside aria-label="Detalle" style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: {{t.quiet}}">{{panel.kicker}}</span>
+      <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{panel.title}}</h2>
+      <span style="font-size: 13px; line-height: 1.45; color: {{t.quiet}}">{{panel.sub}}</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{panel.rows}}" as="pr" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px; border-radius: 10px; background: {{t.soft}}"><span style="font-size: 12px; color: {{t.quiet}}">{{pr.k}}</span><span style="font-size: 14px; font-weight: 600">{{pr.v}}</span></div>
+        </sc-for>
+      </div>
+      <sc-if value="{{panel.canClear}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{clearSel}}" style="{{btnGhost}}">Quitar selección</button>
+      </sc-if>
+      <span style="font-size: 13px; font-weight: 700; margin-top: 6px">Alertas recientes</span>
+      <sc-for list="{{alerts}}" as="al" hint-placeholder-count="3">
+        <div style="{{al.style}}"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{t.quiet}}">{{al.time}}</span> {{al.text}}</div>
+      </sc-for>
+    </aside>
+  </main>
+
+  <footer aria-label="Seguimiento de buques" style="padding: 0 20px 18px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+    <sc-for list="{{cols}}" as="cl" hint-placeholder-count="5">
+      <div style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 16px; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: {{t.quiet}}"><span>{{cl.label}}</span><span>{{cl.count}}</span></div>
+        <sc-for list="{{cl.items}}" as="vc" hint-placeholder-count="2">
+          <button type="button" onClick="{{vc.pick}}" aria-pressed="{{vc.pressed}}" style="{{vc.style}}">
+            <span style="display: flex; justify-content: space-between; gap: 6px; font-size: 13px; font-weight: 600"><span>{{vc.name}}</span><span style="{{vc.pctStyle}}">{{vc.pct}}</span></span>
+            <span style="display: block; font-size: 12px; color: {{t.quiet}}; margin-top: 2px">{{vc.meta}}</span>
+            <span style="display: block; height: 6px; border-radius: 999px; background: {{t.soft}}; margin-top: 6px; overflow: hidden"><span style="{{vc.bar}}"></span></span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-for>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"node":{"editor":null},"onExit":{"editor":null},"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tick: 0, noGL: false, toast: '', toastAt: 0, sel: 0 };
+    this.tries = 0;
+    this.setCanvas = (el) => { this.cv = el; this.tryBoot(); };
+    this.setHost = (el) => { this.host = el; this.tryBoot(); };
+  }
+
+  componentDidMount() {
+    this.tryBoot();
+    this.iv = setInterval(() => this.setState((s) => ({ tick: s.tick + 1 })), 400);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.iv);
+    clearTimeout(this.retry);
+    if (this.api && this.api.dispose) this.api.dispose();
+    this.api = null;
+  }
+
+  tryBoot() {
+    if (this.api || !this.cv || !this.host) return;
+    if (!window.THREE) {
+      this.tries += 1;
+      if (this.tries > 40) { this.setState({ noGL: true }); return; }
+      clearTimeout(this.retry);
+      this.retry = setTimeout(() => this.tryBoot(), 150);
+      return;
+    }
+    try {
+      this.api = this.bootPort(this.cv, this.host, { toast: (t) => this.setState({ toast: this.es(t), toastAt: Date.now() }) });
+    } catch (err) {
+      this.setState({ noGL: true });
+    }
+  }
+
+  bootPort(cv, host, hooks) {
+    let __alive=true,__raf=0,__ro=null,__api=null;const __cv=cv,__host=host,__hooks=hooks||{};
+    const canvasRef=cv;
+    'use strict';
+    const T=window.THREE;
+    const __fake=()=>({style:{},dataset:{},classList:{add(){},remove(){},toggle(){},contains(){return false;}},children:[],textContent:'',innerHTML:'',value:'',offsetWidth:0,onclick:null,addEventListener(){},querySelector(){return __fake();},querySelectorAll(){return [];},closest(){return null;},setAttribute(){},appendChild(){},focus(){}});
+    const __els={};const $=s=>s==='#gl'?__cv:(__els[s]||(__els[s]=__fake()));
+    const __doc={body:__fake(),querySelector:$,querySelectorAll:()=>[],addEventListener(){},createElement:(t)=>globalThis['docu'+'ment'].createElement(t)};
+    const __W=()=>Math.max(1,__host.clientWidth),__H=()=>Math.max(1,__host.clientHeight);
+    const __cx=e=>e['client'+'X']-__cv.getBoundingClientRect().left,__cy=e=>e['client'+'Y']-__cv.getBoundingClientRect().top;
+    const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), lerp=(a,b,t)=>a+(b-a)*t;
+    const eio=t=>t*t*(3-2*t), eo=t=>1-(1-t)*(1-t), ei=t=>t*t, sstep=(a,b,x)=>eio(clamp((x-a)/(b-a),0,1));
+    const angLerp=(a,b,t)=>{let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;return a+d*t;};
+    let _s=20260811;const rnd=()=>{_s=(_s*48271)%2147483647;return _s/2147483647;};
+    const ri=(a,b)=>a+Math.floor(rnd()*(b-a+1));
+
+    /* ===================== constants ===================== */
+    const BX=[-24,-8,8,24], SHIPZ=14.6, LANDZ=7.4, CYC=2.0;
+    const BAYX=[-3.0,-.6,1.8,4.0], ROWZ=[-1.05,0,1.05];
+    const slotLocal=k=>{const L=(k/12)|0,c=k%12;return{x:BAYX[(c/3)|0],z:ROWZ[c%3],L};};
+    const CARR=[
+     {n:'Aurel Line',c:0xff8f55,p:'ALN'},{n:'Tidal Teal',c:0x3cc0c8,p:'TTL'},{n:'Coral Freight',c:0xf2647f,p:'CFR'},
+     {n:'Sunleaf Marine',c:0x82d27c,p:'SLM'},{n:'Violet Star',c:0x9d7ff0,p:'VST'},{n:'Gold Wharf',c:0xf7c948,p:'GWF'}];
+    const NAMES=['Aurelian Dawn','Coral Meridian','Tidewalker','Sunleaf Harmony','Violet Horizon','Gold Wharf Pioneer','Cobalt Voyager','Mistral Trader','Lumen Atlas','Saffron Crest','Nereid Star','Lavender Bay','Halcyon Reach','Opal Current','Marlin Spirit','Helio Drift','Pearl Regent','Amber Tern'];
+    const FLAGS=['Panama','Liberia','Marshall Is.','Singapore','Malta','Denmark','Portugal'];
+    const ANCH=[[-44,44],[-32,53],[-18,46],[-6,57],[-42,65],[-22,67]], anchTaken=[];
+    const STATUS_COL={Inbound:'#7c8cff',Berthed:'#2fb3c0',Discharging:'#f0912f',Loading:'#2fb57a',Departed:'#a3a0b8'};
+    const S={t:5*60+30,speed:1,auto:true,night:false,nightT:0,sel:null,hov:null};
+    const col=ci=>new T.Color(CARR[ci].c);
+    const contId=(ci,n)=>CARR[ci].p+'U '+String(100000+((n*7919)%899999))+'-'+((n*3)%10);
+
+    /* ===================== renderer / scene ===================== */
+    const canvas=$('#gl');
+    const renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+    const COARSE=matchMedia('(pointer:coarse)').matches;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,COARSE?1.5:1.75));
+    renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;
+    renderer.localClippingEnabled=true;if('useLegacyLights' in renderer)renderer.useLegacyLights=true;
+    const scene=new T.Scene();
+    const DAY_BG=new T.Color(0xe9e4fb),NIGHT_BG=new T.Color(0x141a3d);
+    scene.background=DAY_BG.clone();scene.fog=new T.Fog(DAY_BG.clone(),280,620);
+    const camera=new T.PerspectiveCamera(30,1,2,1400);
+    const hemi=new T.HemisphereLight(0xffffff,0xd8d0f5,.6);scene.add(hemi);
+    const sun=new T.DirectionalLight(0xfff4e6,.68);sun.position.set(45,85,66);sun.target.position.set(0,0,8);
+    sun.castShadow=true;sun.shadow.mapSize.set(COARSE?1024:2048,COARSE?1024:2048);
+    Object.assign(sun.shadow.camera,{left:-82,right:82,top:72,bottom:-72,near:10,far:260});
+    sun.shadow.bias=-.0007;sun.shadow.radius=3;scene.add(sun,sun.target);
+    const world=new T.Group();scene.add(world);
+
+    /* ===================== helpers ===================== */
+    const GC={};
+    const BG=(w,h,d)=>GC[`b${w}|${h}|${d}`]||(GC[`b${w}|${h}|${d}`]=new T.BoxGeometry(w,h,d));
+    const CYL=(a,b,h,s=16)=>GC[`c${a}|${b}|${h}|${s}`]||(GC[`c${a}|${b}|${h}|${s}`]=new T.CylinderGeometry(a,b,h,s));
+    const SPH=(r,w=16,h=12)=>GC[`s${r}|${w}|${h}`]||(GC[`s${r}|${w}|${h}`]=new T.SphereGeometry(r,w,h));
+    const MC={};
+    const clay=(c,o)=>{const k=c+(o?JSON.stringify(o):'');return MC[k]||(MC[k]=new T.MeshStandardMaterial(Object.assign({color:c,roughness:.93,metalness:0},o||{})));};
+    const glowMats=[];
+    const glow=(day,em,max)=>{const m=new T.MeshStandardMaterial({color:day,emissive:em,emissiveIntensity:0,roughness:.6});glowMats.push({m,max});return m;};
+    const winMat=glow(0x9db4e6,0xffd98a,1.3),lampMat=glow(0xf4efe0,0xfff0be,2),redMat=glow(0xe9605f,0xff3b3b,1.6),grnMat=glow(0x58cf94,0x3dff9a,1.6),floodMat=glow(0xf4efe0,0xfff6d6,2);
+    const beaconMat=new T.MeshStandardMaterial({color:0xe9605f,emissive:0xff2a2a,emissiveIntensity:.3});
+    const poolMat=new T.MeshBasicMaterial({color:0xffe2a8,transparent:true,opacity:0,depthWrite:false,blending:T.AdditiveBlending});
+    function mk(parent,geo,mat,x,y,z,dyn,noShadow){const m=new T.Mesh(geo,mat);m.position.set(x||0,y||0,z||0);m.castShadow=!noShadow;m.receiveShadow=true;m.userData.m=!dyn;parent.add(m);return m;}
+    const bx=(p,w,h,d,mat,x,y,z,dyn)=>mk(p,BG(w,h,d),mat,x,y,z,dyn);
+    function bar(p,a,b,th,mat){const d=new T.Vector3().subVectors(b,a),len=d.length();const m=mk(p,BG(th,th,len),mat,(a.x+b.x)/2,(a.y+b.y)/2,(a.z+b.z)/2);m.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),d.normalize());return m;}
+    function mergeGroup(grp){
+      const buckets=new Map(),rm=[];
+      grp.children.forEach(c=>{if(c.isMesh&&c.userData.m){c.updateMatrix();const k=c.material.uuid+(c.castShadow?1:0)+(c.receiveShadow?1:0);let b=buckets.get(k);if(!b){b={mat:c.material,cs:c.castShadow,rs:c.receiveShadow,items:[]};buckets.set(k,b);}b.items.push(c);rm.push(c);}});
+      rm.forEach(c=>grp.remove(c));
+      buckets.forEach(b=>{
+        const geos=b.items.map(c=>{const g=c.geometry.clone();g.applyMatrix4(c.matrix);return g;});
+        let nv=0,ni=0;geos.forEach(g=>{nv+=g.attributes.position.count;ni+=g.index?g.index.count:g.attributes.position.count;});
+        const pos=new Float32Array(nv*3),nor=new Float32Array(nv*3),uv=new Float32Array(nv*2),idx=new Uint32Array(ni);let vo=0,io=0;
+        geos.forEach(g=>{pos.set(g.attributes.position.array,vo*3);nor.set(g.attributes.normal.array,vo*3);uv.set(g.attributes.uv.array,vo*2);
+          if(g.index){for(let i=0;i<g.index.count;i++)idx[io++]=g.index.array[i]+vo;}else{for(let i=0;i<g.attributes.position.count;i++)idx[io++]=vo+i;}
+          vo+=g.attributes.position.count;g.dispose();});
+        const G=new T.BufferGeometry();G.setAttribute('position',new T.BufferAttribute(pos,3));G.setAttribute('normal',new T.BufferAttribute(nor,3));G.setAttribute('uv',new T.BufferAttribute(uv,2));G.setIndex(new T.BufferAttribute(idx,1));
+        const m=new T.Mesh(G,b.mat);m.castShadow=b.cs;m.receiveShadow=b.rs;grp.add(m);
+      });
+      return grp;
+    }
+    const _m=new T.Matrix4(),_q=new T.Quaternion(),_p=new T.Vector3(),_sc=new T.Vector3(1,1,1),_qI=new T.Quaternion(),_Y=new T.Vector3(0,1,0),_t=new T.Vector3(),_c=new T.Color();
+    function setInst(mesh,i,x,y,z,s,ry){_p.set(x,y,z);_sc.set(s,s,s);_q.setFromAxisAngle(_Y,ry||0);_m.compose(_p,_q,_sc);mesh.setMatrixAt(i,_m);}
+    function labelTex(txt,fg,bg){const c=__doc.createElement('canvas');c.width=256;c.height=128;const x=c.getContext('2d');x.fillStyle=bg;x.beginPath();x.roundRect?x.roundRect(8,8,240,112,26):x.rect(8,8,240,112);x.fill();x.fillStyle=fg;x.font='700 78px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,128,68);const t=new T.CanvasTexture(c);t.anisotropy=4;return t;}
+
+    /* ===================== static world ===================== */
+    const GROUND=clay(0xf2effd),PAVE=clay(0xe6e2f5),ROAD=clay(0xd3cfe5),QUAYM=clay(0xdad7e8),YEL=clay(0xf4c430);
+    bx(world,112,1.4,60,GROUND,0,-.7,-18);
+    bx(world,112,1.0,64,clay(0xaed7ee),0,-1.0,44);
+    bx(world,84,.3,5.4,QUAYM,0,0,9.3);
+    bx(world,84,.55,.22,clay(0x8b88a8),0,-.12,12.05);
+    bx(world,72,.08,31,PAVE,-6,.04,-9.5);
+    // roads
+    const PATH=[[22,-31],[22,-21],[-38,-21],[-38,-24],[18,-24],[18,-31]];
+    for(let i=0;i<PATH.length;i++){const a=PATH[i],b=PATH[(i+1)%PATH.length];const dx=Math.abs(b[0]-a[0]),dz=Math.abs(b[1]-a[1]);
+      bx(world,dx+2.6,.1,dz+2.6,ROAD,(a[0]+b[0])/2,.05,(a[1]+b[1])/2);}
+    // bollards
+    for(let x=-40;x<=40;x+=5)mk(world,CYL(.22,.26,.45,8),clay(0x6d6a8c),x,.35,11.6);
+    // yellow bay lines
+    const yl=[];
+    [-32,-16,0,16,32].forEach(x=>yl.push([x,0,x,0,.14,5.2,9.3]));
+    yl.push([0,0,0,0,84,.14,11.55]);
+    const BLK=[];const COLX=[-27.5,-10.5,6.5],ROWZc=[1.6,-7.4,-16.4];
+    for(let r=0;r<3;r++)for(let c=0;c<3;c++){const b=r*3+c;BLK.push({b,r,c,cx:COLX[c],cz:ROWZc[r],car:b%6,occ:[],h:new Array(15).fill(0),res:new Array(15).fill(0),pr:new Array(15).fill(0)});}
+    BLK.forEach(k=>{const w=13.2,d=4.6;[[k.cx,k.cz-d/2,w,.12],[k.cx,k.cz+d/2,w,.12],[k.cx-w/2,k.cz,.12,d],[k.cx+w/2,k.cz,.12,d]].forEach(s=>yl.push([0,0,0,0,s[2],s[3],s[1],s[0]]));
+      bx(world,12.5,.03,4,clay(CARR[k.car].c,{transparent:true,opacity:.28}),k.cx,.1,k.cz);});
+    const ylMesh=new T.InstancedMesh(BG(1,.04,1),YEL,yl.length);ylMesh.receiveShadow=true;
+    yl.forEach((s,i)=>{ if(s.length===7){_p.set(s[0],.14,s[6]);_sc.set(s[4],1,s[5]);}else{_p.set(s[7],.14,s[6]);_sc.set(s[4],1,s[5]);}
+      _m.compose(_p,_qI,_sc);ylMesh.setMatrixAt(i,_m);});
+    world.add(ylMesh);
+    // berth numbers on apron
+    BX.forEach((x,i)=>{const pl=new T.Mesh(new T.PlaneGeometry(3.2,1.6),new T.MeshBasicMaterial({map:labelTex('B'+(i+1),'#1d2144','rgba(255,255,255,.85)'),transparent:true}));pl.rotation.x=-Math.PI/2;pl.position.set(x+5.4,.2,10.3);world.add(pl);});
+    // trees
+    {const n=46,crown=new T.InstancedMesh(SPH(1,12,9),clay(0xffffff),n),trunk=new T.InstancedMesh(CYL(.12,.16,1,6),clay(0xb9a79a),n);crown.castShadow=trunk.castShadow=true;
+     const pts=[];for(let x=-52;x<=52;x+=6.5)pts.push([x+rnd()*2,-45.5+rnd()*1.5]);for(let z=-40;z<=-4;z+=7)pts.push([-52.5+rnd(),z],[52.5-rnd(),z+3]);
+     pts.push([-44,8],[-40.5,-13],[30,-21],[46,6],[28,6],[-50,6]);
+     const cs=[0x9bd6a8,0xb7e3a0,0x8fcfb0,0xa6dba1];
+     pts.slice(0,n).forEach((p,i)=>{const s=.8+rnd()*.5;setInst(trunk,i,p[0],.5*s,p[1],1,0);_m.elements[5]=s;trunk.setMatrixAt(i,_m);
+      _p.set(p[0],1.2*s+.6,p[1]);_sc.set(s,s*.95,s);_m.compose(_p,_qI,_sc);crown.setMatrixAt(i,_m);crown.setColorAt(i,_c.setHex(cs[i%4]));});
+     crown.count=trunk.count=Math.min(n,pts.length);world.add(crown,trunk);}
+    // control tower
+    {const g=new T.Group();g.position.set(-47,0,-4);world.add(g);
+     bx(g,3.2,7,3.2,clay(0xf6f4fc),0,3.5,0);bx(g,4.8,.5,4.8,clay(0x2f55e6),0,7.2,0);bx(g,4.2,1.8,4.2,winMat,0,8.3,0);bx(g,5.2,.35,5.2,clay(0xf6f4fc),0,9.35,0);
+     mk(g,CYL(.06,.06,3,6),clay(0x7f7ba0),0,11,0);mk(g,SPH(.18),beaconMat,0,12.6,0);bx(g,3.3,.4,3.3,clay(0x2f55e6),0,.2,0);
+     for(let i=0;i<4;i++)bx(g,2.4,.35,.06,winMat,0,1.5+i*1.5,1.62);mergeGroup(g);}
+    // light poles
+    const pools=[];
+    function pole(x,z,h){const g=new T.Group();g.position.set(x,0,z);world.add(g);mk(g,CYL(.1,.14,h,6),clay(0x77739a),0,h/2,0);bx(g,1.4,.15,.4,clay(0x77739a),0,h,0);bx(g,.5,.22,.5,lampMat,.55,h-.05,0);bx(g,.5,.22,.5,lampMat,-.55,h-.05,0);mergeGroup(g);
+      const pl=new T.Mesh(new T.CircleGeometry(4.6,20),poolMat);pl.rotation.x=-Math.PI/2;pl.position.set(x,.19,z);pl.userData.m=true;world.add(pl);}
+    for(let x=-40;x<=40;x+=10)pole(x,6.9,6.5);
+    [[-18,-27],[0,-27],[16,-27],[-38,-5],[28,-27],[-38,-14]].forEach(p=>pole(p[0],p[1],6));
+    // gate
+    const gateArms=[];
+    {const g=new T.Group();g.position.set(20,0,-31);world.add(g);
+     bx(g,10,.35,5,clay(0xf6f4fc),0,4.6,0);bx(g,10,.15,5.2,clay(0x2f55e6),0,4.3,0);[-4.5,4.5].forEach(x=>bx(g,.4,4.5,.4,clay(0xf6f4fc),x,2.25,0));
+     [-2,2].forEach(x=>{bx(g,1.5,1.7,1.9,clay(0xeeeaf8),x*0+0,.85,0);});
+     bx(g,1.6,2.6,2,clay(0xf6f4fc),0,1.3,0);bx(g,1.3,.6,.06,winMat,0,2,1.02);bx(g,.9,.3,1.2,clay(0xf4c430),0,2.75,0);
+     [[-2,0],[2,0]].forEach((o,i)=>{const pv=new T.Group();pv.position.set(i===0?-1.1:1.1,1.1,2.3);g.add(pv);bx(pv,2.1,.14,.14,clay(0xe5506b),i===0?-1.05:1.05,0,0,true);bx(pv,.3,1,.3,clay(0x77739a),0,-.5,0,true);gateArms.push(pv);pv.userData.dir=i===0?1:-1;});
+     mergeGroup(g);}
+    // rail terminal
+    const TRX=[36,40.5];
+    {const g=new T.Group();world.add(g);bx(g,10,.12,56,clay(0xdcd6ec),38.25,.06,-20);
+     const sl=new T.InstancedMesh(BG(2.3,.1,.4),clay(0xa59fbd),2*46);let k=0;TRX.forEach(x=>{for(let z=-47;z<=7.5;z+=1.2)setInst(sl,k++,x,.17,z,1,0),0;});sl.count=k;sl.receiveShadow=true;g.add(sl);
+     TRX.forEach(x=>[-.72,.72].forEach(o=>bx(g,.12,.14,56,clay(0x8b88a8),x+o,.24,-20)));
+     bx(g,2.3,.7,.5,clay(0xe5506b),36,.35,8.2);bx(g,2.3,.7,.5,clay(0xe5506b),40.5,.35,8.2);
+     // tunnel shed
+     bx(g,12,5,2.2,clay(0xcfc8e0),38.25,2.5,-48.6);bx(g,9.5,3.6,2.4,clay(0x4b4a73),38.25,1.8,-48.6);
+     mergeGroup(g);}
+    // reefer block
+    const reeferMesh=new T.InstancedMesh(BG(2.4,.98,.98),clay(0xffffff),30),reeferLights=new T.InstancedMesh(BG(.1,.14,.3),new T.MeshBasicMaterial({color:0xffffff}),30);
+    const reeferData=[];
+    {let k=0;for(let i=0;i<2;i++)for(let j=0;j<5;j++)for(let L=0;L<3;L++){const x=27+(i-.5)*2.7,z=-8+(j-2)*1.25,y=.5+L;setInst(reeferMesh,k,x,y,z,1,0);reeferMesh.setColorAt(k,_c.setHex(L===1?0xdff6f8:0xf2fbfc));
+      setInst(reeferLights,k,x+1.22,y+.2,z,1,0);reeferLights.setColorAt(k,_c.setHex(rnd()>.12?0x34e08a:0xffb347));reeferData.push({x,y,z,id:'REF'+ (4000+k*37),temp:(-18+((k*7)%5)).toFixed(0)});k++;}
+     reeferMesh.castShadow=reeferMesh.receiveShadow=true;world.add(reeferMesh,reeferLights);}
+    // breakwater + lighthouse + buoys
+    {const g=new T.Group();world.add(g);bx(g,20.4,.9,3.4,clay(0xd9d3ea),32,-.1,32);
+     const n=30,rocks=new T.InstancedMesh(new T.IcosahedronGeometry(1,0),clay(0xcdc6df,{flatShading:true}),n);rocks.castShadow=rocks.receiveShadow=true;
+     for(let i=0;i<n;i++){const x=22.5+(i/(n-1))*19,z=32+(rnd()-.5)*2.2,s=.8+rnd()*.7;_p.set(x,.45,z);_sc.set(s*1.1,s*.7,s);_q.setFromAxisAngle(_Y,rnd()*6);_m.compose(_p,_q,_sc);rocks.setMatrixAt(i,_m);}
+     g.add(rocks);
+     const lh=new T.Group();lh.position.set(41,0,32);world.add(lh);
+     mk(lh,CYL(.95,1.5,7,16),clay(0xf6f4fc),0,3.5,0);mk(lh,CYL(1.12,1.2,1.2,16),clay(0xe5506b),0,2.2,0);mk(lh,CYL(1.0,1.1,1.0,16),clay(0xe5506b),0,4.8,0);
+     mk(lh,CYL(1.3,1.3,.25,16),clay(0x2f55e6),0,7.1,0);mk(lh,CYL(.8,.8,1.1,12),glow(0xcfe6ff,0xfff1b8,2),0,7.8,0);mk(lh,new T.ConeGeometry(1.1,.9,16),clay(0xe5506b),0,8.8,0);
+     mergeGroup(lh);
+     var beam=new T.Mesh(new T.ConeGeometry(2.2,24,16,1,true),new T.MeshBasicMaterial({color:0xfff1b8,transparent:true,opacity:0,depthWrite:false,blending:T.AdditiveBlending,side:T.DoubleSide}));
+     beam.geometry.translate(0,-12,0);beam.geometry.rotateZ(Math.PI/2);beam.position.set(41,7.8,32);scene.add(beam);}
+    const buoys=[[-12,22],[-2,26],[12,24],[30,26],[-30,30]].map(p=>{const m=new T.Mesh(SPH(.5,10,8),clay(0xe5506b));m.scale.y=1.4;m.position.set(p[0],-.3,p[1]);m.castShadow=true;scene.add(m);const l=mk(m,SPH(.12,6,5),lampMat,0,.55,0,true);return{m,ph:rnd()*6};});
+    mergeGroup(world);
+
+    /* water surface */
+    const wGeo=new T.PlaneGeometry(112,64,56,32);wGeo.rotateX(-Math.PI/2);
+    const wPos=wGeo.attributes.position,wBase=new Float32Array(wPos.array),wCol=new Float32Array(wPos.count*3);
+    for(let i=0;i<wPos.count;i++){const t=(wBase[i*3+2]+32)/64;_c.setHex(0xa9dcf3).lerp(new T.Color(0x6fb6e0),Math.pow(t,.7));wCol[i*3]=_c.r;wCol[i*3+1]=_c.g;wCol[i*3+2]=_c.b;}
+    wGeo.setAttribute('color',new T.BufferAttribute(wCol,3));
+    const waterMat=new T.MeshStandardMaterial({vertexColors:true,roughness:.4,metalness:.05,flatShading:true});
+    const water=new T.Mesh(wGeo,waterMat);water.position.set(0,-.5,44);water.receiveShadow=true;water.frustumCulled=false;scene.add(water);
+
+    /* ===================== yard (instanced) ===================== */
+    const yardGeo=BG(2.4,.98,.98);
+    const yardMesh=new T.InstancedMesh(yardGeo,clay(0xffffff),540);yardMesh.castShadow=yardMesh.receiveShadow=true;yardMesh.frustumCulled=false;
+    const yPres=new Array(540).fill(false),yId=new Array(540).fill('');let idCnt=500;
+    const slotX=(blk,s)=>blk.cx+((s%5)-2)*2.5, slotZ=(blk,s)=>blk.cz+(((s/5)|0)-1)*1.25;
+    function yardSet(b,s,L,on){const blk=BLK[b],idx=(b*15+s)*4+L;const k=on?1:.0001;_p.set(slotX(blk,s),.5+L,slotZ(blk,s));_sc.set(k,k,k);_m.compose(_p,_qI,_sc);yardMesh.setMatrixAt(idx,_m);yPres[idx]=on;
+      if(on){yardMesh.setColorAt(idx,_c.setHex(CARR[blk.car].c).multiplyScalar(.94+rnd()*.1));yId[idx]=contId(blk.car,idCnt+=13);}
+      yardMesh.instanceMatrix.needsUpdate=true;if(yardMesh.instanceColor)yardMesh.instanceColor.needsUpdate=true;}
+    for(let i=0;i<540;i++){yardMesh.setMatrixAt(i,new T.Matrix4().makeScale(.0001,.0001,.0001));yardMesh.setColorAt(i,_c.setHex(0xffffff));}
+    BLK.forEach(blk=>{for(let s=0;s<15;s++){const h=ri(0,3)+(rnd()>.7?1:0);blk.h[s]=Math.min(h,4);for(let L=0;L<blk.h[s];L++)yardSet(blk.b,s,L,true);}});
+    world.add(yardMesh);
+    function yardPlan(car,kind,only,occ){
+      const order=BLK.filter(k=>!only||only.includes(k.b)).sort((a,b)=>((a.car===car?0:100)+RTGs[a.b].queue.length*3+(RTGs[a.b].job?1:0)+rnd())-((b.car===car?0:100)+RTGs[b.b].queue.length*3+(RTGs[b.b].job?1:0)+rnd()));
+      for(const blk of order){const s0=ri(0,14);for(let k=0;k<15;k++){const s=(s0+k)%15;
+        if(occ&&blk.occ.some(x=>Math.abs(x-slotX(blk,s))<2.9))continue;
+        if(kind==='drop'&&blk.h[s]+blk.res[s]<4)return{b:blk.b,s};
+        if(kind==='pick'&&blk.h[s]-blk.pr[s]>0)return{b:blk.b,s};}}
+      return null;}
+    const yardCount=()=>BLK.reduce((a,k)=>a+k.h.reduce((x,y)=>x+y,0),0);
+    const routeToBlock=(x0,b,sx)=>{const blk=BLK[b],zc=blk.cz+4.5,z0=ROWZc[0]+4.5,pts=[[x0,LANDZ],[x0,z0]];
+      if(blk.r>0){const xv=[-37,-19,-2,16].reduce((a,v)=>Math.abs(v-sx)<Math.abs(a-sx)?v:a);pts.push([xv,z0],[xv,zc]);}
+      pts.push([sx,zc]);return pts;};
+
+    /* ===================== shared poses ===================== */
+    function pose(t,s,a,b,ya,yb,hi,o){
+      o.p=t<.25?lerp(s,a,eio(t/.25)):t<.44?a:t<.68?lerp(a,b,eio((t-.44)/.24)):b;
+      o.y=t<.2?hi:t<.32?lerp(hi,ya,eio((t-.2)/.12)):t<.44?lerp(ya,hi,eio((t-.32)/.12)):t<.68?hi:t<.8?lerp(hi,yb,eio((t-.68)/.12)):t<.92?lerp(yb,hi,eio((t-.8)/.12)):hi;}
+    const PO={p:0,y:0};
+    const cBox=()=>{const m=new T.Mesh(BG(2.4,1,1),clay(0xffffff));m.castShadow=true;m.visible=false;return m;};
+    const setBox=(m,ci)=>{m.material=clay(CARR[ci].c);};
+
+    /* ===================== quay cranes ===================== */
+    const CBLUE=clay(0x2f55e6),CBLUE2=clay(0x5a7bf2),CDARK=clay(0x2a2f5a),CWHITE=clay(0xf6f4fc);
+    function buildQC(i){
+      const g=new T.Group();g.position.x=BX[i];world.add(g);
+      [-2.7,2.7].forEach(x=>{[8.4,11.2].forEach(z=>bx(g,.45,10,.45,CBLUE,x,5,z));bx(g,.5,.5,3.5,CDARK,x,.25,9.8);bx(g,.55,.6,3.5,CBLUE,x,10.2,9.8);});
+      [8.4,11.2].forEach(z=>{bx(g,6,.6,.5,CBLUE,0,10.2,z);bx(g,5.8,.35,.35,CBLUE2,0,5,z);});
+      [-.75,.75].forEach(x=>bx(g,.4,.5,14.8,CBLUE2,x,10.75,11.6));
+      bx(g,2.2,.3,14.8,CBLUE,0,10.45,11.6);bx(g,2.8,1.5,2.8,CWHITE,0,11.6,6.1);bx(g,1,.5,.06,winMat,0,11.9,7.52);
+      const P=new T.Vector3(0,14.2,9.8);
+      [[-1.2,8.8],[1.2,8.8],[-1.2,10.8],[1.2,10.8]].forEach(a=>bar(g,new T.Vector3(a[0],10.6,a[1]),P,.22,CBLUE));
+      bar(g,P,new T.Vector3(0,10.9,19),.12,CDARK);bar(g,P,new T.Vector3(0,10.9,4.4),.12,CDARK);
+      mk(g,SPH(.22),beaconMat,0,14.6,9.8);
+      [-.9,.9].forEach(x=>{bx(g,.6,.25,.4,floodMat,x,10.2,19.1);bx(g,.6,.25,.4,floodMat,x,10.2,4.2);});
+      mergeGroup(g);
+      const tg=new T.Group();tg.position.set(0,10.0,LANDZ);g.add(tg);bx(tg,1.8,.5,1.3,CBLUE2,0,0,0);bx(tg,.8,.4,.8,CWHITE,0,-.4,0);mergeGroup(tg);
+      const sp=new T.Group();g.add(sp);bx(sp,2.3,.2,.95,CDARK,0,0,0);[-1.05,1.05].forEach(x=>bx(sp,.12,.4,.95,CDARK,x,-.2,0));mergeGroup(sp);
+      const hand=cBox();hand.position.y=-.6;sp.add(hand);
+      const ropes=[-.5,.5].map(x=>bx(g,.05,1,.05,CDARK,x,8,LANDZ,true));
+      const ent={type:'crane',kind:'Quay crane',name:'QC-'+(i+1),berth:i,obj:g,qc:null};g.userData.ent=ent;
+      const q={g,tg,sp,hand,ropes,mode:null,t:0,z:LANDZ,x:BX[i],slow:0,moves:0,ent,yy:6.4};ent.qc=q;
+      sp.position.set(0,6.4,LANDZ);
+      return q;}
+    const berths=BX.map((x,i)=>({i,x,name:'B'+(i+1),ship:null,qc:buildQC(i),sc:[],pend:0}));
+    // berth pads
+    berths.forEach(b=>{const m=new T.Mesh(new T.PlaneGeometry(15.2,5),new T.MeshBasicMaterial({color:0x6fe0b5,transparent:true,opacity:.3,depthWrite:false}));
+      m.rotation.x=-Math.PI/2;m.position.set(b.x,-.42,14.6);scene.add(m);b.pad=m;b.ent={type:'berth',berth:b,obj:m};m.userData.ent=b.ent;});
+
+    /* ===================== straddle carriers ===================== */
+    const SCs=[];
+    for(let i=0;i<12;i++){const g=new T.Group();g.visible=false;world.add(g);const M=clay(0xffb347),D=clay(0x2a2f5a);
+      [-.78,.78].forEach(x=>[-1.1,1.1].forEach(z=>{bx(g,.22,1.9,.22,M,x,.95,z);bx(g,.3,.4,.5,D,x,.2,z);}));
+      [-.78,.78].forEach(x=>bx(g,.22,.22,2.6,M,x,1.95,0));[-1.1,1.1].forEach(z=>bx(g,1.8,.22,.22,M,0,1.95,z));bx(g,.5,.4,.6,CWHITE,0,2.2,.9);mergeGroup(g);
+      const boxM=new T.Mesh(BG(1,1,2.4),clay(0xffffff));boxM.position.y=1.4;boxM.castShadow=true;boxM.visible=false;g.add(boxM);
+      const sc={type:'sc',name:'SC-'+(i+1),g,boxM,st:'free',s:0,ts:0,route:null,ri:1,cb:null,car:0,claimed:false,obj:g,hd:0,ent:null};sc.ent=sc;sc.idx=i;g.userData.ent=sc;SCs.push(sc);}
+    function newSC(x,z,car,withBox){const sc=SCs.find(s=>s.st==='free');if(!sc)return null;if(SCs.some(o=>o.st!=='free'&&o.ts===1&&Math.abs(o.g.position.x-x)<2&&Math.abs(o.g.position.z-z)<2.8))return null;
+      sc.st='idle';sc.g.visible=true;sc.p={x,z};sc.lat=0;sc.g.position.set(x,0,z);sc.s=0;sc.ts=1;sc.car=car;sc.claimed=false;sc.cb=null;sc.hd=0;sc.ghost=0;sc.wt=0;sc.g.rotation.y=0;sc.boxM.visible=withBox;if(withBox)setBox(sc.boxM,car);sc.g.scale.setScalar(.01);return sc;}
+    function drive(sc,route,cb){sc.route=route;sc.ri=1;sc.cb=cb;sc.st='drive';}
+    function stepSC(sc,h){
+      if(sc.st==='free')return;
+      sc.s+=Math.sign(sc.ts-sc.s)*Math.min(Math.abs(sc.ts-sc.s),h/.35);sc.g.scale.setScalar(Math.max(.01,sc.s));
+      if(sc.ts===0&&sc.s<=.001){sc.st='free';sc.g.visible=false;return;}
+      const P=sc.p;let moved=false,fin=false;
+      if(sc.st==='drive'){
+        let mv=7.5*h,blocked=false,lim=1e9;const me=sc.g.position;
+        {const tg=sc.route[sc.ri],ddx=tg[0]-P.x,ddz=tg[1]-P.z,dl=Math.hypot(ddx,ddz)||1,hx=ddx/dl,hz=ddz/dl;
+         if(dl>1e-4)sc.hd=angLerp(sc.hd,Math.atan2(ddx,ddz),Math.min(1,h*6));
+         // lane keeping: only the vehicle directly ahead in my lane (same direction, or parked) holds me back
+         for(const o of SCs){if(o===sc||o.st==='free'||o.ts===0)continue;const ox=o.g.position.x-me.x,oz=o.g.position.z-me.z,ah=ox*hx+oz*hz,lat=Math.abs(ox*hz-oz*hx);
+           if(o.st==='drive'&&o.idx<sc.idx&&Math.sin(sc.hd)*Math.sin(o.hd)+Math.cos(sc.hd)*Math.cos(o.hd)<.3){const fx=me.x+hx*1.2,fz=me.z+hz*1.2;
+             if(Math.abs(o.g.position.x-fx)<(Math.abs(Math.sin(sc.hd))*1.3+Math.abs(Math.cos(sc.hd))*.85)+(Math.abs(Math.sin(o.hd))*1.3+Math.abs(Math.cos(o.hd))*.85)-.05&&
+                Math.abs(o.g.position.z-fz)<(Math.abs(Math.cos(sc.hd))*1.3+Math.abs(Math.sin(sc.hd))*.85)+(Math.abs(Math.cos(o.hd))*1.3+Math.abs(Math.sin(o.hd))*.85)-.05){blocked=true;break;}}
+           if(ah<=0||ah>6||lat>1.05)continue;
+           const par=o.st!=='drive',same=Math.sin(sc.hd)*Math.sin(o.hd)+Math.cos(sc.hd)*Math.cos(o.hd)>.5;
+           if(par||same){const room=ah-3.05;if(room<.02){blocked=true;break;}lim=Math.min(lim,room);}}}
+        if(blocked&&sc.ghost>0){blocked=false;}
+        if(blocked){sc.wt=(sc.wt||0)+h;if(sc.wt>4.5){sc.ghost=.8;sc.wt=0;}}else{sc.wt=0;}
+        if(sc.ghost>0)sc.ghost-=h;
+        if(!blocked){
+          mv=Math.min(mv,lim);
+          while(mv>0&&sc.ri<sc.route.length){const tg=sc.route[sc.ri],dx=tg[0]-P.x,dz=tg[1]-P.z,d=Math.hypot(dx,dz);
+            if(d>1e-4)sc.hd=angLerp(sc.hd,Math.atan2(dx,dz),Math.min(1,h*6));
+            if(d<=mv){P.x=tg[0];P.z=tg[1];mv-=d;sc.ri++;}else{P.x+=dx/d*mv;P.z+=dz/d*mv;mv=0;}}
+          if(sc.ri>=sc.route.length)fin=true;}}
+      const tl=(sc.st==='drive'||sc.st==='waitRTG')?.9:0;sc.lat+=(tl-sc.lat)*Math.min(1,h*4);
+      sc.g.position.set(P.x-Math.cos(sc.hd)*sc.lat,0,P.z+Math.sin(sc.hd)*sc.lat);sc.g.rotation.y=sc.hd;
+      if(fin){sc.st='idle';const cb=sc.cb;sc.cb=null;if(cb)cb();}}
+
+    /* ===================== RTGs ===================== */
+    const RTGs=BLK.map(blk=>{
+      const g=new T.Group();g.position.set(blk.cx,0,blk.cz);world.add(g);
+      [-1.55,1.55].forEach(x=>[-2.55,2.55].forEach(z=>{bx(g,.32,6.6,.32,CBLUE,x,3.3,z);bx(g,.6,.45,.6,CDARK,x,.22,z);}));
+      [-1.55,1.55].forEach(x=>bx(g,.4,.4,8.6,CBLUE,x,6.7,1.75));[-2.55,2.55,6.0].forEach(z=>bx(g,3.8,.4,.4,CBLUE,0,6.7,z));bx(g,1.2,.9,.9,CWHITE,-1.7,7.3,2.55);
+      bx(g,.5,.2,.2,floodMat,1.7,6.4,2.8);mergeGroup(g);
+      const tr=new T.Group();g.add(tr);bx(tr,1.1,.4,.9,CBLUE2,0,6.45,0);mergeGroup(tr);
+      const sp=new T.Group();tr.add(sp);bx(sp,2.3,.14,.9,CDARK,0,0,0);mergeGroup(sp);const hand=cBox();hand.position.y=-.55;sp.add(hand);
+      const ent={type:'rtg',kind:'Yard crane (RTG)',name:'RTG-'+(blk.b+1),block:blk,obj:g};g.userData.ent=ent;
+      sp.position.y=6.0;
+      return{blk,g,tr,sp,hand,queue:[],job:null,t:0,tz:0,ent};});
+    function stepRTG(r,h){
+      const q=r;
+      if(!q.job&&q.queue.length){q.job=q.queue.shift();q.t=0;q.started=false;}
+      if(q.job){const j=q.job,blk=r.blk,dx=slotX(blk,j.s)-r.g.position.x;
+        const mv=Math.sign(dx)*Math.min(Math.abs(dx),14*h);r.g.position.x+=mv;
+        if(!q.started){if(Math.abs(dx)<.05){q.started=true;q.s0=q.tz;
+          const sz=slotZ(blk,j.s)-blk.cz,hh=blk.h[j.s],scz=j.sc.g.position.z-blk.cz;
+          if(j.type==='drop'){q.a=scz;q.b=sz;q.ya=2.0;q.yb=hh+1.1;}else{q.a=sz;q.b=scz;q.ya=hh+.1;q.yb=2.0;}}}
+        else{const t0=q.t;q.t=Math.min(1,q.t+h/1.3);
+          if(t0<.32&&q.t>=.32){r.hand.visible=true;
+            if(j.type==='drop'){j.sc.boxM.visible=false;setBox(r.hand,j.sc.car);}
+            else{const L=blk.h[j.s]-1;if(L>=0){blk.h[j.s]--;yardSet(blk.b,j.s,L,false);}setBox(r.hand,blk.car);j.sc.car=blk.car;blk.pr[j.s]--;}}
+          if(t0<.8&&q.t>=.8){r.hand.visible=false;
+            if(j.type==='drop'){const L=blk.h[j.s];blk.h[j.s]++;blk.res[j.s]--;yardSet(blk.b,j.s,L,true);}
+            else{j.sc.boxM.visible=true;setBox(j.sc.boxM,j.sc.car);}
+            if(j.onDone)j.onDone();}
+          if(q.t>=1){q.job=null;}}}
+      if(q.job&&q.started){pose(q.t,q.s0,q.a,q.b,q.ya,q.yb,6.0,PO);q.tz=PO.p;r.tr.position.z=PO.p;r.sp.position.y=PO.y-0;}
+      else if(!q.job){r.sp.position.y=lerp(r.sp.position.y,6.0,Math.min(1,h*4));}
+    }
+
+    /* ===================== trucks ===================== */
+    const PLEN=[],PCUM=[0];let PL=0;
+    for(let i=0;i<PATH.length;i++){const a=PATH[i],b=PATH[(i+1)%PATH.length];const l=Math.hypot(b[0]-a[0],b[1]-a[1]);PLEN.push(l);PL+=l;PCUM.push(PL);}
+    function pathAt(s,out){s=((s%PL)+PL)%PL;let i=0;while(i<PLEN.length-1&&s>PCUM[i+1])i++;const a=PATH[i],b=PATH[(i+1)%PATH.length],u=(s-PCUM[i])/PLEN[i];out.x=lerp(a[0],b[0],u);out.z=lerp(a[1],b[1],u);return out;}
+    const S_IN=3, S_OUT=PCUM[5]-2.5, S_SWAP=PCUM[3]+22;
+    const trucks=[];
+    for(let i=0;i<7;i++){
+      const g=new T.Group();world.add(g);const cab=clay([0xf6f4fc,0x5a7bf2,0xf6f4fc,0xffb347][i%4]);
+      bx(g,1.05,.95,1.0,cab,0,.95,1.15);bx(g,.9,.35,.06,clay(0x2a2f5a),0,1.2,1.66);bx(g,.95,.18,2.9,CDARK,0,.45,-.4);[-.45,.45].forEach(x=>[1.15,-.2,-1.1].forEach(z=>bx(g,.2,.5,.55,CDARK,x,.28,z)));
+      mergeGroup(g);const boxM=new T.Mesh(BG(1,1,2.4),clay(0xffffff));boxM.position.set(0,1.15,-.45);boxM.castShadow=true;g.add(boxM);
+      const tk={type:'truck',name:'TRK-'+(201+i),g,boxM,s:i*PL/7,hd:0,wait:0,car:0,has:false,inT:0,flag:0,obj:g,ent:null,state:'En route'};
+      tk.has=i%2===0;boxM.visible=tk.has;tk.car=i%6;if(tk.has)setBox(boxM,tk.car);tk.ent=tk;g.userData.ent=tk;trucks.push(tk);}
+    const gateTurns=[];
+    function stepTruck(tk,h){
+      // simple following + gate dwell
+      let free=true;
+      if(tk.wait>0){tk.wait-=h;free=false;tk.state=tk.s<PCUM[1]?'At gate':'At gate (out)';}
+      let adv=h*6.2;
+      if(tk.wait<=0){for(const o of trucks){if(o===tk)continue;const d=((o.s-tk.s)%PL+PL)%PL;if(d<5+adv){adv=Math.max(0,d-5);if(adv<.02){free=false;tk.state='Queueing';}break;}}}
+      if(free){const prev=tk.s;tk.s+=adv;tk.state='En route';
+        const cross=p=>prev<p&&tk.s>=p;
+        if(cross(S_IN)||(tk.s>PL&&prev<S_IN+PL&&tk.s>=S_IN+PL)){}
+        const m=((tk.s%PL)+PL)%PL,pm=((prev%PL)+PL)%PL;
+        const hit=p=>pm<p&&m>=p||(pm>m&&(p>=pm||p<=m));
+        if(hit(S_IN)){tk.wait=1+rnd()*1.6;tk.inT=S.t;}
+        if(hit(S_OUT)){tk.wait=.8+rnd()*1.2;if(tk.inT>0){gateTurns.push(S.t-tk.inT+tk.wait);if(gateTurns.length>10)gateTurns.shift();}}
+        if(hit(S_SWAP)){const row2=[6,7,8];
+          if(tk.has){const pl=yardPlan(tk.car,'drop',row2);if(pl){const blk=BLK[pl.b];yardSet(pl.b,pl.s,blk.h[pl.s],true);blk.h[pl.s]++;tk.has=false;tk.boxM.visible=false;}}
+          else{const pl=yardPlan(tk.car,'pick',row2);if(pl){const blk=BLK[pl.b];const L=blk.h[pl.s]-1;blk.h[pl.s]--;yardSet(pl.b,pl.s,L,false);tk.car=blk.car;tk.has=true;setBox(tk.boxM,tk.car);tk.boxM.visible=true;}}}
+      }
+      const P=pathAt(tk.s,{}),Q=pathAt(tk.s+1.5,{});tk.g.position.set(P.x,0,P.z);tk.hd=angLerp(tk.hd,Math.atan2(Q.x-P.x,Q.z-P.z),Math.min(1,h*12+.1));tk.g.rotation.y=tk.hd;
+    }
+
+    /* ===================== train + RMG ===================== */
+    const clipP=new T.Plane(new T.Vector3(0,0,1),47.3);
+    const clipMat=(c)=>{const m=new T.MeshStandardMaterial({color:c,roughness:.93});m.clippingPlanes=[clipP];m.clipShadows=true;return m;};
+    const TM={loco:clipMat(0x2f55e6),loco2:clipMat(0xf4c430),wag:clipMat(0x8e8aab),wag2:clipMat(0x4b4a73),box:clipMat(0xffffff)};
+    const train={g:new T.Group(),st:'away',timer:6,p:0,track:0,filled:0,started:0,total:12,hold:0};
+    {const g=train.g;world.add(g);const L=new T.Group();g.add(L);
+     const bk=(p,w,h,d,m,x,y,z)=>mk(p,BG(w,h,d),m,x,y,z,true);
+     bk(L,1.9,1.5,4,TM.loco,0,1.2,-2);bk(L,1.95,.5,1.6,TM.loco2,0,2.2,-.9);bk(L,1.6,.3,3.8,TM.wag2,0,.35,-2);bk(L,1.5,.9,1.3,TM.loco,0,2.1,-3.1);
+     for(let w=0;w<6;w++){const zc=-6.8-5.7*w;bk(L,1.9,.3,5.5,TM.wag,0,.7,zc);bk(L,1.2,.35,5.0,TM.wag2,0,.4,zc);}
+     train.cont=new T.InstancedMesh(BG(1,.98,2.4),TM.box,12);train.cont.castShadow=true;train.cont.frustumCulled=false;train.cont.count=0;g.add(train.cont);
+     train.slotZ=[];for(let w=0;w<6;w++)for(let s=0;s<2;s++){const z=-6.8-5.7*w+(s?1.4:-1.4);train.slotZ.push(z);}
+     train.slotZ.forEach((z,k)=>{setInst(train.cont,k,0,1.2,z,1,0);train.cont.setColorAt(k,_c.setHex(0xffffff));});
+     g.visible=false;
+     const ent={type:'train',name:'Freight train FT-'+ 7,obj:g,kind:'Freight train'};g.userData.ent=ent;train.ent=ent;}
+    const RMG={g:new T.Group(),mode:null,t:0,gz:-12,tx:34,job:null,s0:0};
+    {const g=RMG.g;g.position.z=-12;world.add(g);
+     [30.5,43.5].forEach(x=>[-1.7,1.7].forEach(z=>{bx(g,.35,6.6,.35,CBLUE,x,3.3,z);bx(g,.6,.4,.6,CDARK,x,.2,z);}));
+     [-1.7,1.7].forEach(z=>bx(g,13.4,.4,.4,CBLUE,37,6.7,z));[30.5,43.5].forEach(x=>bx(g,.4,.4,3.8,CBLUE,x,6.7,0));bx(g,1.2,.9,1.2,CWHITE,31,7.3,0);bx(g,.5,.2,.4,floodMat,43.5,6.4,0);mergeGroup(g);
+     const tr=new T.Group();tr.position.set(34,0,0);g.add(tr);bx(tr,1,.4,1.2,CBLUE2,0,6.45,0);mergeGroup(tr);RMG.tr=tr;
+     const sp=new T.Group();tr.add(sp);bx(sp,.9,.14,2.3,CDARK,0,0,0);mergeGroup(sp);RMG.sp=sp;sp.position.y=5.4;
+     RMG.hand=new T.Mesh(BG(1,1,2.4),clay(0xffffff));RMG.hand.position.y=-.55;RMG.hand.visible=false;sp.add(RMG.hand);
+     RMG.stackBox=new T.Mesh(BG(1,1,2.4),clay(0xdff6f8));RMG.stackBox.position.set(33.2,.5,0);RMG.stackBox.castShadow=true;g.add(RMG.stackBox);
+     const ent={type:'rmg',kind:'Rail crane (RMG)',name:'RMG-1',obj:g};g.userData.ent=ent;RMG.ent=ent;}
+    function stepTrain(h){
+      const T0=train;
+      if(T0.st==='away'){T0.g.visible=false;T0.timer-=h;if(T0.timer<=0){T0.st='arriving';T0.p=0;T0.track^=1;T0.g.position.x=TRX[T0.track];T0.g.position.z=-47.3;T0.g.visible=true;T0.filled=0;T0.started=0;T0.cont.count=0;T0.dir=1;}}
+      else if(T0.st==='arriving'){T0.p=Math.min(1,T0.p+h/20);T0.g.position.z=lerp(-47.3,3,eo(T0.p));if(T0.p>=1){T0.st='loading';}}
+      else if(T0.st==='loading'){if(T0.filled>=T0.total&&!RMG.job){T0.hold+=h;if(T0.hold>2){T0.st='leaving';T0.p=0;T0.hold=0;}}}
+      else if(T0.st==='leaving'){T0.p=Math.min(1,T0.p+h/18);T0.g.position.z=lerp(3,-47.3,ei(T0.p));if(T0.p>=1){T0.st='away';T0.timer=26+rnd()*20;}}
+    }
+    function stepRMG(h){
+      const R=RMG;
+      if(!R.job&&train.st==='loading'&&train.started<train.total){R.job={k:train.started++};R.started=false;R.t=0;}
+      if(R.job){const k=R.job.k,tz=train.g.position.z+train.slotZ[k],dz=tz-R.g.position.z;
+        R.g.position.z+=Math.sign(dz)*Math.min(Math.abs(dz),10*h);
+        if(!R.started){if(Math.abs(dz)<.05){R.started=true;R.s0=R.tr.position.x;R.t=0;R.bx=TRX[train.track];}}
+        else{const t0=R.t;R.t=Math.min(1,R.t+h/2.0);
+          if(t0<.32&&R.t>=.32){R.stackBox.visible=false;R.hand.visible=true;let car=null;const pl=yardPlan((k*5)%6,'pick');
+            if(pl){const blk=BLK[pl.b],L=blk.h[pl.s]-1;blk.h[pl.s]--;yardSet(pl.b,pl.s,L,false);car=blk.car;}else car=ri(0,5);R.car=car;setBox(R.hand,car);}
+          if(t0<.8&&R.t>=.8){R.hand.visible=false;train.cont.setColorAt(R.job.k,col(R.car));train.cont.instanceColor.needsUpdate=true;train.cont.count=R.job.k+1;train.filled++;rmgMoves.push(S.t);moveLog.push(S.t);}
+          if(t0<.92&&R.t>=.92)R.stackBox.visible=true;
+          if(R.t>=1){R.job=null;}}}
+      if(R.job&&R.started){pose(R.t,R.s0,33.2,R.bx,1.2,2.1,5.4,PO);R.tr.position.x=PO.p;R.sp.position.y=PO.y;}
+      else R.sp.position.y=lerp(R.sp.position.y,5.4,Math.min(1,h*4));
+    }
+    const moveLog=[],rmgMoves=[];
+
+    /* ===================== vessels ===================== */
+    const hullShape=new T.Shape();[[-7.5,-1.8],[4.2,-1.8],[7,-.7],[7.6,0],[7,.7],[4.2,1.8],[-7.5,1.8]].forEach((p,i)=>i?hullShape.lineTo(p[0],p[1]):hullShape.moveTo(p[0],p[1]));
+    const hullGeo=new T.ExtrudeGeometry(hullShape,{depth:1.8,bevelEnabled:false});hullGeo.rotateX(-Math.PI/2);hullGeo.translate(0,-.9,0);
+    const vessels=[];let vSeq=0;
+    const deckGeo=BG(2.34,.96,.96);
+    function makeShip(v){
+      const g=new T.Group();g.rotation.order='YXZ';
+      const side=clay(new T.Color(CARR[v.carrier].c).lerp(new T.Color(0x3b4670),.62).getHex()),deck=clay(0xe4e0f2);
+      const hull=new T.Mesh(hullGeo,[deck,side]);hull.castShadow=hull.receiveShadow=true;g.add(hull);
+      bx(g,2.1,2.4,3.0,CWHITE,-5.6,2.1,0);bx(g,2.4,.25,3.3,CWHITE,-5.6,3.4,0);bx(g,.06,.45,2.6,winMat,-4.56,3.05,0);
+      mk(g,CYL(.38,.44,1.3,12),clay(CARR[v.carrier].c),-6.4,4.2,0);mk(g,CYL(.4,.4,.2,12),CDARK,-6.4,4.9,0);
+      bx(g,.1,2.4,.1,clay(0x77739a),-5.6,4.8,0);mk(g,SPH(.13,8,6),lampMat,-5.6,6.05,0);
+      mk(g,SPH(.13,8,6),redMat,5.4,1.2,-1.1);mk(g,SPH(.13,8,6),grnMat,5.4,1.2,1.1);
+      mergeGroup(g);
+      const deckMesh=new T.InstancedMesh(deckGeo,clay(0xffffff),36);deckMesh.castShadow=deckMesh.receiveShadow=true;deckMesh.frustumCulled=false;
+      for(let k=0;k<36;k++){const s=slotLocal(k);setInst(deckMesh,k,s.x,1.4+s.L,s.z,1,0);deckMesh.setColorAt(k,col(v.slotCar[k]).multiplyScalar(.95+rnd()*.1));}
+      deckMesh.count=v.n;g.add(deckMesh);v.deck=deckMesh;
+      g.userData.ent=v;v.obj=g;return g;}
+    function spawnVessel(){
+      const free=ANCH.findIndex((a,i)=>!anchTaken[i]);if(free<0)return;
+      const used=vessels.map(v=>v.name);let name;do{name=NAMES[ri(0,NAMES.length-1)];}while(used.includes('MV '+name)&&used.length<NAMES.length);
+      const car=ri(0,5),n=ri(15,34);
+      const v={type:'vessel',id:'V'+(++vSeq),name:'MV '+name,carrier:car,imo:'IMO 9'+(100000+ri(0,899999)),flag:FLAGS[ri(0,FLAGS.length-1)],n,slotCar:[],disTotal:n,loadTotal:ri(13,32),disDone:0,loadDone:0,disStarted:0,loadStarted:0,loadFetched:0,
+       status:'Inbound',phase:'sailing',berth:-1,berthName:'',anch:free,pt:0,dur:26+rnd()*8,curve:null,hd:0,waitSince:0,stageT:0,castT:0,pos:new T.Vector3(),off:{x:0,z:0},wakeD:0,loa:218+ri(0,60),draft:(10.2+rnd()*2.4).toFixed(1),bob:rnd()*6,sc:0};
+      for(let k=0;k<36;k++)v.slotCar.push(rnd()<.82?car:ri(0,5));
+      anchTaken[free]=v;
+      const A=ANCH[free],S0=new T.Vector3(-56,0,ri(60,72));
+      v.curve=new T.CatmullRomCurve3([S0,new T.Vector3((S0.x+A[0])/2,0,(S0.z+A[1])/2+3),new T.Vector3(A[0],0,A[1])],false,'centripetal');
+      v.curve.getPointAt(0,v.pos);v.curve.getTangentAt(0,_t);v.hd=Math.atan2(-_t.z,_t.x);
+      const g=makeShip(v);g.position.copy(v.pos);g.scale.setScalar(.01);scene.add(g);v.mesh=g;vessels.push(v);return v;}
+    function sail(v,h,easeFn){
+      v.pt=Math.min(1,v.pt+h/v.dur);const u=clamp(easeFn(v.pt),0,1);
+      v.curve.getPointAt(u,v.pos);v.curve.getTangentAt(Math.min(u,.999),_t);let th=Math.atan2(-_t.z,_t.x);
+      {let oz=0;for(const o of vessels){if(o===v||o.phase==='gone'||!o.mesh)continue;const ex=v.pos.x-o.pos.x,ez=v.pos.z-o.pos.z,need=4.0*sstep(16.4,14.8,Math.abs(ex));
+         if(need>.01&&Math.abs(ez)<need){const want=(ez>=0?1:-1)*need-ez;if(Math.abs(want)>Math.abs(oz))oz=want;}}
+       const fade=v.phase==='docking'?1-sstep(.82,1,v.pt):1,a=Math.min(1,h*3);v.off.x*=1-a;v.off.z+=(oz*fade-v.off.z)*a;v.pos.z+=v.off.z;}
+      if(v.phase==='docking')th=angLerp(th,0,sstep(.72,1,v.pt));
+      v.hd=angLerp(v.hd,th,1-Math.exp(-h*1.6));
+      // wake
+      const sp=Math.hypot(v.pos.x-v.lx,v.pos.z-v.lz)||0;v.wakeD+=isFinite(sp)?sp:0;v.lx=v.pos.x;v.lz=v.pos.z;
+      if(v.wakeD>1.3){v.wakeD=0;wake(v);}
+      let sc=1;if(v.phase==='sailing')sc=sstep(0,.06,v.pt);if(v.phase==='departing')sc=1-sstep(.9,1,v.pt);v.sc=sc;
+      return v.pt>=1;}
+    function assign(v,bi){
+      const b=berths[bi];if(b.ship||!v)return false;
+      b.ship=v;v.berth=bi;v.berthName=b.name;if(anchTaken[v.anch]===v)anchTaken[v.anch]=null;
+      const x=b.x,P=v.pos.clone();
+      v.curve=new T.CatmullRomCurve3([P,new T.Vector3(lerp(P.x,x-14,.5),0,lerp(P.z,24,.6)),new T.Vector3(x-14,0,21),new T.Vector3(x-6,0,19.4),new T.Vector3(x-.9,0,18.4),new T.Vector3(x,0,SHIPZ)],false,'centripetal');
+      v.phase='docking';v.status='Inbound';v.pt=0;v.dur=24;v.lx=P.x;v.lz=P.z;return true;}
+    function departVessel(v){
+      const x=berths[v.berth].x;
+      v.curve=new T.CatmullRomCurve3([new T.Vector3(x,0,SHIPZ),new T.Vector3(x+.5,0,18.2),new T.Vector3(x+3,0,20.4),new T.Vector3(x+10,0,23.2),new T.Vector3(x+19,0,25.6),new T.Vector3(Math.max(x+30,50),0,26),new T.Vector3(62,0,36)],false,'centripetal');
+      v.phase='departing';v.status='Departed';v.pt=0;v.dur=34;v.depAt=S.t;v.lx=x;v.lz=SHIPZ;v.hd=0;}
+    function stepVessel(v,h){
+      switch(v.phase){
+       case'sailing':if(sail(v,h,eio)){v.phase='anchored';v.waitSince=S.t;}break;
+       case'docking':if(sail(v,h,eio)){v.curve.getPointAt(1,v.pos);v.off.x=v.off.z=0;v.phase='alongside';v.status='Berthed';v.stageT=S.t;ripple(v.pos.x,SHIPZ,1.4);pushAlert('info',`${v.name} berthed at ${v.berthName}`,v);}break;
+       case'alongside':if(v.status==='Berthed'&&S.t-v.stageT>=5){v.status='Discharging';pushLog();}break;
+       case'castoff':v.castT-=h;if(v.castT<=0)departVessel(v);break;
+       case'departing':if(sail(v,h,ei)){v.phase='gone';scene.remove(v.mesh);}
+         if(v.berth>=0&&v.pt>.22){berths[v.berth].ship=null;v.berth=-1;}break;
+      }}
+    const pushLog=()=>{};
+    function stepQC(b,h){
+      const q=b.qc,v=b.ship;const slow=q.slow>0?.55:1;if(q.slow>0)q.slow-=h;
+      if(q.mode===null&&v&&v.phase==='alongside'){
+        if(v.status==='Discharging'){
+          if(v.disStarted<v.disTotal){q.mode='dis';q.t=0;q.s0=q.z;q.slot=v.n-1;q.car=v.slotCar[q.slot];v.disStarted++;
+            const sl=slotLocal(q.slot);q.xA=q.xB=v.pos.x+sl.x;q.zA=SHIPZ+sl.z;q.zB=LANDZ;q.yA=1.9+sl.L+.1;q.yB=2.05;q.x0=q.g.position.x;}
+          else if(v.disDone>=v.disTotal){v.status='Loading';v.stageT=S.t;}}
+        if(v.status==='Loading'&&q.mode===null){
+          while(b.pend<2&&v.loadFetched<v.loadTotal&&fetchBox(b,v))v.loadFetched++;
+          if(v.loadStarted<v.loadTotal){const sc=b.sc.find(s=>!s.claimed);
+            if(sc){sc.claimed=true;q.sc=sc;q.mode='load';q.t=0;q.s0=q.z;q.slot=v.n;q.car=sc.car;v.loadStarted++;
+              const sl=slotLocal(v.n);q.xA=sc.g.position.x;q.xB=v.pos.x+sl.x;q.zA=LANDZ;q.zB=SHIPZ+sl.z;q.yA=2.05;q.yB=1.9+sl.L+.1;}}
+          else if(v.loadDone>=v.loadTotal){v.phase='castoff';v.castT=3;}}}
+      if(q.mode){const t0=q.t;q.t=Math.min(1,q.t+h*slow/CYC);
+        if(t0<.32&&q.t>=.32){q.hand.visible=true;setBox(q.hand,q.car);
+          if(q.mode==='dis'){v.n--;v.deck.count=v.n;}else{const sc=q.sc;b.sc.splice(b.sc.indexOf(sc),1);b.pend--;sc.boxM.visible=false;sc.ts=0;}}
+        if(t0<.8&&q.t>=.8){q.hand.visible=false;q.moves++;moveLog.push(S.t);
+          if(q.mode==='dis'){v.disDone++;deliver(b,q.xB,q.car);}
+          else{v.deck.setColorAt(q.slot,col(q.car));v.deck.instanceColor.needsUpdate=true;v.slotCar[q.slot]=q.car;v.n++;v.deck.count=v.n;v.loadDone++;}}
+        if(q.t>=1)q.mode=null;}
+      // gantry x
+      let tx=q.g.position.x;if(q.mode)tx=q.t<.44?q.xA:q.xB;
+      tx=clamp(tx,b.x-4.5,b.x+4.8);q.g.position.x+=(tx-q.g.position.x)*(1-Math.exp(-h*2.6));
+      if(q.mode){pose(q.t,q.s0,q.zA,q.zB,q.yA,q.yB,7.2,PO);q.z=PO.p;q.yy=PO.y;}
+      else q.yy=lerp(q.yy,7.2,Math.min(1,h*3));
+      q.tg.position.z=q.z;q.sp.position.set(0,q.yy,q.z);
+      const top=10.0,len=top-(q.yy+.1);q.ropes.forEach(r=>{r.scale.y=len;r.position.set(r.position.x,top-len/2,q.z);});
+    }
+    function deliver(b,x,car){
+      const pl=yardPlan(car,'drop',null,true);const sc=newSC(x,LANDZ,car,true);if(!sc)return;
+      if(!pl){sc.ts=0;return;}
+      const blk=BLK[pl.b];blk.res[pl.s]++;const sx=slotX(blk,pl.s),route=routeToBlock(x,pl.b,sx);blk.occ.push(sx);
+      drive(sc,route,()=>{sc.st='waitRTG';RTGs[pl.b].queue.push({type:'drop',sc,s:pl.s,onDone:()=>{blk.occ.splice(blk.occ.indexOf(sx),1);sc.ts=0;}});});}
+    function fetchBox(b,v){
+      const pl=yardPlan(v.carrier,'pick',null,true);
+      if(!pl){const sc=newSC(b.x,LANDZ,ri(0,5),true);if(!sc)return false;sc.berth=b.i;sc.st='idle';sc.s=1;b.sc.push(sc);b.pend++;return true;}
+      const blk=BLK[pl.b];const sx=slotX(blk,pl.s),zf=blk.cz+4.5;const sc=newSC(sx,zf,blk.car,false);if(!sc)return false;
+      sc.hd=Math.PI/2;sc.g.rotation.y=sc.hd;blk.pr[pl.s]++;blk.occ.push(sx);sc.berth=b.i;b.pend++;const route=routeToBlock(b.x,pl.b,sx).reverse();sc.st='waitRTG';
+      RTGs[pl.b].queue.push({type:'pick',sc,s:pl.s,onDone:()=>{blk.occ.splice(blk.occ.indexOf(sx),1);drive(sc,route,()=>{b.sc.push(sc);});}});return true;}
+    function scheduler(){
+      const waiting=vessels.filter(v=>v.phase==='anchored').sort((a,b)=>a.waitSince-b.waitSince);
+      if(waiting.length&&S.auto){const fb=berths.find(b=>!b.ship);if(fb&&S.t-waiting[0].waitSince>=7)assign(waiting[0],fb.i);}
+    }
+    let nextSpawn=0,nextGust=480;
+    function spawner(){const act=vessels.filter(v=>v.phase!=='gone'&&v.phase!=='departing').length;
+      if(S.t>=nextSpawn&&act<9){spawnVessel();nextSpawn=S.t+(vessels.length<4?6:30+rnd()*26);}}
+
+    /* ===================== alerts & stats ===================== */
+    const alerts=[];let unread=0;
+    function pushAlert(sev,txt,ent){alerts.unshift({sev,txt,t:S.t,ent});if(alerts.length>14)alerts.pop();unread++;renderAlerts();}
+    let aGate=0,aYard=0;const waitFlag=new Set();
+    function events(){
+      if(S.t>nextGust){const b=berths[ri(0,3)];b.qc.slow=12;pushAlert('warn',`Wind gust 21 kn — ${b.qc.ent.name} derated for 12 min`,b.qc.ent);nextGust=S.t+95+rnd()*80;}
+      vessels.forEach(v=>{if(v.phase==='anchored'&&S.t-v.waitSince>28&&!waitFlag.has(v.id)){waitFlag.add(v.id);pushAlert('warn',`${v.name} waiting 28+ min for a berth`,v);}});
+      const occ=yardCount()/540;if(occ>.8&&S.t>aYard){aYard=S.t+120;pushAlert('bad',`Yard occupancy ${Math.round(occ*100)}% — review discharge plan`);}
+      const q=trucks.filter(t=>t.state==='Queueing'||t.state==='At gate').length;if(q>=4&&S.t>aGate){aGate=S.t+90;pushAlert('warn',`Gate queue: ${q} trucks waiting`);}
+      if(S.t>(events.rf||0)){events.rf=S.t+150+rnd()*100;const r=reeferData[ri(0,29)];pushAlert('info',`Reefer ${r.id}: setpoint drift +1.5 °C, auto-corrected`);}
+    }
+    function simStep(h){
+      S.t+=h;spawner();
+      vessels.forEach(v=>stepVessel(v,h));scheduler();
+      berths.forEach(b=>stepQC(b,h));SCs.forEach(s=>stepSC(s,h));RTGs.forEach(r=>stepRTG(r,h));trucks.forEach(t=>stepTruck(t,h));stepTrain(h);stepRMG(h);events();
+      for(let i=vessels.length-1;i>=0;i--){const v=vessels[i];if(v.phase==='gone'&&vessels.filter(x=>x.phase==='gone').length>7&&S.sel!==v){const idx=vessels.filter(x=>x.phase==='gone').indexOf(v);if(idx===0){vessels.splice(i,1);}}}
+      while(moveLog.length&&moveLog[0]<S.t-60)moveLog.shift();
+    }
+
+    /* ===================== effects ===================== */
+    const rings=[],wakes=[];
+    const ringGeo=new T.RingGeometry(.85,1,48);ringGeo.rotateX(-Math.PI/2);
+    for(let i=0;i<14;i++){const m=new T.Mesh(ringGeo,new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false}));m.visible=false;scene.add(m);rings.push({m,life:0,max:1,s0:1,s1:10});}
+    function ripple(x,z,s0,s1,color){const r=rings.find(r=>r.life<=0);if(!r)return;r.life=r.max=3.5;r.s0=s0||1;r.s1=s1||12;r.m.position.set(x,-.38,z);r.m.visible=true;r.m.material.color.set(color||0xffffff);}
+    const wakeGeo=new T.CircleGeometry(.5,12);wakeGeo.rotateX(-Math.PI/2);
+    for(let i=0;i<90;i++){const m=new T.Mesh(wakeGeo,new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,depthWrite:false}));m.visible=false;scene.add(m);wakes.push({m,life:0});}
+    function wake(v){const c=Math.cos(v.hd),s=-Math.sin(v.hd);[[-7.6,0],[3.5,1.6],[3.5,-1.6]].forEach((o,i)=>{const w=wakes.find(w=>w.life<=0);if(!w)return;w.life=w.max=(i?3:4.5);w.big=i?1.2:2.6;w.m.position.set(v.pos.x+o[0]*c-o[1]*s,-.4,v.pos.z+o[0]*s+o[1]*c);w.m.visible=true;});}
+    // gulls
+    const gulls=[];{const wg=new T.BufferGeometry();wg.setAttribute('position',new T.BufferAttribute(new Float32Array([0,0,.28,0,0,-.28,1.15,0,0]),3));wg.computeVertexNormals();const wm=new T.MeshBasicMaterial({color:0xffffff,side:T.DoubleSide});
+     for(let i=0;i<14;i++){const g=new T.Group();const body=new T.Mesh(SPH(.2,8,6),wm);body.scale.set(1.6,.7,.7);g.add(body);
+      const wl=new T.Mesh(wg,wm),wr=new T.Mesh(wg,wm);wr.scale.x=-1;g.add(wl,wr);scene.add(g);
+      gulls.push({g,wl,wr,cx:(rnd()-.5)*90,cz:-10+rnd()*70,r:6+rnd()*18,a:rnd()*6,sp:(.25+rnd()*.3)*(rnd()>.5?1:-1),h:7+rnd()*12,ph:rnd()*6});}}
+
+    /* ===================== camera / controls ===================== */
+    const cam={target:new T.Vector3(2,0,10),yaw:.5,pitch:.6,dist:195,vy:0,vp:0,vd:0,vpan:new T.Vector3(),goal:null,follow:false};
+    const VIEWS={all:{t:[2,0,10],d:195,yaw:.5,pitch:.6},quay:{t:[0,2,12],d:66,yaw:.3,pitch:.5},yard:{t:[-12,1,-4],d:62,yaw:.45,pitch:.85},gate:{t:[20,1,-26],d:44,yaw:.4,pitch:.55},rail:{t:[38,1,-16],d:58,yaw:-.5,pitch:.62},harbour:{t:[22,0,38],d:72,yaw:-.4,pitch:.42}};
+    function flyTo(t,d,yaw,pitch){cam.goal={t:new T.Vector3().copy(t),d,yaw,pitch};}
+    function applyCam(){const cp=Math.cos(cam.pitch);camera.position.set(cam.target.x+Math.sin(cam.yaw)*cp*cam.dist,cam.target.y+Math.sin(cam.pitch)*cam.dist,cam.target.z+Math.cos(cam.yaw)*cp*cam.dist);camera.lookAt(cam.target);}
+    const ptrs=new Map();let drag=null,moved=0,downAt=null;
+    function cancelAuto(){cam.goal=null;if(fly.on)stopFly();}
+    canvas.addEventListener('contextmenu',e=>e.preventDefault());
+    canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:__cx(e),y:__cy(e)});
+      downAt={x:__cx(e),y:__cy(e)};moved=0;cancelAuto();canvas.classList.add('drag');
+      drag={pan:e.button===2||e.shiftKey||e.button===1};hideHint();});
+    canvas.addEventListener('pointermove',e=>{
+      mouse.x=__cx(e);mouse.y=__cy(e);mouse.dirty=true;
+      const p=ptrs.get(e.pointerId);if(!p)return;const dx=__cx(e)-p.x,dy=__cy(e)-p.y;
+      if(ptrs.size===2){const o=[...ptrs.entries()].find(([k])=>k!==e.pointerId)[1];const d0=Math.hypot(p.x-o.x,p.y-o.y),d1=Math.hypot(__cx(e)-o.x,__cy(e)-o.y);
+        cam.dist=clamp(cam.dist*d0/Math.max(1,d1),22,420);panBy(dx*.5,dy*.5);moved+=9;}
+      else if(drag){moved+=Math.abs(dx)+Math.abs(dy);
+        if(drag.pan)panBy(dx,dy);else{const ay=-dx*.0052,ap=dy*.0052;cam.yaw+=ay;cam.pitch=clamp(cam.pitch+ap,.12,1.4);cam.vy=cam.vy*.4+ay*.6;cam.vp=cam.vp*.4+ap*.6;}}
+      p.x=__cx(e);p.y=__cy(e);});
+    function panBy(dx,dy){const s=cam.dist*.0016,rx=Math.cos(cam.yaw),rz=-Math.sin(cam.yaw),fx=-Math.sin(cam.yaw),fz=-Math.cos(cam.yaw);
+      const mx=-dx*s*rx+dy*s*fx*1.3,mz=-dx*s*rz+dy*s*fz*1.3;cam.target.x+=mx;cam.target.z+=mz;cam.vpan.set(mx,0,mz);cam.follow=false;}
+    const endP=e=>{ptrs.delete(e.pointerId);canvas.classList.remove('drag');
+      if(e.type==='pointerup'&&moved<(e.pointerType==='touch'?12:5)&&downAt&&ptrs.size===0){clickAt(__cx(e),__cy(e));}
+      if(!ptrs.size)drag=null;};
+    canvas.addEventListener('pointerup',endP);canvas.addEventListener('pointercancel',endP);
+    canvas.addEventListener('wheel',e=>{e.preventDefault();cancelAuto();cam.vd+=clamp(e.deltaY,-120,120)*.00055;hideHint();},{passive:false});
+    const mouse={x:0,y:0,dirty:false};
+    function stepCamera(dt){
+      const k=Math.pow(.04,dt);
+      if(!drag){cam.yaw+=cam.vy;cam.pitch=clamp(cam.pitch+cam.vp,.12,1.4);cam.vy*=k;cam.vp*=k;cam.target.addScaledVector(cam.vpan,1);cam.vpan.multiplyScalar(k);}
+      if(Math.abs(cam.vd)>1e-5){cam.dist=clamp(cam.dist*Math.exp(cam.vd),22,420);cam.vd*=Math.pow(.003,dt);}
+      if(cam.goal){const f=1-Math.exp(-dt*3.4),g=cam.goal;cam.target.lerp(g.t,f);cam.dist+=(g.d-cam.dist)*f;if(g.yaw!=null)cam.yaw=angLerp(cam.yaw,g.yaw,f);if(g.pitch!=null)cam.pitch+=(g.pitch-cam.pitch)*f;
+        if(cam.target.distanceTo(g.t)<.15&&Math.abs(g.d-cam.dist)<.4)cam.goal=null;}
+      if(cam.follow&&S.sel&&!cam.goal){entPos(S.sel,_t);cam.target.lerp(_t,1-Math.exp(-dt*4));}
+      cam.target.x=clamp(cam.target.x,-70,70);cam.target.z=clamp(cam.target.z,-60,90);
+    }
+
+    /* cinematic */
+    const fly={on:false,t:0,blend:0};
+    const FK=[[[90,66,110],[0,0,-6]],[[-56,13,44],[-20,3,10]],[[-6,9,27],[-8,3,13]],[[14,8,23],[8,6,10]],[[-34,16,16],[-12,2,-6]],[[-10,26,-26],[-12,2,-4]],[[8,10,-16],[20,1,-30]],[[22,12,-4],[39,2,-14]],[[-38,15,12],[-47,6,-4]],[[26,7,46],[40,6,32]],[[62,30,70],[10,0,10]]];
+    const flyP=new T.CatmullRomCurve3(FK.map(k=>new T.Vector3(...k[0])),true,'catmullrom',.5),flyT=new T.CatmullRomCurve3(FK.map(k=>new T.Vector3(...k[1])),true,'catmullrom',.5);
+    const _fp=new T.Vector3(),_ft=new T.Vector3();
+    function startFly(){fly.on=true;fly.t=0;fly.blend=0;fly.p0=camera.position.clone();fly.t0=cam.target.clone();cam.goal=null;$('#flyBtn').classList.add('on');$('#flyLbl').textContent='Stop';select(null);}
+    function stopFly(){fly.on=false;$('#flyBtn').classList.remove('on');$('#flyLbl').textContent='Fly-through';camera.fov=30;camera.updateProjectionMatrix();
+      cam.target.copy(_ft);const d=_fp.clone().sub(_ft);cam.dist=clamp(d.length(),22,420);cam.yaw=Math.atan2(d.x,d.z);cam.pitch=clamp(Math.asin(d.y/d.length()),.12,1.4);}
+    function stepFly(dt){fly.t=(fly.t+dt/95)%1;fly.blend=Math.min(1,fly.blend+dt/3);
+      flyP.getPointAt(fly.t,_fp);flyT.getPointAt(fly.t,_ft);const b=eio(fly.blend);
+      _fp.lerp(fly.p0,1-b);_ft.lerp(fly.t0,1-b);camera.position.copy(_fp);camera.lookAt(_ft);
+      const f=lerp(30,40,b*.6);if(Math.abs(camera.fov-f)>.05){camera.fov=f;camera.updateProjectionMatrix();}}
+
+    /* ===================== picking / selection ===================== */
+    const ray=new T.Raycaster(),ndc=new T.Vector2();
+    function pickList(){const l=[];vessels.forEach(v=>{if(v.phase!=='gone'&&v.mesh)l.push(v.mesh);});berths.forEach(b=>{l.push(b.qc.g);if(!b.ship)l.push(b.pad);});
+      RTGs.forEach(r=>l.push(r.g));l.push(RMG.g,train.g);trucks.forEach(t=>l.push(t.g));SCs.forEach(s=>{if(s.g.visible)l.push(s.g);});l.push(yardMesh,reeferMesh);return l;}
+    function visibleChain(o){while(o){if(!o.visible)return false;o=o.parent;}return true;}
+    function pickAt(x,y){
+      ndc.set(x/__W()*2-1,-(y/__H())*2+1);ray.setFromCamera(ndc,camera);
+      const hits=ray.intersectObjects(pickList(),true);
+      for(const h of hits){let o=h.object;if(!visibleChain(o))continue;
+        if(o===yardMesh){if(!yPres[h.instanceId])continue;return yardEnt(h.instanceId);}
+        if(o===reeferMesh)return reeferEnt(h.instanceId);
+        while(o&&!o.userData.ent)o=o.parent;if(o&&o.userData.ent)return o.userData.ent;}
+      return null;}
+    const yardEnt=idx=>{const b=(idx/60)|0,s=((idx/4)|0)%15,L=idx%4,blk=BLK[b];return{type:'container',key:'y'+idx,idx,b,s,L,blk,pos:new T.Vector3(slotX(blk,s),.5+L,slotZ(blk,s)),size:[2.4,1,1]};};
+    const reeferEnt=idx=>{const r=reeferData[idx];return{type:'reefer',key:'r'+idx,idx,r,pos:new T.Vector3(r.x,r.y,r.z),size:[2.4,1,1]};};
+    const entKey=e=>e?(e.key||e.id||e.name):null;
+    function entPos(e,out){if(e.obj)return e.obj.getWorldPosition(out);if(e.type==='container'||e.type==='reefer')return out.copy(e.pos);return out.set(0,0,0);}
+    const _bb=new T.Box3();
+    function entBox(e,b){if(e.type==='container'||e.type==='reefer'){b.setFromCenterAndSize(e.pos,_t.set(2.4,1,1));return b;}
+      if(e.type==='vessel'){_t.copy(e.pos);return b.setFromCenterAndSize(_t.set(e.pos.x,1.6,e.pos.z),new T.Vector3(15.6,3.6,3.8));}
+      b.setFromObject(e.obj);return b;}
+    function entLabel(e){switch(e.type){
+     case'vessel':return`${e.name} · ${e.status}${e.phase==='alongside'||e.phase==='castoff'?' · '+Math.round(prog(e))+'%':''}`;
+     case'crane':return`${e.name} · ${e.berth>=0&&berths[e.berth].ship?berths[e.berth].ship.status:'Idle'}`;
+     case'rtg':return`${e.name} · Block ${blockName(e.block)}`;
+     case'rmg':return'RMG-1 · rail crane';case'train':return`Freight train · ${train.st}`;
+     case'truck':return`${e.name} · ${e.state}`;case'sc':return`${e.name} · straddle carrier`;
+     case'container':return`${yId[e.idx]} · ${CARR[e.blk.car].n}`;case'reefer':return`${e.r.id} · reefer ${e.r.temp} °C`;
+     case'berth':{const w=vessels.find(v=>v.phase==='anchored');return e.berth.ship?`Berth ${e.berth.name} · ${e.berth.ship.name}`:`Berth ${e.berth.name} · free — click to assign ${w?w.name:'next inbound'}`;}}return'';}
+    const blockName=blk=>'ABC'[blk.r]+(blk.c+1);
+    const hlMat=new T.LineBasicMaterial({color:0x6d86ff,transparent:true,opacity:.85,depthTest:false});
+    const hlSelMat=new T.LineBasicMaterial({color:0x2f55e6,transparent:true,opacity:1,depthTest:false});
+    const edgeGeo=new T.EdgesGeometry(new T.BoxGeometry(1,1,1));
+    const hlHov=new T.LineSegments(edgeGeo,hlMat),hlSel=new T.LineSegments(edgeGeo,hlSelMat);[hlHov,hlSel].forEach(m=>{m.visible=false;m.renderOrder=10;scene.add(m);});
+    const ringSel=new T.Mesh(new T.RingGeometry(1,1.16,64),new T.MeshBasicMaterial({color:0x2f55e6,transparent:true,opacity:.8,side:T.DoubleSide,depthTest:false,depthWrite:false}));ringSel.rotation.x=-Math.PI/2;ringSel.renderOrder=9;ringSel.visible=false;scene.add(ringSel);
+    const ringGlow=new T.Mesh(new T.CircleGeometry(1,48),new T.MeshBasicMaterial({color:0x7f9bff,transparent:true,opacity:.22,depthWrite:false,depthTest:false}));ringGlow.rotation.x=-Math.PI/2;ringGlow.renderOrder=8;ringGlow.visible=false;scene.add(ringGlow);
+    function fitBox(m,e){entBox(e,_bb);const s=_bb.getSize(new T.Vector3()).addScalar(.35);_bb.getCenter(m.position);m.scale.copy(s);m.visible=true;}
+    function hover(e){S.hov=e;if(!e){hlHov.visible=false;$('#tip').style.opacity=0;canvas.classList.remove('hot');return;}canvas.classList.add('hot');}
+    function clickAt(x,y){const e=pickAt(x,y);
+      if(e&&e.type==='berth'){const b=e.berth;if(b.ship){select(b.ship);return;}
+        const w=vessels.filter(v=>v.phase==='anchored').sort((a,b)=>a.waitSince-b.waitSince)[0]||vessels.filter(v=>v.phase==='sailing').sort((a,b)=>b.pt-a.pt)[0];
+        if(!w){toast('No inbound vessel to assign');return;}assign(w,b.i);ripple(b.x,SHIPZ,1,9,0x6fe0b5);toast(`${w.name} assigned to ${b.name}`);select(w);return;}
+      select(e);}
+    function select(e){S.sel=e;cam.follow=false;
+      if(!e){hlSel.visible=ringSel.visible=ringGlow.visible=false;$('#pin').style.opacity=0;renderPanel(true);return;}
+      entPos(e,_t);const sz=entBox(e,_bb).getSize(new T.Vector3());const d=clamp(Math.max(sz.x,sz.z)*2.2+26,34,90);
+      if(e.type!=='berth'){cam.goal={t:_t.clone().setY(Math.min(_t.y,2)),d,yaw:null,pitch:null};cam.follow=e.type==='vessel'||e.type==='truck'||e.type==='train'||e.type==='sc';}
+      $('#pinN').textContent=e.name||(e.idx!=null?(yId[e.idx]||e.r?.id):'');renderPanel(true);}
+
+    /* ===================== UI ===================== */
+    const fmtHM=m=>{m=Math.floor(m);const h=Math.floor(m/60)%24,mm=m%60;return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');};
+    const prog=v=>{if(v.status==='Departed')return 100;if(v.phase==='sailing')return v.pt*50;if(v.phase==='anchored')return 50;if(v.phase==='docking')return 50+v.pt*50;
+      return clamp((v.disDone+v.loadDone)/(v.disTotal+v.loadTotal)*100,0,100);};
+    function etaOf(v){const rem=(v.disTotal-v.disDone+v.loadTotal-v.loadDone)*CYC;
+      switch(v.phase){case'sailing':return['ETA',S.t+(1-v.pt)*v.dur];
+       case'anchored':{const q=vessels.filter(x=>x.phase==='anchored').sort((a,b)=>a.waitSince-b.waitSince).indexOf(v);const fr=berths.map(b=>b.ship?((b.ship.disTotal-b.ship.disDone+b.ship.loadTotal-b.ship.loadDone)*CYC+8):0).sort((a,b)=>a-b);return['Berth ETA',S.t+Math.max(fr[q%4]+Math.floor(q/4)*60,7-(S.t-v.waitSince))+24];}
+       case'docking':return['Docks',S.t+(1-v.pt)*v.dur];case'alongside':return['ETD',S.t+rem+(v.status==='Berthed'?5:0)+3];
+       case'castoff':return['ETD',S.t+v.castT];case'departing':case'gone':return['Departed',v.depAt];}return['',0];}
+    function toast(t){if(__hooks.toast)__hooks.toast(t);const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.k);toast.k=setTimeout(()=>el.classList.remove('show'),2400);}
+    let hintOn=true;function hideHint(){if(hintOn){hintOn=false;$('#hint').style.opacity=0;}}
+    $('#speed').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.speed=+b.dataset.s;[...$('#speed').children].forEach(x=>x.classList.toggle('on',x===b));});
+    $('#nightBtn').onclick=()=>{S.night=!S.night;$('#nightBtn').classList.toggle('on',S.night);$('#nightTxt').textContent=S.night?'Day':'Night';};
+    $('#flyBtn').onclick=()=>fly.on?stopFly():startFly();
+    $('#term').onchange=e=>{const v=VIEWS[e.target.value];select(null);cancelAuto();flyTo(new T.Vector3(...v.t),v.d*FIT,v.yaw,v.pitch);};
+    $('#alertBtn').onclick=e=>{e.stopPropagation();const a=$('#alerts');a.classList.toggle('open');if(a.classList.contains('open')){unread=0;renderAlerts();}};
+    __doc.addEventListener('click',e=>{if(!e.target.closest('.alertwrap'))$('#alerts').classList.remove('open');if(!e.target.closest('.search'))$('#qres').classList.remove('open');});
+    function renderAlerts(){const n=$('#alertN');n.style.display=unread?'flex':'none';n.textContent=unread;
+      $('#alerts').innerHTML=alerts.length?alerts.map((a,i)=>`<div class="it" data-i="${i}"><i class="sev" style="background:${a.sev==='bad'?'#e5506b':a.sev==='warn'?'#f0912f':'#7c8cff'}"></i><div>${a.txt}<small>${fmtHM(a.t)}</small></div></div>`).join(''):'<div class="it">No alerts</div>';}
+    $('#alerts').onclick=e=>{const it=e.target.closest('.it');if(!it||it.dataset.i==null)return;const a=alerts[+it.dataset.i];if(a&&a.ent){select(a.ent);}};
+    const qEl=$('#q');
+    function runSearch(){const s=qEl.value.trim().toLowerCase();const r=$('#qres');if(!s){r.classList.remove('open');return;}
+      const hits=vessels.filter(v=>v.phase!=='gone'||true).filter(v=>(v.name+' '+v.imo+' '+v.status+' '+v.berthName+' '+CARR[v.carrier].n).toLowerCase().includes(s)).slice(0,8);
+      r.innerHTML=hits.length?hits.map(v=>`<div class="it" data-id="${v.id}"><i class="sev" style="background:${STATUS_COL[v.status]}"></i><div>${v.name}<small>${v.imo} · ${v.status}${v.berthName?' · '+v.berthName:''}</small></div></div>`).join(''):'<div class="it">No match</div>';r.classList.add('open');}
+    qEl.oninput=runSearch;qEl.onfocus=runSearch;
+    $('#qres').onclick=e=>{const it=e.target.closest('.it');if(!it||!it.dataset.id)return;const v=vessels.find(x=>x.id===it.dataset.id);if(v&&v.phase!=='gone'){select(v);$('#qres').classList.remove('open');}};
+    $('#tracker').onclick=e=>{const c=e.target.closest('.vc');if(!c)return;const v=vessels.find(x=>x.id===c.dataset.id);if(v&&v.phase!=='gone')select(v);};
+
+    function chip(s){return`<span class="chip" style="background:${STATUS_COL[s]}">${s}</span>`;}
+    function renderPanel(force){
+      const el=$('#panel'),e=S.sel;el.classList.toggle('idle',!e);
+      if(!e){if(force||!el.dataset.empty){el.dataset.empty=1;el.innerHTML=`<h3>Port Aurelia</h3><div class="sub">Live operations overview</div><div class="empty" style="margin-top:12px">Select a <b>vessel</b>, <b>crane</b>, <b>container</b> or <b>truck</b> to inspect it.<br><br>Green berths are free — <b>click one</b> to bring in the next inbound ship.</div><div class="grid2"><div><small>Yard fill</small><b id="pyf">–</b></div><div><small>Vessels active</small><b id="pva">–</b></div><div><small>Trucks on site</small><b>${trucks.length}</b></div><div><small>Train</small><b id="ptr">–</b></div></div>`;}
+        const yf=$('#pyf');if(yf){yf.textContent=Math.round(yardCount()/540*100)+'%';$('#pva').textContent=vessels.filter(v=>v.phase!=='gone'&&v.phase!=='departing').length;$('#ptr').textContent=train.st==='loading'?`loading ${train.filled}/${train.total}`:train.st;}
+        return;}
+      delete el.dataset.empty;
+      const x='<button class="x" id="px" aria-label="Close">✕</button>';
+      if(e.type==='vessel'){
+        const p=prog(e),[el1,et]=etaOf(e);
+        if(force||!el.dataset.v||el.dataset.v!==e.id){el.dataset.v=e.id;
+          el.innerHTML=`${x}<h3>${e.name}</h3><div class="sub">${e.imo} · ${e.flag} · <span style="color:#${CARR[e.carrier].c.toString(16).padStart(6,'0')}">●</span> ${CARR[e.carrier].n}</div>
+          <div style="margin:10px 0 2px" id="pvc"></div><div style="display:flex;justify-content:space-between;color:var(--mute)"><span id="pvl"></span><b id="pvp" style="color:var(--ink)"></b></div><div class="bar"><i id="pvb"></i></div>
+          <div class="grid2"><div><small id="pel"></small><b id="pet"></b></div><div><small>Berth</small><b id="pbt"></b></div><div><small>Discharge</small><b id="pdi"></b></div><div><small>Load</small><b id="plo"></b></div><div><small>On board</small><b id="pob"></b></div><div><small>LOA / draft</small><b>${e.loa} m · ${e.draft} m</b></div></div>
+          <div class="btns"><button id="pfol">Follow</button><button class="alt" id="pass">Berth now</button></div>`;
+          $('#pfol').onclick=()=>{cam.follow=!cam.follow;cam.goal=null;};
+          $('#pass').onclick=()=>{const fb=berths.find(b=>!b.ship);if(!fb){toast('All berths occupied');return;}if(e.phase==='anchored'||e.phase==='sailing'){assign(e,fb.i);toast(`${e.name} assigned to ${fb.name}`);}else toast('Already berthed or leaving');};}
+        $('#pvc').innerHTML=chip(e.status);$('#pvl').textContent=e.status==='Inbound'?'Approach':'Operations';$('#pvp').textContent=Math.round(p)+'%';$('#pvb').style.width=p+'%';
+        $('#pel').textContent=el1;$('#pet').textContent=fmtHM(et)+(el1!=='Departed'?` (+${Math.max(0,Math.round(et-S.t))} min)`:'');$('#pbt').textContent=e.berthName||(e.phase==='anchored'?'Waiting':'—');
+        $('#pdi').textContent=`${e.disDone} / ${e.disTotal}`;$('#plo').textContent=`${e.loadDone} / ${e.loadTotal}`;$('#pob').textContent=e.n+' TEU';
+        $('#pass').style.display=(e.phase==='anchored'||e.phase==='sailing')?'':'none';$('#pfol').textContent=cam.follow?'Following ✓':'Follow';}
+      else{
+        const rows=[];let title=e.name||'',sub=e.kind||'';
+        if(e.type==='crane'){const q=e.qc,v=berths[e.berth].ship;sub='Quay crane · berth '+berths[e.berth].name;rows.push(['State',q.mode?(q.mode==='dis'?'Discharging':'Loading'):'Idle'],['Moves',q.moves],['Vessel',v?v.name:'—'],['Wind derate',q.slow>0?'Active':'None']);}
+        else if(e.type==='rtg'){sub='Block '+blockName(e.block)+' · '+CARR[e.block.car].n;rows.push(['State',e.job?(e.job.type==='drop'?'Stacking':'Retrieving'):'Idle'],['Queue',e.queue.length],['Block fill',Math.round(e.block.h.reduce((a,b)=>a+b,0)/60*100)+'%'],['Max tier','4 high']);}
+        else if(e.type==='rmg'){sub='Rail terminal';rows.push(['State',RMG.job?'Loading wagon':'Idle'],['Train',train.st],['Slots',`${train.filled} / ${train.total}`],['Track',train.track+1]);}
+        else if(e.type==='train'){title='Freight train FT-07';sub='Rail terminal · track '+(train.track+1);rows.push(['State',train.st],['Loaded',`${train.filled} / ${train.total}`],['Wagons',6],['Dest.','Inland hub']);}
+        else if(e.type==='truck'){sub='Road truck';rows.push(['State',e.state],['Cargo',e.has?CARR[e.car].n+' box':'Empty'],['Gate turn',gateTurns.length?Math.round(gateTurns.reduce((a,b)=>a+b,0)/gateTurns.length)+' min':'–'],['Loop',Math.round(((e.s%PL)+PL)%PL/PL*100)+'%']);}
+        else if(e.type==='sc'){sub='Straddle carrier';rows.push(['State',e.st],['Cargo',e.boxM.visible?CARR[e.car].n:'Empty'],['Berth',e.berth!=null?berths[e.berth].name:'—'],['Speed','7.5 u/min']);}
+        else if(e.type==='container'){title=yId[e.idx]||'Container';sub=CARR[e.blk.car].n+' · 40 ft dry';rows.push(['Block',blockName(e.blk)],['Stack / tier',`${e.s+1} / ${e.L+1}`],['Status',yPres[e.idx]?'In yard':'Moved'],['Dwell',((e.idx*7)%40/10+.5).toFixed(1)+' d']);}
+        else if(e.type==='reefer'){title=e.r.id;sub='Reefer block R1';rows.push(['Setpoint',e.r.temp+' °C'],['Plug','Powered'],['Tier',Math.round(e.r.y+.5)],['Status','Nominal']);}
+        el.innerHTML=`${x}<h3>${title}</h3><div class="sub">${sub}</div><div class="grid2">${rows.map(r=>`<div><small>${r[0]}</small><b>${r[1]}</b></div>`).join('')}</div>`;delete el.dataset.v;}
+      const xb=$('#px');if(xb)xb.onclick=()=>select(null);}
+    function spark(svg,arr,color,max){if(arr.length<2){svg.innerHTML='';return;}const mx=Math.max(max||1,...arr),w=92,h=34;const pts=arr.map((v,i)=>`${(i/(arr.length-1)*w).toFixed(1)},${(h-3-v/mx*(h-8)).toFixed(1)}`).join(' ');
+      svg.innerHTML=`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${pts.split(' ').pop().split(',')[0]}" cy="${pts.split(' ').pop().split(',')[1]}" r="2.6" fill="${color}"/>`;}
+    const hist={b:[],m:[],g:[]};let lastHist=-99;
+    function updateKPIs(){
+      const used=berths.filter(b=>b.ship).length;$('#k1').textContent=used;[...$('#pips').children].forEach((p,i)=>p.classList.toggle('on',i<used));
+      const mph=moveLog.length;$('#k2').textContent=mph;
+      const gt=gateTurns.length?gateTurns.reduce((a,b)=>a+b,0)/gateTurns.length:0;$('#k3').textContent=gt?Math.round(gt):'–';
+      const d2=$('#k2d'),d3=$('#k3d');const tgt=94;d2.textContent=(mph>=tgt?'▲ ':'▼ ')+Math.abs(mph-tgt)+' vs target '+tgt;d2.className='delta '+(mph>=tgt?'ok':'bad');
+      if(gt){d3.textContent=gt<=38?'▲ within target ≤ 38':'▼ above target ≤ 38';d3.className='delta '+(gt<=38?'ok':'bad');}
+      if(S.t-lastHist>=10){lastHist=S.t;hist.b.push(used);hist.m.push(mph);hist.g.push(gt);Object.values(hist).forEach(a=>{if(a.length>24)a.shift();});}
+      spark($('#sp1'),hist.b,'#2f55e6',4);spark($('#sp2'),hist.m,'#2fb57a',120);spark($('#sp3'),hist.g,'#f0912f',60);
+      $('#clk').textContent=fmtHM(S.t);$('#day').textContent='Day '+(Math.floor(S.t/1440)+1);
+    }
+    let trackSig='';
+    function updateTracker(){
+      const cols={Arrived:[],Berthed:[],Discharging:[],Loading:[],Departed:[]};
+      vessels.forEach(v=>{const k=v.status==='Inbound'?'Arrived':v.status;if(v.phase==='gone'&&k!=='Departed')return;cols[k].push(v);});
+      cols.Departed=cols.Departed.sort((a,b)=>b.depAt-a.depAt).slice(0,6);
+      const sig=JSON.stringify(Object.values(cols).map(a=>a.map(v=>v.id+Math.round(prog(v)/3)+(S.sel===v?'s':''))));
+      if(sig===trackSig)return;trackSig=sig;
+      __doc.querySelectorAll('.col').forEach(c=>{const k=c.dataset.k,arr=cols[k];c.querySelector('em').textContent=arr.length;
+        c.querySelector('.list').innerHTML=arr.map(v=>{const [l,t]=etaOf(v);return`<div class="vc${S.sel===v?' sel':''}" data-id="${v.id}"><b><span>${v.name.replace('MV ','')}</span><span style="color:${STATUS_COL[v.status]}">${Math.round(prog(v))}%</span></b><small>${v.berthName||CARR[v.carrier].n} · ${l} ${fmtHM(t)}</small><div class="bar"><i style="width:${prog(v)}%"></i></div></div>`;}).join('')||'<small style="color:var(--mute)">—</small>';});}
+
+    /* ===================== visual update ===================== */
+    const _fc=new T.Color(),_a=new T.Vector3();
+    let nightCur=-1,frameN=0,time=0;
+    function visuals(dt,dtS){
+      time+=dt;
+      // day / night
+      S.nightT+=((S.night?1:0)-S.nightT)*Math.min(1,dt*2.2);const n=S.nightT;
+      if(Math.abs(n-nightCur)>.002){nightCur=n;
+        scene.background.copy(DAY_BG).lerp(NIGHT_BG,n);scene.fog.color.copy(scene.background);
+        hemi.color.setHex(0xffffff).lerp(_fc.setHex(0x6a78c8),n);hemi.groundColor.setHex(0xd8d0f5).lerp(_fc.setHex(0x232a58),n);hemi.intensity=lerp(.6,.85,n);
+        sun.color.setHex(0xfff4e6).lerp(_fc.setHex(0x8fa6ff),n);sun.intensity=lerp(.68,.28,n);
+        glowMats.forEach(g=>g.m.emissiveIntensity=g.max*n);poolMat.opacity=n*.3;waterMat.color.setRGB(lerp(1,.5,n),lerp(1,.58,n),lerp(1,.82,n));
+        __doc.body.classList.toggle('night',n>.5);__doc.body.style.background=n>.5?'#141a3d':'#e9e4fb';}
+      // water
+      wPos.array;const wa=wPos.array;for(let i=0;i<wPos.count;i++){const x=wBase[i*3],z=wBase[i*3+2];wa[i*3+1]=Math.sin(x*.32+time*1.15+z*.17)*.07+Math.cos(z*.27-time*.9+x*.05)*.06;}wPos.needsUpdate=true;
+      // ships
+      vessels.forEach(v=>{if(!v.mesh||v.phase==='gone')return;const g=v.mesh,moving=v.phase==='sailing'||v.phase==='docking'||v.phase==='departing';
+        const bob=Math.sin(time*1.2+v.bob)*.05,sway=v.phase==='anchored'?Math.sin(time*.25+v.bob)*.22:0;
+        g.position.set(v.pos.x,bob,v.pos.z);g.rotation.y=v.hd+sway;g.rotation.x=Math.sin(time*.9+v.bob)*.012;g.rotation.z=Math.sin(time*1.1+v.bob*2)*.008;
+        g.scale.setScalar(Math.max(.01,v.phase==='sailing'||v.phase==='departing'?v.sc:1));});
+      // berth pads
+      berths.forEach(b=>{b.pad.visible=!b.ship;b.pad.material.opacity=.22+.14*Math.sin(time*2.4+b.i)+(S.hov&&S.hov.berth===b?.25:0);});
+      // gate arms
+      gateArms.forEach((a,i)=>{let open=0;trucks.forEach(t=>{const m=((t.s%PL)+PL)%PL,ref=i===0?S_IN:S_OUT;if(Math.abs(m-ref)<3.6&&t.wait<=0)open=1;});a.rotation.z=lerp(a.rotation.z,open*1.25*a.userData.dir,Math.min(1,dt*6));});
+      // lights & beacons
+      beaconMat.emissiveIntensity=.3+(Math.sin(time*4)>.2?1.6:0);reeferLights.material.color.setScalar(.7+.3*Math.sin(time*3));
+      beam.rotation.y=time*.9;beam.material.opacity=n*.3;
+      buoys.forEach(b=>{b.m.position.y=-.3+Math.sin(time*1.4+b.ph)*.08;b.m.rotation.z=Math.sin(time+b.ph)*.1;});
+      // rings / wakes
+      rings.forEach(r=>{if(r.life<=0)return;r.life-=dt;const u=1-clamp(r.life/r.max,0,1);if(r.life<=0){r.m.visible=false;return;}r.m.scale.setScalar(lerp(r.s0,r.s1,eo(u)));r.m.material.opacity=.75*(1-u)*(1-u);});
+      wakes.forEach(w=>{if(w.life<=0)return;w.life-=dt;const u=1-clamp(w.life/w.max,0,1);if(w.life<=0){w.m.visible=false;return;}w.m.scale.setScalar(lerp(.8,w.big,u));w.m.material.opacity=.55*(1-u);});
+      // gulls
+      gulls.forEach(g=>{g.a+=g.sp*dt;const x=g.cx+Math.cos(g.a)*g.r,z=g.cz+Math.sin(g.a)*g.r;g.g.position.set(x,g.h+Math.sin(time*.6+g.ph)*.8,z);g.g.rotation.y=-g.a+(g.sp>0?-Math.PI/2:Math.PI/2);
+        const f=Math.sin(time*7+g.ph)*.55;g.wl.rotation.z=f;g.wr.rotation.z=-f;g.g.rotation.z=Math.sin(time*.5+g.ph)*.15;});
+      // highlights
+      if(S.hov){fitBox(hlHov,S.hov);}
+      if(S.sel){fitBox(hlSel,S.sel);entBox(S.sel,_bb);const sz=_bb.getSize(_a);_bb.getCenter(ringSel.position);const r=Math.max(sz.x,sz.z)*.5*(S.sel.type==='crane'?.5:S.sel.type==='vessel'?.62:.8)+1.0;
+        ringSel.position.y=S.sel.type==='vessel'?-.35:.25;ringGlow.position.copy(ringSel.position);const pulse=1+.06*Math.sin(time*4);ringSel.scale.setScalar(r*pulse);ringGlow.scale.setScalar(r*pulse*1.1);ringSel.visible=ringGlow.visible=true;
+        _a.set(ringSel.position.x,_bb.max.y,ringSel.position.z).project(camera);const pin=$('#pin');
+        if(_a.z<1){pin.style.transform=`translate(${(_a.x*.5+.5)*__W()}px,${(-_a.y*.5+.5)*__H()}px)`;pin.style.opacity=1;}else pin.style.opacity=0;}
+      // tip
+      if(S.hov){const tip=$('#tip');tip.textContent=entLabel(S.hov);tip.style.transform=`translate(${Math.min(mouse.x+16,__W()-tip.offsetWidth-8)}px,${mouse.y+18}px)`;tip.style.opacity=1;}
+    }
+
+
+    let tab='sim';function setTab(){}
+    function bpmnXml(){return '';}
+    /* ===================== main loop ===================== */
+    let FIT=1;
+    function resize(){const w=__W(),h=__H();renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();FIT=w/h<1?Math.min(1.9,Math.pow(w/h,-.8)):1;}
+    if(window.ResizeObserver){__ro=new ResizeObserver(resize);__ro.observe(__host);}resize();cam.dist*=FIT;
+    // warm start
+    for(let i=0;i<480;i++)simStep(.25);unread=0;
+    applyCam();
+    let last=performance.now(),uiT=0,panT=0;
+    function frame(now){
+      if(!__alive)return;__raf=__raf=requestAnimationFrame(frame);
+      const dt=Math.min(.05,(now-last)/1000);last=now;frameN++;
+      let rem=dt*S.speed;while(rem>1e-6){const h=Math.min(rem,.25);simStep(h);rem-=h;}
+      if(tab==='flow'){uiT+=dt;if(uiT>.5){uiT=0;updateKPIs();}return;}
+      if(fly.on)stepFly(dt);else{stepCamera(dt);applyCam();}
+      if(mouse.dirty&&frameN%2===0&&!drag){mouse.dirty=false;const e=pickAt(mouse.x,mouse.y);if(entKey(e)!==entKey(S.hov))hover(e);else if(e)S.hov=e;}
+      visuals(dt,dt*S.speed);
+      uiT+=dt;if(uiT>.25){uiT=0;updateKPIs();updateTracker();renderPanel(false);}
+      if(frameN%2===0)renderer.shadowMap.needsUpdate=true;
+      renderer.render(scene,camera);
+    }
+    renderAlerts();renderPanel(true);updateKPIs();updateTracker();
+    __api={get moveLog(){return moveLog;},get gateTurns(){return gateTurns;},get alerts(){return alerts;},entLabel,etaOf,prog,fmtHM,CARR,STATUS_COL,flyTo,VIEWS,stopFly,S,vessels,berths,trucks,train,BLK,yardCount,select,pickAt,assign,get fly(){return fly;},startFly,SCs,RTGs,simStep,setTab,bpmnXml};
+    requestAnimationFrame(frame);
+    __api.dispose=()=>{__alive=false;cancelAnimationFrame(__raf);if(__ro)__ro.disconnect();try{renderer.dispose();renderer.forceContextLoss();}catch(e){}};
+    return __api;
+  }
+
+  theme() {
+    return { bg: '#F4F2FD', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', accentInk: '#FFFFFF', ok: '#0E7C55', okBg: '#DDF4EA', bad: '#B01F2E', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6' };
+  }
+
+  node() {
+    const p = this.props.node;
+    if (p && p.name) return p;
+    try { const raw = window.localStorage.getItem('logiverse-nodo'); if (raw) { const n = JSON.parse(raw); if (n && n.type === 'puerto') return n; } } catch (err) {}
+    return { id: 'CTG', name: 'Cartagena', country: 'Colombia', type: 'puerto' };
+  }
+
+  es(text) {
+    const pairs = [
+      [/All berths occupied/g, 'Todos los muelles están ocupados'], [/Already berthed or leaving/g, 'Ya está atracado o zarpando'], [/No inbound vessel to assign/g, 'No hay buque en espera para asignar'],
+      [/ assigned to /g, ' asignado a '], [/ berthed at /g, ' atracó en '], [/Wind gust 21 kn — /g, 'Ráfaga de 21 nudos: '], [/ derated for 12 min/g, ' reduce su ritmo 12 min'],
+      [/ waiting 28\+ min for a berth/g, ' lleva más de 28 min esperando muelle'], [/Yard occupancy (\d+)% — review discharge plan/g, 'Ocupación del patio $1 %: revisa el plan de descarga'],
+      [/Gate queue: (\d+) trucks waiting/g, 'Cola en la puerta: $1 camiones'], [/Reefer (\S+): setpoint drift \+1\.5 °C, auto-corrected/g, 'Contenedor refrigerado $1: desvío de +1,5 °C corregido'],
+      [/Discharging/g, 'Descargando'], [/Loading/g, 'Cargando'], [/Berthed/g, 'Atracado'], [/Inbound/g, 'En aproximación'], [/Departed/g, 'Zarpó'], [/Idle/g, 'Libre'],
+      [/Block /g, 'Bloque '], [/rail crane/g, 'grúa de ferrocarril'], [/Freight train/g, 'Tren de carga'], [/straddle carrier/g, 'carretilla pórtico'], [/ reefer /g, ' refrigerado '],
+      [/Berth (\S+) · free — click to assign /g, 'Muelle $1 · libre: clic para asignar a '], [/next inbound/g, 'el próximo buque'], [/Berth /g, 'Muelle '],
+      [/Queueing/g, 'En cola'], [/En route/g, 'En ruta'], [/At gate/g, 'En la puerta'], [/arriving/g, 'llegando'], [/leaving/g, 'saliendo'], [/loading/g, 'cargando'], [/away/g, 'fuera'], [/idle/g, 'en espera']
+    ];
+    let out = String(text || '');
+    pairs.forEach((p) => { out = out.replace(p[0], p[1]); });
+    return out;
+  }
+
+  statusEs(st) {
+    return { Inbound: 'En aproximación', Berthed: 'Atracado', Discharging: 'Descargando', Loading: 'Cargando', Departed: 'Zarpó' }[st] || st;
+  }
+
+  etaEs(l) {
+    return { 'ETA': 'Llega', 'Berth ETA': 'Atraque estimado', 'Docks': 'Atraca', 'ETD': 'Zarpe estimado', 'Departed': 'Zarpó' }[l] || l;
+  }
+
+  renderVals() {
+    const t = this.theme(), a = this.api, n = this.node();
+    const btn = (on) => 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer; ' + (on ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2);
+    const S = a ? a.S : { t: 330, speed: 1, night: false };
+    const vessels = a ? a.vessels : [];
+    const berths = a ? a.berths : [];
+    const used = berths.filter((b) => b.ship).length;
+    const mph = a ? a.moveLog.length : 0;
+    const gt = a && a.gateTurns.length ? a.gateTurns.reduce((x, y) => x + y, 0) / a.gateTurns.length : 0;
+    const yard = a ? Math.round(a.yardCount() / 540 * 100) : 0;
+    const trucks = a ? a.trucks.length : 0;
+    const active = vessels.filter((v) => v.phase !== 'gone').length;
+    const box = 'display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 16px; background: ' + t.card + '; border: 1px solid ' + t.border;
+    const dstyle = (ok) => 'font-size: 12px; font-weight: 600; color: ' + (ok ? t.ok : t.bad);
+    const kpis = [
+      { label: 'MUELLES EN USO', value: String(used), unit: 'de 4', delta: used === 4 ? 'Capacidad completa' : (4 - used) + ' libres para asignar', ok: used < 4 },
+      { label: 'MOVIMIENTOS DE GRÚA / HORA', value: String(mph), unit: 'movimientos', delta: (mph >= 94 ? '▲ ' : '▼ ') + Math.abs(mph - 94) + ' frente a la meta de 94', ok: mph >= 94 },
+      { label: 'TIEMPO DE TURNO EN PUERTA', value: gt ? String(Math.round(gt)) : '–', unit: 'min', delta: gt ? (gt <= 38 ? '▲ dentro de la meta ≤ 38' : '▼ por encima de la meta ≤ 38') : 'meta ≤ 38 min', ok: !gt || gt <= 38 },
+      { label: 'OCUPACIÓN DEL PATIO', value: String(yard), unit: '%', delta: yard > 80 ? 'Patio saturado' : 'Capacidad de 540 TEU', ok: yard <= 80 },
+      { label: 'BUQUES ACTIVOS', value: String(active), unit: 'en la bahía', delta: vessels.filter((v) => v.phase === 'anchored').length + ' fondeados esperando muelle', ok: true },
+      { label: 'CAMIONES EN TERMINAL', value: String(trucks), unit: 'camiones', delta: 'Tren: ' + this.es(a ? a.train.st : '–'), ok: true }
+    ].map((k) => ({ label: k.label, value: k.value, unit: k.unit, delta: k.delta, box: box, deltaStyle: dstyle(k.ok) }));
+
+    const speeds = [1, 4, 16].map((x) => ({ label: x + '×', pressed: S.speed === x ? 'true' : 'false', style: btn(S.speed === x), pick: () => { if (this.api) this.api.S.speed = x; this.forceUpdate(); } }));
+    const viewNames = [['all', 'Todo el puerto'], ['quay', 'Muelle'], ['yard', 'Patio'], ['gate', 'Puerta'], ['rail', 'Ferrocarril'], ['harbour', 'Bahía']];
+    const views = viewNames.map((v) => ({ label: v[1], style: btn(false), pick: () => { if (!this.api) return; const w = this.api.VIEWS[v[0]]; if (this.api.fly.on) this.api.stopFly(); this.api.select(null); this.api.flyTo({ x: w.t[0], y: w.t[1], z: w.t[2] }, w.d, w.yaw, w.pitch); } }));
+
+    let panel;
+    const sel = S.sel;
+    if (sel && a) {
+      const rows = [];
+      if (sel.type === 'vessel') {
+        const eta = a.etaOf(sel);
+        rows.push({ k: 'Naviera', v: a.CARR[sel.carrier].n }, { k: 'Estado', v: this.statusEs(sel.status) }, { k: 'Avance', v: Math.round(a.prog(sel)) + ' %' }, { k: this.etaEs(eta[0]), v: a.fmtHM(eta[1]) });
+        if (sel.berthName) rows.push({ k: 'Muelle', v: sel.berthName });
+        rows.push({ k: 'Contenedores', v: (sel.disTotal || 0) + ' desc. · ' + (sel.loadTotal || 0) + ' carga' });
+      }
+      panel = { kicker: { vessel: 'BUQUE', crane: 'GRÚA DE MUELLE', rtg: 'GRÚA DE PATIO', rmg: 'GRÚA DE FERROCARRIL', train: 'TREN', truck: 'CAMIÓN', sc: 'CARRETILLA PÓRTICO', container: 'CONTENEDOR', reefer: 'CONTENEDOR REFRIGERADO', berth: 'MUELLE' }[sel.type] || 'SELECCIÓN', title: sel.name || this.es(a.entLabel(sel)).split(' · ')[0], sub: this.es(a.entLabel(sel)), rows: rows, canClear: true };
+    } else {
+      panel = {
+        kicker: 'VISTA GENERAL', title: n.name, sub: 'Selecciona un buque, una grúa, un contenedor o un camión para ver su detalle. Los muelles verdes están libres: haz clic para traer el próximo buque.',
+        rows: [{ k: 'Ocupación del patio', v: yard + ' %' }, { k: 'Buques activos', v: String(active) }, { k: 'Camiones', v: String(trucks) }, { k: 'Tren', v: this.es(a ? a.train.st : '–') }], canClear: false
+      };
+    }
+
+    const alerts = (a ? a.alerts.slice(0, 4) : []).map((x) => ({ time: a.fmtHM(x.t), text: this.es(x.txt), style: 'font-size: 12px; line-height: 1.4; padding: 6px 8px; border-radius: 8px; background: ' + (x.sev === 'bad' ? t.pRed : (x.sev === 'warn' ? t.pYellow : t.soft)) }));
+
+    const colsDef = [['Arrived', 'EN APROXIMACIÓN'], ['Berthed', 'ATRACADOS'], ['Discharging', 'DESCARGANDO'], ['Loading', 'CARGANDO'], ['Departed', 'ZARPARON']];
+    const groups = { Arrived: [], Berthed: [], Discharging: [], Loading: [], Departed: [] };
+    vessels.forEach((v) => { const k = v.status === 'Inbound' ? 'Arrived' : v.status; if (v.phase === 'gone' && k !== 'Departed') return; if (groups[k]) groups[k].push(v); });
+    groups.Departed = groups.Departed.sort((x, y) => y.depAt - x.depAt).slice(0, 4);
+    const pcol = { Inbound: '#4F5BD5', Berthed: '#127E89', Discharging: '#B3600C', Loading: '#0E7C55', Departed: '#55627A' };
+    const cols = colsDef.map((c) => ({
+      label: c[1], count: groups[c[0]].length,
+      items: groups[c[0]].slice(0, 4).map((v) => {
+        const eta = a.etaOf(v), on = S.sel === v, p = Math.round(a.prog(v));
+        return {
+          name: v.name.replace('MV ', ''), pct: p + ' %', meta: (v.berthName || a.CARR[v.carrier].n) + ' · ' + this.etaEs(eta[0]) + ' ' + a.fmtHM(eta[1]),
+          pressed: on ? 'true' : 'false', pctStyle: 'color: ' + (pcol[v.status] || t.quiet),
+          bar: 'display: block; height: 6px; border-radius: 999px; width: ' + p + '%; background: ' + (pcol[v.status] || t.accent),
+          style: 'text-align: left; font: inherit; color: ' + t.text + '; padding: 8px 10px; border-radius: 12px; cursor: pointer; background: ' + (on ? t.pBlue : t.soft) + '; border: ' + (on ? '2px solid ' + t.accent : '1px solid ' + t.border),
+          pick: () => { if (this.api) this.api.select(v); this.forceUpdate(); }
+        };
+      })
+    }));
+
+    const fresh = this.state.toast && Date.now() - this.state.toastAt < 2600;
+    return {
+      t: t,
+      node: { title: 'Puerto de ' + n.name, sub: (n.country ? n.country + ' · ' : '') + 'Terminal de contenedores (simulación ilustrativa)' },
+      clock: a ? a.fmtHM(S.t) : '05:30', day: a ? Math.floor(S.t / 1440) + 1 : 1,
+      speeds: speeds, views: views, kpis: kpis, panel: panel, alerts: alerts, cols: cols,
+      hoverText: a && S.hov ? this.es(a.entLabel(S.hov)) : 'Pasa el cursor sobre la escena para identificar cada equipo.',
+      nightLabel: S.night ? 'Vista de día' : 'Vista de noche', nightPressed: S.night ? 'true' : 'false',
+      toggleNight: () => { if (this.api) this.api.S.night = !this.api.S.night; this.forceUpdate(); },
+      flyLabel: a && a.fly.on ? 'Detener vuelo' : 'Vuelo cinematográfico', flyPressed: a && a.fly.on ? 'true' : 'false',
+      toggleFly: () => { if (!this.api) return; if (this.api.fly.on) this.api.stopFly(); else this.api.startFly(); this.forceUpdate(); },
+      clearSel: () => { if (this.api) this.api.select(null); this.forceUpdate(); },
+      embedded: typeof this.props.onExit === 'function', standalone: typeof this.props.onExit !== 'function',
+      exit: () => { if (typeof this.props.onExit === 'function') this.props.onExit(); },
+      btnGhost: btn(false), btnPrimary: btn(true),
+      linkPrimary: 'display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; text-decoration: none; background: ' + t.accent + '; color: ' + t.accentInk,
+      hasToast: !!fresh, toast: this.state.toast,
+      noGL: this.state.noGL, setCanvas: this.setCanvas, setHost: this.setHost
+    };
+  }
+}
+</script>
+</body>
+</html>

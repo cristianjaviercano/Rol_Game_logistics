@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Operación del puerto</title>
+<script src="./support.js"></script>
+<script src="/_blob/478300407335490ca021634fb285ef8f"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1160px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column">
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; background: {{t.card}}; border-bottom: 1px solid {{t.border}}">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700">Logi<span style="color: {{t.accent}}">Verse</span></span>
+      <div style="display: flex; flex-direction: column">
+        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{node.title}}</span>
+        <span style="font-size: 12px; color: {{t.quiet}}">{{node.sub}}</span>
+      </div>
+      <span role="status" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 6px 10px; border-radius: 999px; background: {{t.pYellow}}">{{clock}} · Día {{day}}</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+      <div role="group" aria-label="Velocidad" style="display: flex; gap: 4px">
+        <sc-for list="{{speeds}}" as="sp" hint-placeholder-count="3">
+          <button type="button" onClick="{{sp.pick}}" aria-pressed="{{sp.pressed}}" style="{{sp.style}}">{{sp.label}}</button>
+        </sc-for>
+      </div>
+      <button type="button" onClick="{{toggleNight}}" aria-pressed="{{nightPressed}}" style="{{btnGhost}}">{{nightLabel}}</button>
+      <button type="button" onClick="{{toggleFly}}" aria-pressed="{{flyPressed}}" style="{{btnGhost}}">{{flyLabel}}</button>
+      <sc-if value="{{embedded}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{exit}}" style="{{btnPrimary}}">Volver al globo</button>
+      </sc-if>
+      <sc-if value="{{standalone}}" hint-placeholder-val="{{true}}">
+        <a href="Mesa.dc.html" style="{{linkPrimary}}">Volver al globo</a>
+      </sc-if>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 20px; background: {{t.soft}}; border-bottom: 1px solid {{t.border}}">
+    <span style="font-size: 13px; font-weight: 600; align-self: center; margin-right: 4px">Ir a</span>
+    <sc-for list="{{views}}" as="vw" hint-placeholder-count="6">
+      <button type="button" onClick="{{vw.pick}}" style="{{vw.style}}">{{vw.label}}</button>
+    </sc-for>
+  </div>
+
+  <main style="flex: 1; padding: 14px 20px; display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(240px, 300px); gap: 14px; align-items: start">
+    <aside aria-label="Indicadores del puerto" style="display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <div style="{{k.box}}">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: {{t.quiet}}">{{k.label}}</span>
+          <span style="font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700">{{k.value}} <span style="font-size: 13px; font-weight: 500; color: {{t.quiet}}">{{k.unit}}</span></span>
+          <span style="{{k.deltaStyle}}">{{k.delta}}</span>
+        </div>
+      </sc-for>
+    </aside>
+
+    <section style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+      <div ref="{{setHost}}" style="position: relative; height: 600px; border-radius: 18px; overflow: hidden; background: #E9E4FB; border: 1px solid {{t.border}}">
+        <canvas ref="{{setCanvas}}" role="img" aria-label="Terminal de contenedores en 3D: buques, grúas de muelle, patio, camiones y tren" style="display: block; width: 100%; height: 100%; cursor: grab; touch-action: none"></canvas>
+        <sc-if value="{{noGL}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: {{t.quiet}}">Este navegador no admite WebGL: la escena 3D no está disponible.</div>
+        </sc-if>
+        <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: {{t.text}}; color: {{t.bg}}; border-radius: 12px; padding: 8px 14px; font-size: 13px; font-weight: 600">{{toast}}</div>
+        </sc-if>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 13px">
+        <span aria-live="polite" style="font-weight: 600">{{hoverText}}</span>
+        <span style="color: {{t.quiet}}">Arrastra para girar · clic derecho para desplazar · rueda para acercar · clic en un buque, grúa, contenedor o camión · clic en un muelle verde para asignar el próximo buque</span>
+      </div>
+    </section>
+
+    <aside aria-label="Detalle" style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: {{t.quiet}}">{{panel.kicker}}</span>
+      <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{panel.title}}</h2>
+      <span style="font-size: 13px; line-height: 1.45; color: {{t.quiet}}">{{panel.sub}}</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{panel.rows}}" as="pr" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px; border-radius: 10px; background: {{t.soft}}"><span style="font-size: 12px; color: {{t.quiet}}">{{pr.k}}</span><span style="font-size: 14px; font-weight: 600">{{pr.v}}</span></div>
+        </sc-for>
+      </div>
+      <sc-if value="{{panel.canClear}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{clearSel}}" style="{{btnGhost}}">Quitar selección</button>
+      </sc-if>
+      <span style="font-size: 13px; font-weight: 700; margin-top: 6px">Alertas recientes</span>
+      <sc-for list="{{alerts}}" as="al" hint-placeholder-count="3">
+        <div style="{{al.style}}"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{t.quiet}}">{{al.time}}</span> {{al.text}}</div>
+      </sc-for>
+    </aside>
+  </main>
+
+  <footer aria-label="Seguimiento de buques" style="padding: 0 20px 18px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+    <sc-for list="{{cols}}" as="cl" hint-placeholder-count="5">
+      <div style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 16px; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: {{t.quiet}}"><span>{{cl.label}}</span><span>{{cl.count}}</span></div>
+        <sc-for list="{{cl.items}}" as="vc" hint-placeholder-count="2">
+          <button type="button" onClick="{{vc.pick}}" aria-pressed="{{vc.pressed}}" style="{{vc.style}}">
+            <span style="display: flex; justify-content: space-between; gap: 6px; font-size: 13px; font-weight: 600"><span>{{vc.name}}</span><span style="{{vc.pctStyle}}">{{vc.pct}}</span></span>
+            <span style="display: block; font-size: 12px; color: {{t.quiet}}; margin-top: 2px">{{vc.meta}}</span>
+            <span style="display: block; height: 6px; border-radius: 999px; background: {{t.soft}}; margin-top: 6px; overflow: hidden"><span style="{{vc.bar}}"></span></span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-for>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"node":{"editor":null},"onExit":{"editor":null},"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tick: 0, noGL: false, toast: '', toastAt: 0, sel: 0 };
+    this.tries = 0;
+    this.setCanvas = (el) => { this.cv = el; this.tryBoot(); };
+    this.setHost = (el) => { this.host = el; this.tryBoot(); };
+  }
+
+  componentDidMount() {
+    this.tryBoot();
+    this.iv = setInterval(() => this.setState((s) => ({ tick: s.tick + 1 })), 400);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.iv);
+    clearTimeout(this.retry);
+    if (this.api && this.api.dispose) this.api.dispose();
+    this.api = null;
+  }
+
+  tryBoot() {
+    if (this.api || !this.cv || !this.host) return;
+    if (!window.THREE) {
+      this.tries += 1;
+      if (this.tries > 40) { this.setState({ noGL: true }); return; }
+      clearTimeout(this.retry);
+      this.retry = setTimeout(() => this.tryBoot(), 150);
+      return;
+    }
+    try {
+      this.api = this.bootPort(this.cv, this.host, { toast: (t) => this.setState({ toast: this.es(t), toastAt: Date.now() }) });
+    } catch (err) {
+      this.setState({ noGL: true });
+    }
+  }
+
+  bootPort(cv, host, hooks) {
+%%ENGINE%%
+  }
+
+  theme() {
+    return { bg: '#F4F2FD', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', accentInk: '#FFFFFF', ok: '#0E7C55', okBg: '#DDF4EA', bad: '#B01F2E', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6' };
+  }
+
+  node() {
+    const p = this.props.node;
+    if (p && p.name) return p;
+    try { const raw = window.localStorage.getItem('logiverse-nodo'); if (raw) { const n = JSON.parse(raw); if (n && n.type === 'puerto') return n; } } catch (err) {}
+    return { id: 'CTG', name: 'Cartagena', country: 'Colombia', type: 'puerto' };
+  }
+
+  es(text) {
+    const pairs = [
+      [/All berths occupied/g, 'Todos los muelles están ocupados'], [/Already berthed or leaving/g, 'Ya está atracado o zarpando'], [/No inbound vessel to assign/g, 'No hay buque en espera para asignar'],
+      [/ assigned to /g, ' asignado a '], [/ berthed at /g, ' atracó en '], [/Wind gust 21 kn — /g, 'Ráfaga de 21 nudos: '], [/ derated for 12 min/g, ' reduce su ritmo 12 min'],
+      [/ waiting 28\+ min for a berth/g, ' lleva más de 28 min esperando muelle'], [/Yard occupancy (\d+)% — review discharge plan/g, 'Ocupación del patio $1 %: revisa el plan de descarga'],
+      [/Gate queue: (\d+) trucks waiting/g, 'Cola en la puerta: $1 camiones'], [/Reefer (\S+): setpoint drift \+1\.5 °C, auto-corrected/g, 'Contenedor refrigerado $1: desvío de +1,5 °C corregido'],
+      [/Discharging/g, 'Descargando'], [/Loading/g, 'Cargando'], [/Berthed/g, 'Atracado'], [/Inbound/g, 'En aproximación'], [/Departed/g, 'Zarpó'], [/Idle/g, 'Libre'],
+      [/Block /g, 'Bloque '], [/rail crane/g, 'grúa de ferrocarril'], [/Freight train/g, 'Tren de carga'], [/straddle carrier/g, 'carretilla pórtico'], [/ reefer /g, ' refrigerado '],
+      [/Berth (\S+) · free — click to assign /g, 'Muelle $1 · libre: clic para asignar a '], [/next inbound/g, 'el próximo buque'], [/Berth /g, 'Muelle '],
+      [/Queueing/g, 'En cola'], [/En route/g, 'En ruta'], [/At gate/g, 'En la puerta'], [/arriving/g, 'llegando'], [/leaving/g, 'saliendo'], [/loading/g, 'cargando'], [/away/g, 'fuera'], [/idle/g, 'en espera']
+    ];
+    let out = String(text || '');
+    pairs.forEach((p) => { out = out.replace(p[0], p[1]); });
+    return out;
+  }
+
+  statusEs(st) {
+    return { Inbound: 'En aproximación', Berthed: 'Atracado', Discharging: 'Descargando', Loading: 'Cargando', Departed: 'Zarpó' }[st] || st;
+  }
+
+  etaEs(l) {
+    return { 'ETA': 'Llega', 'Berth ETA': 'Atraque estimado', 'Docks': 'Atraca', 'ETD': 'Zarpe estimado', 'Departed': 'Zarpó' }[l] || l;
+  }
+
+  renderVals() {
+    const t = this.theme(), a = this.api, n = this.node();
+    const btn = (on) => 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer; ' + (on ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2);
+    const S = a ? a.S : { t: 330, speed: 1, night: false };
+    const vessels = a ? a.vessels : [];
+    const berths = a ? a.berths : [];
+    const used = berths.filter((b) => b.ship).length;
+    const mph = a ? a.moveLog.length : 0;
+    const gt = a && a.gateTurns.length ? a.gateTurns.reduce((x, y) => x + y, 0) / a.gateTurns.length : 0;
+    const yard = a ? Math.round(a.yardCount() / 540 * 100) : 0;
+    const trucks = a ? a.trucks.length : 0;
+    const active = vessels.filter((v) => v.phase !== 'gone').length;
+    const box = 'display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 16px; background: ' + t.card + '; border: 1px solid ' + t.border;
+    const dstyle = (ok) => 'font-size: 12px; font-weight: 600; color: ' + (ok ? t.ok : t.bad);
+    const kpis = [
+      { label: 'MUELLES EN USO', value: String(used), unit: 'de 4', delta: used === 4 ? 'Capacidad completa' : (4 - used) + ' libres para asignar', ok: used < 4 },
+      { label: 'MOVIMIENTOS DE GRÚA / HORA', value: String(mph), unit: 'movimientos', delta: (mph >= 94 ? '▲ ' : '▼ ') + Math.abs(mph - 94) + ' frente a la meta de 94', ok: mph >= 94 },
+      { label: 'TIEMPO DE TURNO EN PUERTA', value: gt ? String(Math.round(gt)) : '–', unit: 'min', delta: gt ? (gt <= 38 ? '▲ dentro de la meta ≤ 38' : '▼ por encima de la meta ≤ 38') : 'meta ≤ 38 min', ok: !gt || gt <= 38 },
+      { label: 'OCUPACIÓN DEL PATIO', value: String(yard), unit: '%', delta: yard > 80 ? 'Patio saturado' : 'Capacidad de 540 TEU', ok: yard <= 80 },
+      { label: 'BUQUES ACTIVOS', value: String(active), unit: 'en la bahía', delta: vessels.filter((v) => v.phase === 'anchored').length + ' fondeados esperando muelle', ok: true },
+      { label: 'CAMIONES EN TERMINAL', value: String(trucks), unit: 'camiones', delta: 'Tren: ' + this.es(a ? a.train.st : '–'), ok: true }
+    ].map((k) => ({ label: k.label, value: k.value, unit: k.unit, delta: k.delta, box: box, deltaStyle: dstyle(k.ok) }));
+
+    const speeds = [1, 4, 16].map((x) => ({ label: x + '×', pressed: S.speed === x ? 'true' : 'false', style: btn(S.speed === x), pick: () => { if (this.api) this.api.S.speed = x; this.forceUpdate(); } }));
+    const viewNames = [['all', 'Todo el puerto'], ['quay', 'Muelle'], ['yard', 'Patio'], ['gate', 'Puerta'], ['rail', 'Ferrocarril'], ['harbour', 'Bahía']];
+    const views = viewNames.map((v) => ({ label: v[1], style: btn(false), pick: () => { if (!this.api) return; const w = this.api.VIEWS[v[0]]; if (this.api.fly.on) this.api.stopFly(); this.api.select(null); this.api.flyTo({ x: w.t[0], y: w.t[1], z: w.t[2] }, w.d, w.yaw, w.pitch); } }));
+
+    let panel;
+    const sel = S.sel;
+    if (sel && a) {
+      const rows = [];
+      if (sel.type === 'vessel') {
+        const eta = a.etaOf(sel);
+        rows.push({ k: 'Naviera', v: a.CARR[sel.carrier].n }, { k: 'Estado', v: this.statusEs(sel.status) }, { k: 'Avance', v: Math.round(a.prog(sel)) + ' %' }, { k: this.etaEs(eta[0]), v: a.fmtHM(eta[1]) });
+        if (sel.berthName) rows.push({ k: 'Muelle', v: sel.berthName });
+        rows.push({ k: 'Contenedores', v: (sel.disTotal || 0) + ' desc. · ' + (sel.loadTotal || 0) + ' carga' });
+      }
+      panel = { kicker: { vessel: 'BUQUE', crane: 'GRÚA DE MUELLE', rtg: 'GRÚA DE PATIO', rmg: 'GRÚA DE FERROCARRIL', train: 'TREN', truck: 'CAMIÓN', sc: 'CARRETILLA PÓRTICO', container: 'CONTENEDOR', reefer: 'CONTENEDOR REFRIGERADO', berth: 'MUELLE' }[sel.type] || 'SELECCIÓN', title: sel.name || this.es(a.entLabel(sel)).split(' · ')[0], sub: this.es(a.entLabel(sel)), rows: rows, canClear: true };
+    } else {
+      panel = {
+        kicker: 'VISTA GENERAL', title: n.name, sub: 'Selecciona un buque, una grúa, un contenedor o un camión para ver su detalle. Los muelles verdes están libres: haz clic para traer el próximo buque.',
+        rows: [{ k: 'Ocupación del patio', v: yard + ' %' }, { k: 'Buques activos', v: String(active) }, { k: 'Camiones', v: String(trucks) }, { k: 'Tren', v: this.es(a ? a.train.st : '–') }], canClear: false
+      };
+    }
+
+    const alerts = (a ? a.alerts.slice(0, 4) : []).map((x) => ({ time: a.fmtHM(x.t), text: this.es(x.txt), style: 'font-size: 12px; line-height: 1.4; padding: 6px 8px; border-radius: 8px; background: ' + (x.sev === 'bad' ? t.pRed : (x.sev === 'warn' ? t.pYellow : t.soft)) }));
+
+    const colsDef = [['Arrived', 'EN APROXIMACIÓN'], ['Berthed', 'ATRACADOS'], ['Discharging', 'DESCARGANDO'], ['Loading', 'CARGANDO'], ['Departed', 'ZARPARON']];
+    const groups = { Arrived: [], Berthed: [], Discharging: [], Loading: [], Departed: [] };
+    vessels.forEach((v) => { const k = v.status === 'Inbound' ? 'Arrived' : v.status; if (v.phase === 'gone' && k !== 'Departed') return; if (groups[k]) groups[k].push(v); });
+    groups.Departed = groups.Departed.sort((x, y) => y.depAt - x.depAt).slice(0, 4);
+    const pcol = { Inbound: '#4F5BD5', Berthed: '#127E89', Discharging: '#B3600C', Loading: '#0E7C55', Departed: '#55627A' };
+    const cols = colsDef.map((c) => ({
+      label: c[1], count: groups[c[0]].length,
+      items: groups[c[0]].slice(0, 4).map((v) => {
+        const eta = a.etaOf(v), on = S.sel === v, p = Math.round(a.prog(v));
+        return {
+          name: v.name.replace('MV ', ''), pct: p + ' %', meta: (v.berthName || a.CARR[v.carrier].n) + ' · ' + this.etaEs(eta[0]) + ' ' + a.fmtHM(eta[1]),
+          pressed: on ? 'true' : 'false', pctStyle: 'color: ' + (pcol[v.status] || t.quiet),
+          bar: 'display: block; height: 6px; border-radius: 999px; width: ' + p + '%; background: ' + (pcol[v.status] || t.accent),
+          style: 'text-align: left; font: inherit; color: ' + t.text + '; padding: 8px 10px; border-radius: 12px; cursor: pointer; background: ' + (on ? t.pBlue : t.soft) + '; border: ' + (on ? '2px solid ' + t.accent : '1px solid ' + t.border),
+          pick: () => { if (this.api) this.api.select(v); this.forceUpdate(); }
+        };
+      })
+    }));
+
+    const fresh = this.state.toast && Date.now() - this.state.toastAt < 2600;
+    return {
+      t: t,
+      node: { title: 'Puerto de ' + n.name, sub: (n.country ? n.country + ' · ' : '') + 'Terminal de contenedores (simulación ilustrativa)' },
+      clock: a ? a.fmtHM(S.t) : '05:30', day: a ? Math.floor(S.t / 1440) + 1 : 1,
+      speeds: speeds, views: views, kpis: kpis, panel: panel, alerts: alerts, cols: cols,
+      hoverText: a && S.hov ? this.es(a.entLabel(S.hov)) : 'Pasa el cursor sobre la escena para identificar cada equipo.',
+      nightLabel: S.night ? 'Vista de día' : 'Vista de noche', nightPressed: S.night ? 'true' : 'false',
+      toggleNight: () => { if (this.api) this.api.S.night = !this.api.S.night; this.forceUpdate(); },
+      flyLabel: a && a.fly.on ? 'Detener vuelo' : 'Vuelo cinematográfico', flyPressed: a && a.fly.on ? 'true' : 'false',
+      toggleFly: () => { if (!this.api) return; if (this.api.fly.on) this.api.stopFly(); else this.api.startFly(); this.forceUpdate(); },
+      clearSel: () => { if (this.api) this.api.select(null); this.forceUpdate(); },
+      embedded: typeof this.props.onExit === 'function', standalone: typeof this.props.onExit !== 'function',
+      exit: () => { if (typeof this.props.onExit === 'function') this.props.onExit(); },
+      btnGhost: btn(false), btnPrimary: btn(true),
+      linkPrimary: 'display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; text-decoration: none; background: ' + t.accent + '; color: ' + t.accentInk,
+      hasToast: !!fresh, toast: this.state.toast,
+      noGL: this.state.noGL, setCanvas: this.setCanvas, setHost: this.setHost
+    };
+  }
+}
+</script>
+</body>
+</html>

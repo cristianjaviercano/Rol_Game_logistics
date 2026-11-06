@@ -1,12 +1,18 @@
-"""Arma mockup/Mesa.dc.html: inserta en la plantilla los métodos del globo 3D tomados de mockup/Main.dc.html.
+"""Arma Mesa.dc.html: inserta en la plantilla los métodos del globo 3D.
 
-Uso: python3 tools/build_mesa.py
+Toma de Main.dc.html los métodos comunes (proyección, mapa, países, estrechos) y de
+tools/mesa_globe.js el globo propio de la mesa (nodos, buques, aviones, camiones y selección).
+
+Uso: python3 tools/build_mesa.py [carpeta_del_mockup]   (por defecto: mockup)
 """
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-main = (ROOT / 'mockup' / 'Main.dc.html').read_text(encoding='utf-8')
+MOCK = ROOT / (sys.argv[1] if len(sys.argv) > 1 else 'mockup')
+main = (MOCK / 'Main.dc.html').read_text(encoding='utf-8')
 template = (ROOT / 'tools' / 'Mesa.template.html').read_text(encoding='utf-8')
+own = (ROOT / 'tools' / 'mesa_globe.js').read_text(encoding='utf-8').rstrip('\n')
 script = main.split('class Component extends DCLogic {')[1]
 
 
@@ -26,16 +32,11 @@ def method(name):
         j += 1
 
 
-names = ['tryInit', 'll', 'slerp', 'initGlobe', 'gameCountries', 'chokepoints', 'alertCountries', 'paintMap']
+names = ['tryInit', 'll', 'slerp', 'gameCountries', 'chokepoints', 'alertCountries', 'paintMap']
 globe = '\n'.join(method(n) for n in names)
-# Eventos propios del juego de cartas que también se ven en el globo.
-globe = globe.replace(
-    "const alert = { CTG: !!act.tormenta, RTM: !!act.huelga, PAN: !!act.sequia, SUE: !!act.marrojo };",
-    "const alert = { CTG: !!act.tormenta || !!act.congestion, RTM: !!act.huelga, PAN: !!act.sequia, SUE: !!act.marrojo };")
-globe = globe.replace("(act.pandemia ? 0.5 : 1);", "(act.pandemia ? 0.5 : 1) * (act.ciber ? 0.6 : 1);")
 globe = globe.replace(
     "if (act.tormenta || act.devaluacion) ids.push('170');",
     "if (act.tormenta || act.devaluacion || act.revaluacion || act.congestion) ids.push('170');")
-out = template.replace('%%GLOBE%%', globe)
-(ROOT / 'mockup' / 'Mesa.dc.html').write_text(out, encoding='utf-8')
+out = template.replace('%%GLOBE%%', globe + '\n\n' + own)
+(MOCK / 'Mesa.dc.html').write_text(out, encoding='utf-8')
 print('Mesa.dc.html generado:', len(out), 'caracteres')

@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Operación del aeropuerto</title>
+<script src="./support.js"></script>
+<script src="/_blob/478300407335490ca021634fb285ef8f"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1160px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column">
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; background: {{t.card}}; border-bottom: 1px solid {{t.border}}">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700">Logi<span style="color: {{t.accent}}">Verse</span></span>
+      <div style="display: flex; flex-direction: column">
+        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{node.title}}</span>
+        <span style="font-size: 12px; color: {{t.quiet}}">{{node.sub}}</span>
+      </div>
+      <span role="status" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 6px 10px; border-radius: 999px; background: {{t.pYellow}}">{{clock}} · Día {{day}}</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+      <div role="group" aria-label="Velocidad" style="display: flex; gap: 4px">
+        <sc-for list="{{speeds}}" as="sp" hint-placeholder-count="3">
+          <button type="button" onClick="{{sp.pick}}" aria-pressed="{{sp.pressed}}" style="{{sp.style}}">{{sp.label}}</button>
+        </sc-for>
+      </div>
+      <button type="button" onClick="{{toggleNight}}" aria-pressed="{{nightPressed}}" style="{{btnGhost}}">{{nightLabel}}</button>
+      <button type="button" onClick="{{toggleFly}}" aria-pressed="{{flyPressed}}" style="{{btnGhost}}">{{flyLabel}}</button>
+      <sc-if value="{{embedded}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{exit}}" style="{{btnPrimary}}">Volver al globo</button>
+      </sc-if>
+      <sc-if value="{{standalone}}" hint-placeholder-val="{{true}}">
+        <a href="Mesa.dc.html" style="{{linkPrimary}}">Volver al globo</a>
+      </sc-if>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 20px; background: {{t.soft}}; border-bottom: 1px solid {{t.border}}">
+    <span style="font-size: 13px; font-weight: 600; align-self: center; margin-right: 4px">Ir a</span>
+    <sc-for list="{{views}}" as="vw" hint-placeholder-count="6">
+      <button type="button" onClick="{{vw.pick}}" style="{{vw.style}}">{{vw.label}}</button>
+    </sc-for>
+  </div>
+
+  <main style="flex: 1; padding: 14px 20px; display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(240px, 300px); gap: 14px; align-items: start">
+    <aside aria-label="Indicadores del aeropuerto" style="display: flex; flex-direction: column; gap: 10px">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+        <div style="{{k.box}}">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: {{t.quiet}}">{{k.label}}</span>
+          <span style="font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700">{{k.value}} <span style="font-size: 13px; font-weight: 500; color: {{t.quiet}}">{{k.unit}}</span></span>
+          <span style="{{k.deltaStyle}}">{{k.delta}}</span>
+        </div>
+      </sc-for>
+    </aside>
+
+    <section style="min-width: 0; display: flex; flex-direction: column; gap: 8px">
+      <div ref="{{setHost}}" style="position: relative; height: 600px; border-radius: 18px; overflow: hidden; background: #E9E4FB; border: 1px solid {{t.border}}">
+        <canvas ref="{{setCanvas}}" role="img" aria-label="Aeropuerto de carga en 3D: pista, calle de rodaje, plataforma, terminal de carga, torre de control y camiones" style="display: block; width: 100%; height: 100%; cursor: grab; touch-action: none"></canvas>
+        <sc-if value="{{noGL}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: {{t.quiet}}">Este navegador no admite WebGL: la escena 3D no está disponible.</div>
+        </sc-if>
+        <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: {{t.text}}; color: {{t.bg}}; border-radius: 12px; padding: 8px 14px; font-size: 13px; font-weight: 600">{{toast}}</div>
+        </sc-if>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 13px">
+        <span aria-live="polite" style="font-weight: 600">{{hoverText}}</span>
+        <span style="color: {{t.quiet}}">Arrastra para girar · clic derecho para desplazar · rueda para acercar · clic en una aeronave, tractor o camión · clic en una posición verde para traer la próxima aeronave</span>
+      </div>
+    </section>
+
+    <aside aria-label="Detalle" style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: {{t.quiet}}">{{panel.kicker}}</span>
+      <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{panel.title}}</h2>
+      <span style="font-size: 13px; line-height: 1.45; color: {{t.quiet}}">{{panel.sub}}</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{panel.rows}}" as="pr" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 2px; padding: 8px; border-radius: 10px; background: {{t.soft}}"><span style="font-size: 12px; color: {{t.quiet}}">{{pr.k}}</span><span style="font-size: 14px; font-weight: 600">{{pr.v}}</span></div>
+        </sc-for>
+      </div>
+      <sc-if value="{{panel.canClear}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{clearSel}}" style="{{btnGhost}}">Quitar selección</button>
+      </sc-if>
+      <span style="font-size: 13px; font-weight: 700; margin-top: 6px">Alertas recientes</span>
+      <sc-for list="{{alerts}}" as="al" hint-placeholder-count="3">
+        <div style="{{al.style}}"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{t.quiet}}">{{al.time}}</span> {{al.text}}</div>
+      </sc-for>
+    </aside>
+  </main>
+
+  <footer aria-label="Seguimiento de aeronaves" style="padding: 0 20px 18px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+    <sc-for list="{{cols}}" as="cl" hint-placeholder-count="5">
+      <div style="background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 16px; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; color: {{t.quiet}}"><span>{{cl.label}}</span><span>{{cl.count}}</span></div>
+        <sc-for list="{{cl.items}}" as="vc" hint-placeholder-count="2">
+          <button type="button" onClick="{{vc.pick}}" aria-pressed="{{vc.pressed}}" style="{{vc.style}}">
+            <span style="display: flex; justify-content: space-between; gap: 6px; font-size: 13px; font-weight: 600"><span>{{vc.name}}</span><span style="{{vc.pctStyle}}">{{vc.pct}}</span></span>
+            <span style="display: block; font-size: 12px; color: {{t.quiet}}; margin-top: 2px">{{vc.meta}}</span>
+            <span style="display: block; height: 6px; border-radius: 999px; background: {{t.soft}}; margin-top: 6px; overflow: hidden"><span style="{{vc.bar}}"></span></span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-for>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"node":{"editor":null},"onExit":{"editor":null},"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tick: 0, noGL: false, toast: '', toastAt: 0, sel: 0 };
+    this.tries = 0;
+    this.setCanvas = (el) => { this.cv = el; this.tryBoot(); };
+    this.setHost = (el) => { this.host = el; this.tryBoot(); };
+  }
+
+  componentDidMount() {
+    this.tryBoot();
+    this.iv = setInterval(() => this.setState((s) => ({ tick: s.tick + 1 })), 400);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.iv);
+    clearTimeout(this.retry);
+    if (this.api && this.api.dispose) this.api.dispose();
+    this.api = null;
+  }
+
+  tryBoot() {
+    if (this.api || !this.cv || !this.host) return;
+    if (!window.THREE) {
+      this.tries += 1;
+      if (this.tries > 40) { this.setState({ noGL: true }); return; }
+      clearTimeout(this.retry);
+      this.retry = setTimeout(() => this.tryBoot(), 150);
+      return;
+    }
+    try {
+      this.api = this.bootAirport(this.cv, this.host, { toast: (t) => this.setState({ toast: t, toastAt: Date.now() }) });
+    } catch (err) {
+      this.setState({ noGL: true });
+    }
+  }
+
+  bootAirport(cv, host, hooks) {
+    'use strict';
+    const T = window.THREE;
+    let alive = true, raf = 0, ro = null;
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
+    const eio = (t) => t * t * (3 - 2 * t);
+    const angLerp = (a, b, t) => { const d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * t; };
+    let seed = 20261106; const rnd = () => { seed = (seed * 48271) % 2147483647; return seed / 2147483647; };
+    const W = () => Math.max(1, host.clientWidth), H = () => Math.max(1, host.clientHeight);
+    const hk = hooks || {};
+
+    /* ===== catálogos ===== */
+    const CARR = [
+      { n: 'Andes Air Cargo', p: 'AAC', c: 0xff8f55 }, { n: 'Caribe Cargo', p: 'CBC', c: 0x3cc0c8 }, { n: 'Polar Freight', p: 'PFR', c: 0x7c8cff },
+      { n: 'Sol Express', p: 'SOL', c: 0xf7c948 }, { n: 'Ceiba Logistics', p: 'CEI', c: 0x82d27c }, { n: 'Coral Wings', p: 'CRW', c: 0xf2647f }];
+    const ORIG = ['Miami', 'Ámsterdam', 'Shanghái', 'Ciudad de Panamá', 'São Paulo', 'Madrid', 'Ciudad de México', 'Houston', 'Lima', 'Fráncfort'];
+    const TYPES = [{ n: 'B767-300F', uld: 18, len: 1 }, { n: 'B777F', uld: 24, len: 1.12 }, { n: 'A330-200F', uld: 20, len: 1.05 }];
+    const S = { t: 6 * 60, speed: 1, night: false, nightT: 0, sel: null, hov: null };
+
+    /* ===== render ===== */
+    const renderer = new T.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
+    if ('useLegacyLights' in renderer) renderer.useLegacyLights = true;
+    const scene = new T.Scene();
+    const DAY_BG = new T.Color(0xe9e4fb), NIGHT_BG = new T.Color(0x141a3d);
+    scene.background = DAY_BG.clone(); scene.fog = new T.Fog(DAY_BG.clone(), 300, 700);
+    const camera = new T.PerspectiveCamera(30, 1, 2, 1500);
+    const hemi = new T.HemisphereLight(0xffffff, 0xd8d0f5, 0.6); scene.add(hemi);
+    const sun = new T.DirectionalLight(0xfff4e6, 0.7); sun.position.set(50, 90, 70); sun.target.position.set(0, 0, 10);
+    sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -110, right: 110, top: 90, bottom: -90, near: 10, far: 300 });
+    sun.shadow.bias = -0.0007; scene.add(sun, sun.target);
+
+    const GC = {};
+    const BG = (w, h, d) => GC['b' + w + '|' + h + '|' + d] || (GC['b' + w + '|' + h + '|' + d] = new T.BoxGeometry(w, h, d));
+    const CYL = (a, b, h, s) => GC['c' + a + '|' + b + '|' + h + '|' + (s || 16)] || (GC['c' + a + '|' + b + '|' + h + '|' + (s || 16)] = new T.CylinderGeometry(a, b, h, s || 16));
+    const MC = {};
+    const clay = (c, o) => { const k = c + (o ? JSON.stringify(o) : ''); return MC[k] || (MC[k] = new T.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.93, metalness: 0 }, o || {}))); };
+    const glowMats = [];
+    const glow = (day, em, max) => { const m = new T.MeshStandardMaterial({ color: day, emissive: em, emissiveIntensity: 0, roughness: 0.6 }); glowMats.push({ m: m, max: max }); return m; };
+    const winMat = glow(0x9db4e6, 0xffd98a, 1.3), edgeMat = glow(0xf4efe0, 0xfff0be, 2.2), blueMat = glow(0x7f9bff, 0x4d7cff, 2), redMat = glow(0xe9605f, 0xff3b3b, 1.8), floodMat = glow(0xf4efe0, 0xfff6d6, 2);
+    function mk(parent, geo, mat, x, y, z, noShadow) { const m = new T.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); m.castShadow = !noShadow; m.receiveShadow = true; parent.add(m); return m; }
+    const bx = (p, w, h, d, mat, x, y, z, ns) => mk(p, BG(w, h, d), mat, x, y, z, ns);
+    const world = new T.Group(); scene.add(world);
+
+    /* ===== mundo estático ===== */
+    const RWY_Z = 46, TWY_Z = 33, STAND_Z = 14, DOCK_Z = 1, ROAD_Z = -26;
+    const ground = mk(world, new T.PlaneGeometry(420, 300), clay(0xf6f3ff), 0, -0.05, 10, true); ground.rotation.x = -Math.PI / 2;
+    const grass = clay(0xcdeccf);
+    [[0, 58, 330, 14], [0, 39.5, 330, 5], [0, 24, 200, 4]].forEach((g) => { const m = mk(world, new T.PlaneGeometry(g[2], g[3]), grass, g[0], 0.0, g[1], true); m.rotation.x = -Math.PI / 2; });
+    const asphalt = clay(0x6b7186), apronMat = clay(0xd9d6e8), stripe = clay(0xffffff), yellow = clay(0xf7c948);
+    bx(world, 300, 0.12, 9, asphalt, 0, 0.02, RWY_Z, true);
+    for (let x = -140; x < 140; x += 10) bx(world, 5, 0.14, 0.35, stripe, x, 0.04, RWY_Z, true);
+    [-148, 148].forEach((x) => { for (let k = -3; k <= 3; k++) bx(world, 4, 0.14, 0.5, stripe, x + (x < 0 ? 4 : -4), 0.04, RWY_Z + k * 1.1, true); });
+    const edgeLights = [];
+    for (let x = -148; x <= 148; x += 12) [RWY_Z - 4.8, RWY_Z + 4.8].forEach((z) => edgeLights.push(mk(world, BG(0.35, 0.3, 0.35), edgeMat, x, 0.2, z, true)));
+    bx(world, 230, 0.1, 6, asphalt, -5, 0.03, TWY_Z, true);
+    for (let x = -118; x < 110; x += 4) bx(world, 2, 0.12, 0.2, yellow, x, 0.05, TWY_Z, true);
+    [-110, -40, 30, 100].forEach((x) => { bx(world, 6, 0.1, RWY_Z - TWY_Z, asphalt, x, 0.03, (RWY_Z + TWY_Z) / 2, true); for (let z = TWY_Z; z < RWY_Z; z += 3) mk(world, BG(0.3, 0.25, 0.3), blueMat, x - 3.4, 0.15, z, true); });
+    bx(world, 170, 0.1, 22, apronMat, -10, 0.02, 14, true);
+    const STANDS = [-70, -40, -10, 20].map((x, i) => ({ i: i, name: 'P' + (i + 1), x: x, ac: null, train: null }));
+    STANDS.forEach((s) => {
+      bx(world, 0.3, 0.12, 16, yellow, s.x, 0.05, 15, true);
+      bx(world, 8, 0.12, 0.3, yellow, s.x, 0.05, 7.5, true);
+      s.pad = mk(world, new T.CircleGeometry(4.5, 32), new T.MeshBasicMaterial({ color: 0x6fe0b5, transparent: true, opacity: 0.25, depthWrite: false }), s.x, 0.08, 16, true);
+      s.pad.rotation.x = -Math.PI / 2; s.pad.userData.ent = { type: 'stand', stand: s, name: 'Posición ' + s.name };
+    });
+    // terminal de carga
+    const term = new T.Group(); world.add(term);
+    bx(term, 120, 8, 12, clay(0xf1eefc), -25, 4, -6);
+    bx(term, 122, 0.8, 13, clay(0x9fb2f0), -25, 8.4, -6);
+    for (let x = -80; x <= 30; x += 10) { bx(term, 6, 4.2, 0.3, clay(0xc9d2e6), x, 2.1, 0.1); bx(term, 6, 0.4, 0.4, yellow, x, 4.5, 0.15); }
+    for (let x = -82; x <= 32; x += 4) bx(term, 2.6, 1.2, 0.2, winMat, x, 6.6, 0.12, true);
+    const docks = [];
+    for (let x = -75; x <= 25; x += 20) { bx(term, 5, 4, 0.3, clay(0xc9d2e6), x, 2, -12.1); docks.push({ x: x, truck: null }); }
+    term.userData.ent = { type: 'terminal', name: 'Terminal de carga' };
+    term.children.forEach((c) => { c.userData.ent = term.userData.ent; });
+    bx(world, 300, 0.1, 8, asphalt, 0, 0.03, ROAD_Z, true);
+    for (let x = -145; x < 145; x += 6) bx(world, 3, 0.12, 0.25, stripe, x, 0.05, ROAD_Z, true);
+    bx(world, 120, 0.1, 9, clay(0xb9bccb), -25, 0.025, -16.5, true);
+    // torre de control
+    const tower = new T.Group(); world.add(tower); tower.position.set(70, 0, 6);
+    mk(tower, CYL(1.6, 2.2, 22, 16), clay(0xf1eefc), 0, 11, 0);
+    mk(tower, CYL(3.6, 2.6, 3, 16), winMat, 0, 23.5, 0);
+    mk(tower, CYL(3.9, 3.9, 0.6, 16), clay(0x2f55e6), 0, 25.3, 0);
+    const beacon = mk(tower, CYL(0.3, 0.3, 1.6, 8), redMat, 0, 26.4, 0);
+    tower.userData.ent = { type: 'tower', name: 'Torre de control' };
+    tower.children.forEach((c) => { c.userData.ent = tower.userData.ent; });
+    // hangar y patio de ULD
+    const hangar = new T.Group(); world.add(hangar); hangar.position.set(100, 0, -8);
+    const hg = new T.Mesh(new T.CylinderGeometry(9, 9, 22, 24, 1, false, 0, Math.PI), clay(0xdfe4f5)); hg.rotation.z = Math.PI / 2; hg.rotation.y = Math.PI / 2; hg.castShadow = true; hg.receiveShadow = true; hangar.add(hg);
+    const uldYard = [];
+    for (let i = 0; i < 18; i++) { const m = bx(world, 2.2, 1.6, 2.2, clay(CARR[i % 6].c), -96 + (i % 6) * 2.6, 0.8, 4 + Math.floor(i / 6) * 2.6); uldYard.push(m); }
+    // árboles y postes de luz
+    const leaf = clay(0x9fdcae), trunk = clay(0xb79e8a);
+    for (let x = -150; x <= 150; x += 11) [-36, 68].forEach((z) => { const g = new T.Group(); g.position.set(x + (z > 0 ? 5 : 0), 0, z); mk(g, CYL(0.25, 0.3, 1.6, 6), trunk, 0, 0.8, 0); mk(g, new T.IcosahedronGeometry(1.5, 0), leaf, 0, 2.6, 0); world.add(g); });
+    const floods = [];
+    [-85, -55, -25, 5, 35].forEach((x) => { mk(world, CYL(0.15, 0.2, 12, 6), clay(0x9aa3b8), x, 6, 26); floods.push(mk(world, BG(1.6, 0.5, 0.8), floodMat, x, 12, 26, true)); });
+
+    /* ===== modelos ===== */
+    function wingShape(span, root, tip, sweep) { const s = new T.Shape(); s.moveTo(0, 0); s.lineTo(sweep, span); s.lineTo(sweep + tip, span); s.lineTo(root, 0); s.lineTo(0, 0); return s; }
+    function makeAircraft(ci, type) {
+      const g = new T.Group(), k = type.len, livery = clay(CARR[ci].c), white = clay(0xffffff), grey = clay(0xc9d2e6), dark = clay(0x3a3f55);
+      const fus = mk(g, CYL(1.25, 1.25, 15 * k, 18), white, 0, 2.6, 0); fus.rotation.z = Math.PI / 2;
+      const nose = mk(g, new T.SphereGeometry(1.25, 18, 12), white, 7.5 * k, 2.6, 0); nose.scale.set(1.8, 1, 1);
+      const tail = mk(g, new T.ConeGeometry(1.25, 5, 18), white, -10 * k, 2.95, 0); tail.rotation.z = Math.PI / 2; tail.scale.set(1, 1, 0.85);
+      mk(g, BG(15 * k, 0.6, 2.56), livery, 0, 2.15, 0);
+      mk(g, BG(1.2, 0.5, 2.0), clay(0x2b3150), 8.9 * k, 3.25, 0);
+      const wg = new T.ExtrudeGeometry(wingShape(8 * k, 4.2, 1.4, 4.5), { depth: 0.28, bevelEnabled: false });
+      [1, -1].forEach((sd) => {
+        const w = mk(g, wg, grey, 1.5 * k, 1.9, sd * 0.6); w.rotation.x = sd * Math.PI / 2; w.scale.set(-1, 1, 1);
+        const eng = mk(g, CYL(0.6, 0.55, 2.6, 14), grey, 1.4 * k, 1.15, sd * 3.6); eng.rotation.z = Math.PI / 2;
+        mk(g, CYL(0.46, 0.46, 0.1, 14), dark, 2.72 * k, 1.15, sd * 3.6).rotation.z = Math.PI / 2;
+      });
+      const sg = new T.ExtrudeGeometry(wingShape(3.4 * k, 2.2, 0.9, 1.8), { depth: 0.2, bevelEnabled: false });
+      [1, -1].forEach((sd) => { const s = mk(g, sg, grey, -9.2 * k, 3.1, sd * 0.4); s.rotation.x = sd * Math.PI / 2; s.scale.set(-1, 1, 1); });
+      const fg = new T.ExtrudeGeometry(wingShape(4.2 * k, 3.2, 1.2, 2.6), { depth: 0.24, bevelEnabled: false });
+      const fin = mk(g, fg, livery, -9.3 * k, 3.4, -0.12); fin.scale.set(-1, 1, 1);
+      [[5.5, 0], [-0.5, 1.5], [-0.5, -1.5]].forEach((p) => { mk(g, CYL(0.08, 0.08, 1.4, 6), dark, p[0] * k, 0.75, p[1]); mk(g, CYL(0.42, 0.42, 0.3, 12), dark, p[0] * k, 0.4, p[1]).rotation.x = Math.PI / 2; });
+      const door = mk(g, BG(3, 2, 0.12), clay(0xe3e7f0), 5, 3, -1.25); door.userData.door = true;
+      const nav = mk(g, BG(0.3, 0.3, 0.3), redMat, 0, 4, 0, true);
+      g.userData.nav = nav;
+      return g;
+    }
+    function makeTug(color) {
+      const g = new T.Group();
+      bx(g, 2.2, 0.9, 1.4, clay(color), 0, 0.75, 0); bx(g, 0.9, 0.9, 1.3, winMat, -0.3, 1.6, 0);
+      [[0.7, 0.6], [0.7, -0.6], [-0.7, 0.6], [-0.7, -0.6]].forEach((w) => mk(g, CYL(0.3, 0.3, 0.25, 10), clay(0x3a3f55), w[0], 0.3, w[1]).rotation.x = Math.PI / 2);
+      return g;
+    }
+    function makeDolly() {
+      const g = new T.Group(); bx(g, 2.4, 0.25, 2.2, clay(0x9aa3b8), 0, 0.5, 0);
+      const load = bx(g, 2.2, 1.6, 2.1, clay(0xffffff), 0, 1.45, 0); load.visible = false; g.userData.load = load; return g;
+    }
+    function makeTruck(c) {
+      const g = new T.Group();
+      bx(g, 2.2, 2.2, 2.3, clay(c), 4.2, 1.5, 0); bx(g, 0.2, 0.9, 2, winMat, 5.35, 2.0, 0);
+      bx(g, 7, 2.6, 2.4, clay(0xf1eefc), -0.6, 1.9, 0);
+      [3.8, -2, -3.5].forEach((x) => [1.1, -1.1].forEach((z) => mk(g, CYL(0.45, 0.45, 0.3, 10), clay(0x3a3f55), x, 0.45, z).rotation.x = Math.PI / 2));
+      return g;
+    }
+    function makeLoader() {
+      const g = new T.Group(); bx(g, 3.4, 0.6, 2.6, clay(0xf7c948), 0, 0.5, 0);
+      const plat = bx(g, 3.2, 0.25, 2.4, clay(0xe3e7f0), 0, 1.0, 0); g.userData.plat = plat; return g;
+    }
+
+    /* ===== aeronaves y flujo ===== */
+    const aircraft = [], trucks = [], moveLog = [], rwyLog = [], turnTimes = [], alerts = [];
+    let nextArr = S.t + 2, idSeq = 0, tonsToday = 0, runwayBusy = null;
+    function pushAlert(sev, txt, ent) { alerts.unshift({ sev: sev, txt: txt, t: S.t, ent: ent }); if (alerts.length > 14) alerts.pop(); }
+    const P = (x, z) => new T.Vector3(x, 0, z);
+    function spawnAircraft() {
+      const free = STANDS.filter((s) => !s.ac);
+      if (!free.length || runwayBusy) return false;
+      const s = free[Math.floor(rnd() * free.length)], ci = Math.floor(rnd() * CARR.length), type = TYPES[Math.floor(rnd() * TYPES.length)];
+      const a = { id: ++idSeq, type: 'aircraft', ci: ci, model: type, name: CARR[ci].p + ' ' + (100 + Math.floor(rnd() * 899)), carrier: CARR[ci].n, from: ORIG[Math.floor(rnd() * ORIG.length)], to: ORIG[Math.floor(rnd() * ORIG.length)],
+        stand: s, phase: 'approach', status: 'Inbound', pt: 0, uldIn: type.uld - Math.floor(rnd() * 4), uldOut: type.uld - 2 - Math.floor(rnd() * 5), done: 0, arrAt: S.t, parkAt: 0, depAt: 0, pos: new T.Vector3(-260, 30, RWY_Z), hd: 0, alt: 30, spd: 0, path: null };
+      a.total = a.uldIn + a.uldOut;
+      a.mesh = makeAircraft(ci, type); a.mesh.userData.ent = a; world.add(a.mesh);
+      s.ac = a; runwayBusy = a; aircraft.push(a);
+      pushAlert('info', a.name + ' (' + type.n + ') en aproximación desde ' + a.from, a);
+      return true;
+    }
+    function pathLen(pts) { let L = 0; for (let i = 1; i < pts.length; i++) L += pts[i].distanceTo(pts[i - 1]); return L; }
+    function along(pts, d, out) {
+      for (let i = 1; i < pts.length; i++) { const L = pts[i].distanceTo(pts[i - 1]); if (d <= L) { out.copy(pts[i - 1]).lerp(pts[i], d / L); return Math.atan2(-(pts[i].z - pts[i - 1].z), pts[i].x - pts[i - 1].x); } d -= L; }
+      out.copy(pts[pts.length - 1]); const n = pts.length; return Math.atan2(-(pts[n - 1].z - pts[n - 2].z), pts[n - 1].x - pts[n - 2].x);
+    }
+    function setPath(a, pts, speed, phase) { a.path = pts; a.pd = 0; a.pl = pathLen(pts); a.pspd = speed; a.phase = phase; }
+    const tmpV = new T.Vector3();
+    function stepAircraft(a, h) {
+      if (a.phase === 'approach') {
+        a.pt += h / 4; const u = clamp(a.pt, 0, 1);
+        a.pos.set(lerp(-260, -125, u), lerp(30, 0, eio(u)), RWY_Z); a.hd = 0; a.pitch = 0.05 * (1 - u);
+        if (u >= 1) { a.phase = 'landing'; a.pt = 0; rwyLog.push(S.t); }
+      } else if (a.phase === 'landing') {
+        a.pt += h / 1.6; const u = clamp(a.pt, 0, 1);
+        a.pos.set(lerp(-125, 25, 1 - (1 - u) * (1 - u)), 0, RWY_Z); a.pitch = 0;
+        if (u >= 1) { runwayBusy = null; const x = a.stand.x; setPath(a, [P(25, RWY_Z), P(30, TWY_Z + 4), P(30, TWY_Z), P(x, TWY_Z), P(x, STAND_Z + 2)], 28, 'taxiIn'); }
+      } else if (a.phase === 'taxiIn' || a.phase === 'taxiOut') {
+        a.pd += a.pspd * h; a.hd = angLerp(a.hd, along(a.path, a.pd, a.pos), Math.min(1, h * 6));
+        if (a.pd >= a.pl) {
+          if (a.phase === 'taxiIn') { a.phase = 'unloading'; a.status = 'Unloading'; a.parkAt = S.t; a.hd = Math.PI / 2; startTrain(a); pushAlert('info', a.name + ' en la posición ' + a.stand.name, a); }
+          else { if (runwayBusy) return; runwayBusy = a; a.phase = 'takeoff'; a.pt = 0; a.status = 'Departing'; }
+        }
+      } else if (a.phase === 'unloading' || a.phase === 'loading') {
+        a.pos.set(a.stand.x, 0, STAND_Z + 2); a.hd = angLerp(a.hd, Math.PI / 2, Math.min(1, h * 4));
+      } else if (a.phase === 'pushback') {
+        a.pt += h / 3; const u = clamp(a.pt, 0, 1); a.pos.set(a.stand.x, 0, lerp(STAND_Z + 2, TWY_Z, eio(u))); a.hd = Math.PI / 2;
+        if (u >= 1) { a.stand.ac = null; setPath(a, [P(a.stand.x, TWY_Z), P(-110, TWY_Z), P(-110, RWY_Z - 3), P(-125, RWY_Z)], 26, 'taxiOut'); a.hd = Math.PI; }
+      } else if (a.phase === 'takeoff') {
+        a.pt += h / 1.8; const u = clamp(a.pt, 0, 1);
+        a.pos.set(lerp(-125, 230, u * u), u > 0.45 ? Math.pow((u - 0.45) / 0.55, 1.6) * 34 : 0, RWY_Z); a.hd = 0; a.pitch = u > 0.42 ? 0.16 : 0;
+        if (u >= 1) { runwayBusy = null; rwyLog.push(S.t); a.phase = 'gone'; a.status = 'Departed'; a.depAt = S.t; turnTimes.push(a.depAt - a.parkAt); if (turnTimes.length > 12) turnTimes.shift(); world.remove(a.mesh); if (S.sel === a) select(null); pushAlert('info', a.name + ' despegó hacia ' + a.to, null); }
+      }
+    }
+    /* tren de remolque + dollies por posición */
+    const DOOR_OFF = -5.5, LOAD_X = -3.0, LOAD_Z = 11;
+    function startTrain(a) {
+      const s = a.stand;
+      if (!s.train) {
+        const tug = makeTug(0x2f55e6); world.add(tug);
+        const dollies = [makeDolly(), makeDolly(), makeDolly()]; dollies.forEach((d) => world.add(d));
+        const loader = makeLoader(); world.add(loader); loader.position.set(s.x + LOAD_X, 0, LOAD_Z);
+        s.train = { tug: tug, dollies: dollies, loader: loader, st: 'toPlane', pt: 0, carry: 0, name: 'Tractor ' + s.name, type: 'tug' };
+        tug.userData.ent = s.train; dollies.forEach((d) => { d.userData.ent = s.train; });
+      }
+      s.train.st = 'toPlane'; s.train.pt = 0; s.train.carry = 0;
+    }
+    const tugPath = (s) => [P(s.x + DOOR_OFF, LOAD_Z), P(s.x + DOOR_OFF, 7.5), P(s.x - 1, 4.8), P(s.x - 1, 2.2)];
+    function stepTrain(s, h) {
+      const tr = s.train; if (!tr) return;
+      const a = s.ac, path = tugPath(s), L = pathLen(path);
+      const seg = 2.2;
+      if (!a || (a.phase !== 'unloading' && a.phase !== 'loading')) { tr.st = 'park'; }
+      if (tr.st === 'toPlane') { tr.pt = Math.max(0, tr.pt - h / seg); if (tr.pt <= 0) { tr.st = 'xferPlane'; tr.wait = 1.2; } }
+      else if (tr.st === 'xferPlane') {
+        tr.wait -= h; tr.loaderUp = 1;
+        if (tr.wait <= 0) {
+          if (a.phase === 'unloading') { const n = Math.min(3, a.uldIn); a.uldIn -= n; a.done += n; tr.carry = n; for (let i = 0; i < n; i++) moveLog.push(S.t); }
+          else { a.uldOut -= tr.carry; a.done += tr.carry; for (let i = 0; i < tr.carry; i++) moveLog.push(S.t); tr.carry = 0; }
+          tr.loaderUp = 0;
+          if (a.phase === 'loading' && a.uldOut <= 0) { a.phase = 'pushback'; a.pt = 0; a.status = 'Departing'; tr.st = 'park'; pushAlert('info', a.name + ': carga completa, inicia remolque', a); }
+          else tr.st = 'toTerm';
+        }
+      } else if (tr.st === 'toTerm') { tr.pt = Math.min(1, tr.pt + h / seg); if (tr.pt >= 1) { tr.st = 'xferTerm'; tr.wait = 1; } }
+      else if (tr.st === 'xferTerm') {
+        tr.wait -= h;
+        if (tr.wait <= 0) {
+          if (a.phase === 'unloading') { tonsToday += tr.carry * 4.2; tr.carry = 0; if (a.uldIn <= 0) { a.phase = 'loading'; a.status = 'Loading'; pushAlert('info', a.name + ': descarga terminada, empieza la carga', a); } }
+          if (a.phase === 'loading') { tr.carry = Math.min(3, a.uldOut); tonsToday += tr.carry * 4.2; }
+          tr.st = 'toPlane';
+        }
+      }
+      const d = (tr.st === 'park' ? 0.15 : tr.pt) * L, dir = (tr.st === 'toPlane' || tr.st === 'xferPlane' || tr.st === 'park') ? 1 : -1;
+      const hd = along(path, d, tmpV);
+      tr.tug.position.copy(tmpV); tr.tug.rotation.y = hd + (dir > 0 ? Math.PI : 0);
+      tr.dollies.forEach((dl, i) => {
+        const dd = clamp(d + dir * (i + 1) * 3.0, 0, L); const hh = along(path, dd, tmpV); dl.position.copy(tmpV); dl.rotation.y = hh;
+        dl.userData.load.visible = i < tr.carry; dl.userData.load.material = clay(CARR[a ? a.ci : 0].c);
+      });
+      const p = tr.loader.userData.plat; p.position.y = lerp(p.position.y, tr.loaderUp ? 3.3 : 1.0, Math.min(1, h * 3));
+      tr.loader.position.set(s.x + LOAD_X, 0, LOAD_Z);
+    }
+    /* camiones del lado tierra */
+    for (let i = 0; i < 6; i++) {
+      const c = [0xff8f55, 0x3cc0c8, 0x82d27c, 0x9d7ff0, 0xf7c948, 0xf2647f][i];
+      const g = makeTruck(c); world.add(g);
+      const tk = { type: 'truck', name: 'Camión ' + (i + 1), g: g, x: -160 + i * 50, st: 'road', dock: null, wait: 0, s: 0 };
+      g.userData.ent = tk; trucks.push(tk);
+    }
+    function stepTruck(tk, h) {
+      if (tk.st === 'road') {
+        const px = tk.x; tk.x += 22 * h;
+        if (tk.x > 170) tk.x = -170;
+        const dk = docks.find((d) => !d.truck && px < d.x && tk.x >= d.x && rnd() < 0.5);
+        if (dk) tk.x = dk.x;
+        if (dk) { dk.truck = tk; tk.dock = dk; tk.st = 'in'; tk.s = 0; }
+        tk.g.position.set(tk.x, 0, ROAD_Z - 2); tk.g.rotation.y = 0;
+      } else if (tk.st === 'in') {
+        tk.s = Math.min(1, tk.s + h / 1.2); tk.g.position.set(tk.dock.x, 0, lerp(ROAD_Z - 2, -16.2, eio(tk.s))); tk.g.rotation.y = -Math.PI / 2;
+        if (tk.s >= 1) { tk.st = 'dock'; tk.wait = 8 + rnd() * 10; }
+      } else if (tk.st === 'dock') {
+        tk.wait -= h; if (tk.wait <= 0) { tk.st = 'out'; tk.s = 0; }
+      } else if (tk.st === 'out') {
+        tk.s = Math.min(1, tk.s + h / 1.2); tk.g.position.set(tk.dock.x, 0, lerp(-16.2, ROAD_Z - 2, eio(tk.s))); tk.g.rotation.y = -Math.PI / 2;
+        if (tk.s >= 1) { tk.dock.truck = null; tk.dock = null; tk.st = 'road'; tk.x = tk.g.position.x + 1.5; }
+      }
+    }
+    function simStep(h) {
+      S.t += h;
+      if (S.t >= nextArr) { if (spawnAircraft()) nextArr = S.t + 14 + rnd() * 10; else nextArr = S.t + 2; }
+      aircraft.forEach((a) => { if (a.phase !== 'gone') stepAircraft(a, h); });
+      STANDS.forEach((s) => stepTrain(s, h));
+      trucks.forEach((tk) => stepTruck(tk, h));
+      while (moveLog.length && moveLog[0] < S.t - 60) moveLog.shift();
+      while (rwyLog.length && rwyLog[0] < S.t - 60) rwyLog.shift();
+      for (let i = aircraft.length - 1; i >= 0; i--) { const a = aircraft[i]; if (a.phase === 'gone' && aircraft.filter((x) => x.phase === 'gone').length > 6 && S.sel !== a) { aircraft.splice(i, 1); break; } }
+      if (S.t > (simStep.gust || 0)) { simStep.gust = S.t + 120 + rnd() * 90; pushAlert('warn', 'Viento cruzado de 18 nudos: separación entre aterrizajes ampliada', null); nextArr += 3; }
+    }
+    function prog(a) {
+      if (a.status === 'Departed') return 100;
+      if (a.phase === 'approach' || a.phase === 'landing' || a.phase === 'taxiIn') return 0;
+      return clamp(a.done / a.total * 100, 0, 100);
+    }
+    function etaOf(a) {
+      const rem = (a.uldIn + a.uldOut) / 3 * 5.4;
+      switch (a.phase) {
+        case 'approach': return ['Aterriza', S.t + (1 - a.pt) * 4];
+        case 'landing': case 'taxiIn': return ['En posición', S.t + 4];
+        case 'unloading': case 'loading': return ['Salida estimada', S.t + rem + 6];
+        case 'pushback': case 'taxiOut': case 'takeoff': return ['Despega', S.t + 4];
+        default: return ['Despegó', a.depAt];
+      }
+    }
+    const fmtHM = (m) => { m = Math.floor(m); const h = Math.floor(m / 60) % 24, mm = m % 60; return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0'); };
+    function entLabel(e) {
+      if (!e) return '';
+      if (e.type === 'aircraft') return e.name + ' · ' + e.model.n + ' · ' + statusEs(e.status) + (e.phase === 'unloading' || e.phase === 'loading' ? ' · ' + Math.round(prog(e)) + ' %' : '');
+      if (e.type === 'tug') return e.name + ' · ' + ({ toPlane: 'hacia la aeronave', xferPlane: 'transfiriendo ULD', toTerm: 'hacia la terminal', xferTerm: 'en el muelle de la terminal', park: 'estacionado' }[e.st] || e.st) + (e.carry ? ' · ' + e.carry + ' ULD' : '');
+      if (e.type === 'truck') return e.name + ' · ' + ({ road: 'en la vía de acceso', in: 'entrando al muelle', dock: 'cargando en el muelle', out: 'saliendo' }[e.st]);
+      if (e.type === 'stand') return e.stand.ac ? 'Posición ' + e.stand.name + ' · ' + e.stand.ac.name : 'Posición ' + e.stand.name + ' · libre';
+      return e.name;
+    }
+    function statusEs(st) { return { Inbound: 'En aproximación', Unloading: 'Descargando', Loading: 'Cargando', Departing: 'Saliendo', Departed: 'Despegó' }[st] || st; }
+
+    /* ===== cámara ===== */
+    const cam = { target: new T.Vector3(-10, 0, 12), yaw: 0.45, pitch: 0.62, dist: 230, vy: 0, vp: 0, vd: 0, vpan: new T.Vector3(), goal: null, follow: false };
+    const VIEWS = { all: { t: [-10, 0, 12], d: 230, yaw: 0.45, pitch: 0.62 }, runway: { t: [-30, 0, 44], d: 120, yaw: 0.2, pitch: 0.35 }, apron: { t: [-25, 1, 14], d: 80, yaw: 0.35, pitch: 0.55 }, terminal: { t: [-25, 3, -4], d: 70, yaw: 0.9, pitch: 0.5 }, landside: { t: [-20, 1, -20], d: 70, yaw: 2.6, pitch: 0.55 }, tower: { t: [70, 12, 6], d: 60, yaw: -0.6, pitch: 0.3 } };
+    function flyTo(t, d, yaw, pitch) { cam.goal = { t: new T.Vector3().copy(t), d: d, yaw: yaw, pitch: pitch }; cam.follow = false; }
+    function applyCam() { const cp = Math.cos(cam.pitch); camera.position.set(cam.target.x + Math.sin(cam.yaw) * cp * cam.dist, cam.target.y + Math.sin(cam.pitch) * cam.dist, cam.target.z + Math.cos(cam.yaw) * cp * cam.dist); camera.lookAt(cam.target); }
+    const ptrs = new Map(); let drag = null, moved = 0;
+    const mouse = { x: 0, y: 0, dirty: false };
+    const rel = (e) => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    function panBy(dx, dy) { const s = cam.dist * 0.0016, rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw), fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw); const mx = -dx * s * rx + dy * s * fx * 1.3, mz = -dx * s * rz + dy * s * fz * 1.3; cam.target.x += mx; cam.target.z += mz; cam.vpan.set(mx, 0, mz); cam.follow = false; }
+    const onCtx = (e) => e.preventDefault();
+    const onDown = (e) => { cv.setPointerCapture(e.pointerId); const p = rel(e); ptrs.set(e.pointerId, p); moved = 0; cam.goal = null; if (fly.on) stopFly(); drag = { pan: e.button === 2 || e.shiftKey || e.button === 1 }; };
+    const onMove = (e) => {
+      const q = rel(e); mouse.x = q.x; mouse.y = q.y; mouse.dirty = true;
+      const p = ptrs.get(e.pointerId); if (!p) return; const dx = q.x - p.x, dy = q.y - p.y;
+      if (drag) { moved += Math.abs(dx) + Math.abs(dy); if (drag.pan) panBy(dx, dy); else { const ay = -dx * 0.0052, ap = dy * 0.0052; cam.yaw += ay; cam.pitch = clamp(cam.pitch + ap, 0.12, 1.4); cam.vy = cam.vy * 0.4 + ay * 0.6; cam.vp = cam.vp * 0.4 + ap * 0.6; } }
+      p.x = q.x; p.y = q.y;
+    };
+    const onUp = (e) => { const q = rel(e); ptrs.delete(e.pointerId); if (e.type === 'pointerup' && moved < 5) clickAt(q.x, q.y); if (!ptrs.size) drag = null; };
+    const onWheel = (e) => { e.preventDefault(); cam.goal = null; if (fly.on) stopFly(); cam.vd += clamp(e.deltaY, -120, 120) * 0.00055; };
+    cv.addEventListener('contextmenu', onCtx); cv.addEventListener('pointerdown', onDown); cv.addEventListener('pointermove', onMove);
+    cv.addEventListener('pointerup', onUp); cv.addEventListener('pointercancel', onUp); cv.addEventListener('wheel', onWheel, { passive: false });
+    function stepCamera(dt) {
+      const k = Math.pow(0.04, dt);
+      if (!drag) { cam.yaw += cam.vy; cam.pitch = clamp(cam.pitch + cam.vp, 0.12, 1.4); cam.vy *= k; cam.vp *= k; cam.target.addScaledVector(cam.vpan, 1); cam.vpan.multiplyScalar(k); }
+      if (Math.abs(cam.vd) > 1e-5) { cam.dist = clamp(cam.dist * Math.exp(cam.vd), 25, 460); cam.vd *= Math.pow(0.003, dt); }
+      if (cam.goal) { const f = 1 - Math.exp(-dt * 3.4), g = cam.goal; cam.target.lerp(g.t, f); cam.dist += (g.d - cam.dist) * f; if (g.yaw != null) cam.yaw = angLerp(cam.yaw, g.yaw, f); if (g.pitch != null) cam.pitch += (g.pitch - cam.pitch) * f; if (cam.target.distanceTo(g.t) < 0.15 && Math.abs(g.d - cam.dist) < 0.4) cam.goal = null; }
+      if (cam.follow && S.sel && S.sel.mesh && !cam.goal) { cam.target.lerp(tmpV.copy(S.sel.mesh.position).setY(Math.min(S.sel.mesh.position.y, 6)), 1 - Math.exp(-dt * 4)); }
+      cam.target.x = clamp(cam.target.x, -150, 150); cam.target.z = clamp(cam.target.z, -60, 90);
+    }
+    /* vuelo cinematográfico */
+    const fly = { on: false, t: 0, blend: 0 };
+    const FK = [[[150, 70, 130], [0, 0, 10]], [[-150, 14, 60], [-80, 6, 46]], [[-40, 9, 34], [-10, 3, 16]], [[10, 12, 28], [20, 3, 12]], [[-50, 10, -40], [-30, 3, -16]], [[90, 30, 30], [70, 18, 6]], [[120, 50, 110], [0, 0, 10]]];
+    const flyP = new T.CatmullRomCurve3(FK.map((k) => new T.Vector3(...k[0])), true, 'catmullrom', 0.5), flyTg = new T.CatmullRomCurve3(FK.map((k) => new T.Vector3(...k[1])), true, 'catmullrom', 0.5);
+    const fp = new T.Vector3(), ft = new T.Vector3();
+    function startFly() { fly.on = true; fly.t = 0; fly.blend = 0; fly.p0 = camera.position.clone(); fly.t0 = cam.target.clone(); cam.goal = null; select(null); }
+    function stopFly() { fly.on = false; camera.fov = 30; camera.updateProjectionMatrix(); cam.target.copy(ft); const d = fp.clone().sub(ft); cam.dist = clamp(d.length(), 25, 460); cam.yaw = Math.atan2(d.x, d.z); cam.pitch = clamp(Math.asin(d.y / d.length()), 0.12, 1.4); }
+    function stepFly(dt) { fly.t = (fly.t + dt / 80) % 1; fly.blend = Math.min(1, fly.blend + dt / 3); flyP.getPointAt(fly.t, fp); flyTg.getPointAt(fly.t, ft); const b = eio(fly.blend); fp.lerp(fly.p0, 1 - b); ft.lerp(fly.t0, 1 - b); camera.position.copy(fp); camera.lookAt(ft); }
+    /* selección */
+    const ray = new T.Raycaster(), ndc = new T.Vector2();
+    const hlMat = new T.LineBasicMaterial({ color: 0x2f55e6, transparent: true, opacity: 1, depthTest: false });
+    const hl = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(1, 1, 1)), hlMat); hl.visible = false; hl.renderOrder = 10; scene.add(hl);
+    const hov = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(1, 1, 1)), new T.LineBasicMaterial({ color: 0x6d86ff, transparent: true, opacity: 0.8, depthTest: false })); hov.visible = false; hov.renderOrder = 10; scene.add(hov);
+    function pickList() { const l = [term, tower]; aircraft.forEach((a) => { if (a.phase !== 'gone') l.push(a.mesh); }); STANDS.forEach((s) => { if (!s.ac) l.push(s.pad); if (s.train) { l.push(s.train.tug); s.train.dollies.forEach((d) => l.push(d)); } }); trucks.forEach((t) => l.push(t.g)); return l; }
+    function pickAt(x, y) {
+      ndc.set(x / W() * 2 - 1, -(y / H()) * 2 + 1); ray.setFromCamera(ndc, camera);
+      const hits = ray.intersectObjects(pickList(), true);
+      for (const h of hits) { let o = h.object; while (o && !o.userData.ent) o = o.parent; if (o && o.userData.ent) return o.userData.ent; }
+      return null;
+    }
+    const box3 = new T.Box3();
+    function objOf(e) { if (!e) return null; if (e.type === 'aircraft') return e.mesh; if (e.type === 'tug') return e.tug; if (e.type === 'truck') return e.g; if (e.type === 'stand') return e.stand.pad; if (e.type === 'tower') return tower; if (e.type === 'terminal') return term; return null; }
+    function fit(m, e) { const o = objOf(e); if (!o) { m.visible = false; return; } box3.setFromObject(o); const s = box3.getSize(tmpV).addScalar(0.4); box3.getCenter(m.position); m.scale.copy(s); m.visible = true; }
+    function clickAt(x, y) {
+      const e = pickAt(x, y);
+      if (e && e.type === 'stand') { if (e.stand.ac) { select(e.stand.ac); return; } if (spawnAircraft()) { toast('Nueva aeronave asignada a la posición ' + e.stand.name); nextArr = S.t + 14; } else toast(runwayBusy ? 'La pista está ocupada: espera el siguiente turno' : 'No hay posiciones libres'); return; }
+      select(e);
+    }
+    function select(e) {
+      S.sel = e; cam.follow = false;
+      if (!e) { hl.visible = false; return; }
+      const o = objOf(e); if (o && e.type !== 'terminal') { box3.setFromObject(o); box3.getCenter(tmpV); cam.goal = { t: tmpV.clone().setY(Math.min(tmpV.y, 4)), d: e.type === 'aircraft' ? 55 : 40, yaw: null, pitch: null }; cam.follow = e.type === 'aircraft' || e.type === 'truck' || e.type === 'tug'; }
+    }
+    function toast(t) { if (hk.toast) hk.toast(t); }
+
+    /* ===== bucle ===== */
+    const nightC = new T.Color();
+    let nightCur = -1, time = 0, frameN = 0;
+    function visuals(dt) {
+      time += dt;
+      S.nightT += ((S.night ? 1 : 0) - S.nightT) * Math.min(1, dt * 2.2); const n = S.nightT;
+      if (Math.abs(n - nightCur) > 0.002) {
+        nightCur = n; scene.background.copy(DAY_BG).lerp(NIGHT_BG, n); scene.fog.color.copy(scene.background);
+        hemi.color.setHex(0xffffff).lerp(nightC.setHex(0x6a78c8), n); hemi.groundColor.setHex(0xd8d0f5).lerp(nightC.setHex(0x232a58), n); hemi.intensity = lerp(0.6, 0.85, n);
+        sun.color.setHex(0xfff4e6).lerp(nightC.setHex(0x8fa6ff), n); sun.intensity = lerp(0.7, 0.28, n);
+        glowMats.forEach((g) => { g.m.emissiveIntensity = g.max * n; });
+      }
+      beacon.material.emissiveIntensity = 0.3 + (Math.sin(time * 4) > 0.2 ? 1.6 : 0);
+      aircraft.forEach((a) => {
+        if (a.phase === 'gone') return;
+        a.mesh.position.copy(a.pos); a.mesh.rotation.set(0, a.hd, 0); a.mesh.rotateZ(a.pitch || 0);
+        a.mesh.userData.nav.material = Math.sin(time * 5 + a.id) > 0.6 ? redMat : clay(0xffffff);
+      });
+      STANDS.forEach((s) => { s.pad.visible = !s.ac; s.pad.material.opacity = 0.2 + 0.12 * Math.sin(time * 2.4 + s.i); });
+      if (S.hov) fit(hov, S.hov); else hov.visible = false;
+      if (S.sel) fit(hl, S.sel);
+    }
+    const resize = () => { renderer.setSize(W(), H(), false); camera.aspect = W() / H(); camera.updateProjectionMatrix(); };
+    if (window.ResizeObserver) { ro = new ResizeObserver(resize); ro.observe(host); }
+    resize();
+    for (let i = 0; i < 360; i++) simStep(0.25);
+    applyCam();
+    renderer.shadowMap.needsUpdate = true;
+    let last = performance.now();
+    function frame(now) {
+      if (!alive) return; raf = requestAnimationFrame(frame);
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; frameN++;
+      let rem = dt * S.speed; while (rem > 1e-6) { const h = Math.min(rem, 0.25); simStep(h); rem -= h; }
+      if (fly.on) stepFly(dt); else { stepCamera(dt); applyCam(); }
+      if (mouse.dirty && frameN % 2 === 0 && !drag) { mouse.dirty = false; S.hov = pickAt(mouse.x, mouse.y); }
+      visuals(dt);
+      if (frameN % 2 === 0) renderer.shadowMap.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    raf = requestAnimationFrame(frame);
+    return {
+      S: S, aircraft: aircraft, stands: STANDS, trucks: trucks, docks: docks, CARR: CARR, VIEWS: VIEWS,
+      get moveLog() { return moveLog; }, get rwyLog() { return rwyLog; }, get turnTimes() { return turnTimes; }, get alerts() { return alerts; }, get tons() { return tonsToday; }, get runwayBusy() { return runwayBusy; },
+      get fly() { return fly; }, startFly: startFly, stopFly: stopFly, flyTo: flyTo, select: select, entLabel: entLabel, statusEs: statusEs, prog: prog, etaOf: etaOf, fmtHM: fmtHM, simStep: simStep, pickAt: pickAt,
+      dispose: () => { alive = false; cancelAnimationFrame(raf); if (ro) ro.disconnect(); cv.removeEventListener('contextmenu', onCtx); cv.removeEventListener('pointerdown', onDown); cv.removeEventListener('pointermove', onMove); cv.removeEventListener('pointerup', onUp); cv.removeEventListener('pointercancel', onUp); cv.removeEventListener('wheel', onWheel); try { renderer.dispose(); renderer.forceContextLoss(); } catch (err) {} }
+    };
+
+  }
+
+  theme() {
+    return { bg: '#F4F2FD', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', accentInk: '#FFFFFF', ok: '#0E7C55', okBg: '#DDF4EA', bad: '#B01F2E', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6' };
+  }
+
+  node() {
+    const p = this.props.node;
+    if (p && p.name) return p;
+    try { const raw = window.localStorage.getItem('logiverse-nodo'); if (raw) { const n = JSON.parse(raw); if (n && n.type === 'aeropuerto') return n; } } catch (err) {}
+    return { id: 'BOG', name: 'El Dorado', city: 'Bogotá', country: 'Colombia', type: 'aeropuerto' };
+  }
+
+  renderVals() {
+    const t = this.theme(), a = this.api, n = this.node();
+    const btn = (on) => 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer; ' + (on ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2);
+    const S = a ? a.S : { t: 450, speed: 1, night: false };
+    const fleet = a ? a.aircraft : [];
+    const stands = a ? a.stands : [];
+    const used = stands.filter((s) => s.ac).length;
+    const uph = a ? a.moveLog.length : 0;
+    const mov = a ? a.rwyLog.length : 0;
+    const tt = a && a.turnTimes.length ? a.turnTimes.reduce((x, y) => x + y, 0) / a.turnTimes.length : 0;
+    const tons = a ? Math.round(a.tons) : 0;
+    const docked = a ? a.trucks.filter((k) => k.st === 'dock').length : 0;
+    const box = 'display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 16px; background: ' + t.card + '; border: 1px solid ' + t.border;
+    const dstyle = (ok) => 'font-size: 12px; font-weight: 600; color: ' + (ok ? t.ok : t.bad);
+    const kpis = [
+      { label: 'POSICIONES EN USO', value: String(used), unit: 'de 4', delta: used === 4 ? 'Plataforma completa' : (4 - used) + ' libres para asignar', ok: used < 4 },
+      { label: 'ULD MOVIDOS / HORA', value: String(uph), unit: 'ULD', delta: (uph >= 60 ? '▲ ' : '▼ ') + Math.abs(uph - 60) + ' frente a la meta de 60', ok: uph >= 60 },
+      { label: 'TIEMPO DE ESCALA', value: tt ? String(Math.round(tt)) : '–', unit: 'min', delta: tt ? (tt <= 90 ? '▲ dentro de la meta ≤ 90' : '▼ por encima de la meta ≤ 90') : 'meta ≤ 90 min en tierra', ok: !tt || tt <= 90 },
+      { label: 'OPERACIONES DE PISTA / HORA', value: String(mov), unit: 'aterrizajes y despegues', delta: a && a.runwayBusy ? 'Pista ocupada' : 'Pista libre', ok: true },
+      { label: 'CARGA MANIPULADA', value: String(tons), unit: 't', delta: 'Promedio de 4,2 t por ULD', ok: true },
+      { label: 'CAMIONES EN MUELLE', value: String(docked), unit: 'de 6 muelles', delta: (a ? a.trucks.length : 0) + ' camiones en el lado tierra', ok: true }
+    ].map((k) => ({ label: k.label, value: k.value, unit: k.unit, delta: k.delta, box: box, deltaStyle: dstyle(k.ok) }));
+
+    const speeds = [1, 4, 16].map((x) => ({ label: x + '×', pressed: S.speed === x ? 'true' : 'false', style: btn(S.speed === x), pick: () => { if (this.api) this.api.S.speed = x; this.forceUpdate(); } }));
+    const viewNames = [['all', 'Todo el aeropuerto'], ['runway', 'Pista'], ['apron', 'Plataforma'], ['terminal', 'Terminal de carga'], ['landside', 'Lado tierra'], ['tower', 'Torre']];
+    const views = viewNames.map((v) => ({ label: v[1], style: btn(false), pick: () => { if (!this.api) return; const w = this.api.VIEWS[v[0]]; if (this.api.fly.on) this.api.stopFly(); this.api.select(null); this.api.flyTo({ x: w.t[0], y: w.t[1], z: w.t[2] }, w.d, w.yaw, w.pitch); } }));
+
+    let panel;
+    const sel = S.sel;
+    if (sel && a) {
+      const rows = [];
+      if (sel.type === 'aircraft') {
+        const eta = a.etaOf(sel);
+        rows.push({ k: 'Aerolínea', v: sel.carrier }, { k: 'Aeronave', v: sel.model.n }, { k: 'Estado', v: a.statusEs(sel.status) }, { k: 'Avance', v: Math.round(a.prog(sel)) + ' %' }, { k: eta[0], v: a.fmtHM(eta[1]) }, { k: 'Posición', v: sel.stand.name });
+        rows.push({ k: 'Ruta', v: sel.from + ' → ' + sel.to }, { k: 'ULD', v: sel.done + ' de ' + sel.total });
+      }
+      panel = { kicker: { aircraft: 'AERONAVE DE CARGA', tug: 'TRACTOR Y DOLLIES', truck: 'CAMIÓN', stand: 'POSICIÓN', tower: 'TORRE DE CONTROL', terminal: 'TERMINAL DE CARGA' }[sel.type] || 'SELECCIÓN', title: sel.name || a.entLabel(sel).split(' · ')[0], sub: a.entLabel(sel), rows: rows, canClear: true };
+    } else {
+      panel = {
+        kicker: 'VISTA GENERAL', title: n.name + (n.city ? ' · ' + n.city : ''), sub: 'Selecciona una aeronave, un tractor o un camión para ver su detalle. Las posiciones verdes están libres: haz clic para traer la próxima aeronave.',
+        rows: [{ k: 'Posiciones en uso', v: used + ' de 4' }, { k: 'Aeronaves activas', v: String(fleet.filter((x) => x.phase !== 'gone').length) }, { k: 'Carga manipulada', v: tons + ' t' }, { k: 'Pista', v: a && a.runwayBusy ? 'ocupada' : 'libre' }], canClear: false
+      };
+    }
+
+    const alerts = (a ? a.alerts.slice(0, 4) : []).map((x) => ({ time: a.fmtHM(x.t), text: x.txt, style: 'font-size: 12px; line-height: 1.4; padding: 6px 8px; border-radius: 8px; background: ' + (x.sev === 'bad' ? t.pRed : (x.sev === 'warn' ? t.pYellow : t.soft)) }));
+
+    const colsDef = [['air', 'EN APROXIMACIÓN'], ['Unloading', 'DESCARGANDO'], ['Loading', 'CARGANDO'], ['Departing', 'SALIENDO'], ['Departed', 'DESPEGARON']];
+    const groups = { air: [], Unloading: [], Loading: [], Departing: [], Departed: [] };
+    fleet.forEach((v) => { const k = v.status === 'Inbound' ? 'air' : v.status; if (groups[k]) groups[k].push(v); });
+    groups.Departed = groups.Departed.sort((x, y) => y.depAt - x.depAt).slice(0, 4);
+    const pcol = { Inbound: '#4F5BD5', Unloading: '#B3600C', Loading: '#0E7C55', Departing: '#127E89', Departed: '#55627A' };
+    const cols = colsDef.map((c) => ({
+      label: c[1], count: groups[c[0]].length,
+      items: groups[c[0]].slice(0, 4).map((v) => {
+        const eta = a.etaOf(v), on = S.sel === v, p = Math.round(a.prog(v));
+        return {
+          name: v.name, pct: p + ' %', meta: v.model.n + ' · ' + v.stand.name + ' · ' + eta[0] + ' ' + a.fmtHM(eta[1]),
+          pressed: on ? 'true' : 'false', pctStyle: 'color: ' + (pcol[v.status] || t.quiet),
+          bar: 'display: block; height: 6px; border-radius: 999px; width: ' + p + '%; background: ' + (pcol[v.status] || t.accent),
+          style: 'text-align: left; font: inherit; color: ' + t.text + '; padding: 8px 10px; border-radius: 12px; cursor: pointer; background: ' + (on ? t.pBlue : t.soft) + '; border: ' + (on ? '2px solid ' + t.accent : '1px solid ' + t.border),
+          pick: () => { if (this.api && v.phase !== 'gone') this.api.select(v); this.forceUpdate(); }
+        };
+      })
+    }));
+
+    const fresh = this.state.toast && Date.now() - this.state.toastAt < 2600;
+    return {
+      t: t,
+      node: { title: 'Aeropuerto ' + n.name + (n.city ? ' (' + n.city + ')' : ''), sub: (n.country ? n.country + ' · ' : '') + 'Terminal de carga aérea (simulación ilustrativa)' },
+      clock: a ? a.fmtHM(S.t) : '07:30', day: a ? Math.floor(S.t / 1440) + 1 : 1,
+      speeds: speeds, views: views, kpis: kpis, panel: panel, alerts: alerts, cols: cols,
+      hoverText: a && S.hov ? a.entLabel(S.hov) : 'Pasa el cursor sobre la escena para identificar cada equipo.',
+      nightLabel: S.night ? 'Vista de día' : 'Vista de noche', nightPressed: S.night ? 'true' : 'false',
+      toggleNight: () => { if (this.api) this.api.S.night = !this.api.S.night; this.forceUpdate(); },
+      flyLabel: a && a.fly.on ? 'Detener vuelo' : 'Vuelo cinematográfico', flyPressed: a && a.fly.on ? 'true' : 'false',
+      toggleFly: () => { if (!this.api) return; if (this.api.fly.on) this.api.stopFly(); else this.api.startFly(); this.forceUpdate(); },
+      clearSel: () => { if (this.api) this.api.select(null); this.forceUpdate(); },
+      embedded: typeof this.props.onExit === 'function', standalone: typeof this.props.onExit !== 'function',
+      exit: () => { if (typeof this.props.onExit === 'function') this.props.onExit(); },
+      btnGhost: btn(false), btnPrimary: btn(true),
+      linkPrimary: 'display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; text-decoration: none; background: ' + t.accent + '; color: ' + t.accentInk,
+      hasToast: !!fresh, toast: this.state.toast,
+      noGL: this.state.noGL, setCanvas: this.setCanvas, setHost: this.setHost
+    };
+  }
+}
+</script>
+</body>
+</html>

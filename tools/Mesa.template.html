@@ -15,7 +15,7 @@ body{margin:0}
 a{color:#1F5EFF}a:hover{color:#1446C8}
 </style>
 </helmet>
-<div style="min-height: 1080px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column">
+<div style="min-height: 1240px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column">
 
   <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; background: {{t.card}}; border-bottom: 1px solid {{t.border}}">
     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
@@ -31,7 +31,7 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
     </ol>
   </header>
 
-  <div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 24px; background: {{t.soft}}; border-bottom: 1px solid {{t.border}}">
+  <div style="{{topsStyle}}">
     <sc-for list="{{tops}}" as="tp" hint-placeholder-count="5">
       <div style="{{tp.box}}">
         <span style="font-size: 12px; color: {{t.quiet}}">{{tp.label}}</span>
@@ -41,7 +41,7 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
     </sc-for>
   </div>
 
-  <main style="flex: 1; padding: 16px 24px; display: grid; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr) minmax(250px, 300px); gap: 16px; align-items: start">
+  <main style="{{mainStyle}}">
     <aside aria-label="Empresas de América" style="display: flex; flex-direction: column; gap: 12px">
       <sc-for list="{{left}}" as="co" hint-placeholder-count="3">
         <article style="{{co.box}}">
@@ -70,13 +70,38 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
     <section style="min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
       <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
         <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Mundo de la partida</h1>
-        <span style="font-size: 12px; color: {{t.quiet}}">Arrastra para girar · los países en rojo tienen un evento activo</span>
+        <span style="font-size: 12px; color: {{t.quiet}}">Arrastra para girar · pasa el cursor sobre un puerto o un aeropuerto · haz clic para ver su operación</span>
       </div>
-      <div ref="{{setWrap}}" style="position: relative; height: 560px; border-radius: 14px; overflow: hidden; background: {{t.sky}}">
-        <canvas ref="{{setCanvas}}" onPointerDown="{{down}}" onPointerMove="{{move}}" onPointerUp="{{up}}" onPointerLeave="{{up}}" role="img" aria-label="Globo 3D con puertos, rutas y buques de la partida" style="display: block; width: 100%; height: 100%; cursor: grab; touch-action: none"></canvas>
+      <div ref="{{setWrap}}" style="position: relative; height: 700px; border-radius: 14px; overflow: hidden; background: {{t.sky}}">
+        <canvas ref="{{setCanvas}}" onPointerDown="{{down}}" onPointerMove="{{move}}" onPointerUp="{{up}}" onPointerLeave="{{up}}" role="img" aria-label="Globo 3D con puertos, aeropuertos, rutas marítimas, aéreas y terrestres, buques, aviones y camiones" style="display: block; width: 100%; height: 100%; cursor: {{globeCursor}}; touch-action: none"></canvas>
         <div aria-live="polite" style="position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none">
           <sc-for list="{{inPlay}}" as="ip" hint-placeholder-count="0">
             <span style="font-size: 13px; font-weight: 600; color: #FFFFFF; background: #D62839; border-radius: 10px; padding: 6px 10px">{{ip.label}} · {{ip.left}}</span>
+          </sc-for>
+        </div>
+        <sc-if value="{{hasTip}}" hint-placeholder-val="{{false}}">
+          <div role="tooltip" style="{{tip.style}}"><span style="font-weight: 700">{{tip.name}}</span><span style="font-size: 12px; opacity: 0.85">{{tip.sub}}</span></div>
+        </sc-if>
+        <sc-if value="{{hasNode}}" hint-placeholder-val="{{false}}">
+          <div role="dialog" aria-label="{{nodeCard.name}}" style="{{nodeCard.box}}">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+              <span style="{{nodeCard.badge}}">{{nodeCard.type}}</span>
+              <span style="font-size: 12px; color: {{t.quiet}}">{{nodeCard.country}}</span>
+            </div>
+            <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{nodeCard.name}}</h2>
+            <span style="font-size: 13px; line-height: 1.45; color: {{t.quiet}}">{{nodeCard.desc}}</span>
+            <sc-if value="{{nodeCard.hasAlert}}" hint-placeholder-val="{{false}}">
+              <span style="font-size: 13px; font-weight: 600; color: {{t.alertText}}">{{nodeCard.alert}}</span>
+            </sc-if>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <button type="button" onClick="{{enterNode}}" aria-disabled="{{nodeCard.disabled}}" style="{{nodeCard.enterStyle}}">{{nodeCard.enter}}</button>
+              <button type="button" onClick="{{closeNode}}" style="{{nodeCard.closeStyle}}">Cerrar</button>
+            </div>
+          </div>
+        </sc-if>
+        <div aria-hidden="true" style="{{legend.box}}">
+          <sc-for list="{{legend.items}}" as="lgd" hint-placeholder-count="4">
+            <span style="display: inline-flex; align-items: center; gap: 6px"><span style="{{lgd.dot}}"></span>{{lgd.label}}</span>
           </sc-for>
         </div>
         <sc-if value="{{noGL}}" hint-placeholder-val="{{false}}">
@@ -111,7 +136,18 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
     </aside>
   </main>
 
-  <footer style="position: sticky; bottom: 0; background: {{t.card}}; border-top: 2px solid {{t.border2}}; padding: 12px 24px 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 -8px 24px rgba(20, 33, 61, 0.08)">
+  <sc-if value="{{insidePuerto}}" hint-placeholder-val="{{false}}">
+    <section aria-label="Operación del puerto" style="padding: 0 0 12px">
+      <dc-import name="Puerto" node="{{insideNode}}" on-exit="{{exitNode}}" hint-size="1440,1160"></dc-import>
+    </section>
+  </sc-if>
+  <sc-if value="{{insideAero}}" hint-placeholder-val="{{false}}">
+    <section aria-label="Operación del aeropuerto" style="padding: 0 0 12px">
+      <dc-import name="Aeropuerto" node="{{insideNode}}" on-exit="{{exitNode}}" hint-size="1440,1160"></dc-import>
+    </section>
+  </sc-if>
+
+  <footer style="{{footStyle}}">
     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px">
       <div role="tablist" aria-label="Panel de control del Superusuario" style="display: flex; flex-wrap: wrap; gap: 6px">
         <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="4">
@@ -164,7 +200,7 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
   </footer>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"rotar":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1080}}'>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"rotar":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1240}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -177,22 +213,44 @@ class Component extends DCLogic {
       tab: 'eventos', sel: null, confirm: null, undo: null, msg: null,
       market: ['C-07', 'C-11', 'C-14'], hidden: ['C-18', 'C-21'],
       log: [{ round: 3, text: 'Café Sinú S.A.S. firmó el contrato C-07: café verde CIF Rotterdam.' }, { round: 1, text: 'Se abre el mercado: 6 empresas, 4 países y 4 divisas.' }],
-      player: null
+      player: null, hover: null, nodeSel: null, inside: null
     };
     this.inited = false; this.tries = 0; this.drag = null;
     this.setCanvas = (el) => { this.cv = el; this.tryInit(); };
     this.setWrap = (el) => { this.wrap = el; this.tryInit(); };
     this.down = (e) => {
       if (!this.g) return;
-      this.drag = { x: e.clientX, y: e.clientY, ry: this.g.globe.rotation.y, rx: this.g.tilt.rotation.x };
+      this.drag = { x: e.clientX, y: e.clientY, ry: this.g.globe.rotation.y, rx: this.g.tilt.rotation.x, moved: 0 };
       if (e.currentTarget && e.currentTarget.setPointerCapture) { try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {} }
     };
     this.move = (e) => {
-      if (!this.drag || !this.g) return;
+      if (!this.g) return;
+      if (!this.drag) {
+        const hit = this.pickNode(e), cur = this.state.hover;
+        if (hit && (!cur || cur.id !== hit.node.id)) this.setState({ hover: { id: hit.node.id, x: hit.x, y: hit.y } });
+        else if (!hit && cur) this.setState({ hover: null });
+        return;
+      }
+      this.drag.moved = Math.abs(e.clientX - this.drag.x) + Math.abs(e.clientY - this.drag.y);
       this.g.globe.rotation.y = this.drag.ry + (e.clientX - this.drag.x) * 0.006;
       this.g.tilt.rotation.x = Math.max(-0.5, Math.min(0.9, this.drag.rx + (e.clientY - this.drag.y) * 0.004));
     };
-    this.up = () => { this.drag = null; };
+    this.up = (e) => {
+      const d = this.drag;
+      this.drag = null;
+      if (!d || !e || e.type !== 'pointerup' || d.moved > 5) return;
+      const hit = this.pickNode(e);
+      this.setState({ nodeSel: hit ? hit.node : null, hover: null });
+    };
+    this.closeNode = () => this.setState({ nodeSel: null });
+    this.enterNode = () => {
+      const n = this.state.nodeSel;
+      if (!n || n.soon) return;
+      const node = { id: n.id, name: n.name, city: n.city || '', country: n.country, type: n.type };
+      try { window.localStorage.setItem('logiverse-nodo', JSON.stringify(node)); } catch (err) {}
+      this.setState({ inside: node, nodeSel: null, hover: null });
+    };
+    this.exitNode = () => this.setState({ inside: null });
     this.confirmNo = () => this.setState({ confirm: null });
     this.confirmYes = () => { if (this.state.confirm) this.play(this.state.confirm); };
     this.undoDo = () => { if (this.state.undo) this.revert(this.state.undo.key); };
@@ -241,6 +299,43 @@ class Component extends DCLogic {
       bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A',
       accent: '#1F5EFF', accentInk: '#FFFFFF', alert: '#D62839', alertText: '#B01F2E', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', okBg: '#DDF4EA', sky: '#EEF4FF', selRing: '#1F5EFF',
       g: { core: 0xCFE0FF, grat: 0x9DB8F0, atm: 0x1F5EFF, route: 0x1F5EFF, port: 0x1F5EFF, ship: 0x14213D, alert: 0xD62839 }
+    };
+  }
+
+  nodeVals(t, s, act) {
+    const hide = s.inside ? '; display: none' : '';
+    const nodes = this.globeNodes ? this.globeNodes() : [];
+    const byId = (id) => nodes.find((n) => n.id === id);
+    const hex = (c) => '#' + c.toString(16).padStart(6, '0');
+    const alertTxt = { CTG: act.tormenta ? 'Tormenta tropical: operación suspendida' : (act.congestion ? 'Congestión portuaria: atraques demorados' : ''), RTM: act.huelga ? 'Huelga portuaria: sin movimiento de carga' : '', PAN: act.sequia ? 'Sequía en el canal: tránsito restringido' : '', SUE: act.marrojo ? 'Crisis del mar Rojo: desvío por el cabo de Buena Esperanza' : '' };
+    const hv = s.hover ? byId(s.hover.id) : null;
+    const sel = s.nodeSel;
+    let nodeCard = { name: '', type: '', country: '', desc: '', alert: '', hasAlert: false, enter: '', disabled: 'false', box: '', badge: '', enterStyle: '', closeStyle: '' };
+    if (sel) {
+      const info = this.nodeTypeInfo(sel.type), col = hex(info.color);
+      nodeCard = {
+        name: sel.type === 'aeropuerto' ? 'Aeropuerto ' + sel.name + ' (' + sel.city + ')' : (sel.type === 'puerto' ? 'Puerto de ' + sel.name : info.label + ' de ' + sel.name),
+        type: info.label + (sel.soon ? ' · próximamente' : ''), country: sel.country, desc: sel.desc,
+        alert: alertTxt[sel.id] || '', hasAlert: !!alertTxt[sel.id],
+        enter: sel.soon ? 'Disponible en la etapa 2' : info.enter, disabled: sel.soon ? 'true' : 'false',
+        box: 'position: absolute; left: 12px; bottom: 12px; width: 300px; max-width: calc(100% - 24px); box-sizing: border-box; background: ' + t.card + '; color: ' + t.text + '; border: 2px solid ' + col + '; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 10px 28px rgba(20, 33, 61, 0.18)',
+        badge: 'font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; color: #FFFFFF; background: ' + (sel.type === 'aeropuerto' ? '#B4490F' : (sel.type === 'terminal' ? '#0B7A55' : col)),
+        enterStyle: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; cursor: ' + (sel.soon ? 'not-allowed' : 'pointer') + '; color: ' + (sel.soon ? t.quiet : '#FFFFFF') + '; background: ' + (sel.soon ? t.soft : t.accent) + '; border: 1px solid ' + (sel.soon ? t.border2 : t.accent),
+        closeStyle: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; cursor: pointer; color: ' + t.text + '; background: ' + t.card + '; border: 1px solid ' + t.border2
+      };
+    }
+    const legendItems = ['puerto', 'aeropuerto', 'terminal', 'bodega'].map((k) => ({ label: this.nodeTypeInfo(k).label + (k === 'terminal' || k === 'bodega' ? ' (etapa 2)' : ''), dot: 'width: 10px; height: 10px; border-radius: 3px; display: inline-block; background: ' + hex(this.nodeTypeInfo(k).color) }));
+    return {
+      topsStyle: 'display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 24px; background: ' + t.soft + '; border-bottom: 1px solid ' + t.border + hide,
+      mainStyle: 'flex: 1; padding: 16px 24px; display: grid; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr) minmax(250px, 300px); gap: 16px; align-items: start' + hide,
+      footStyle: 'position: sticky; bottom: 0; background: ' + t.card + '; border-top: 2px solid ' + t.border2 + '; padding: 12px 24px 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 -8px 24px rgba(20, 33, 61, 0.08)' + hide,
+      globeCursor: s.hover ? 'pointer' : 'grab',
+      hasTip: !!hv && !sel,
+      tip: hv ? { name: hv.type === 'aeropuerto' ? 'Aeropuerto ' + hv.name : (hv.type === 'puerto' ? 'Puerto de ' + hv.name : this.nodeTypeInfo(hv.type).label + ' de ' + hv.name), sub: (alertTxt[hv.id] || (hv.soon ? 'Próximamente · etapa 2' : 'Clic para ver la operación')), style: 'position: absolute; left: ' + Math.min(s.hover.x + 14, 9999) + 'px; top: ' + Math.max(s.hover.y - 52, 8) + 'px; pointer-events: none; display: flex; flex-direction: column; gap: 2px; font-size: 13px; padding: 8px 10px; border-radius: 10px; background: ' + t.text + '; color: ' + t.bg + '; white-space: nowrap' } : { name: '', sub: '', style: '' },
+      hasNode: !!sel, nodeCard: nodeCard, enterNode: this.enterNode, closeNode: this.closeNode,
+      legend: { box: 'position: absolute; right: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; padding: 6px 10px; border-radius: 10px; color: ' + t.text + '; background: ' + t.card + '; border: 1px solid ' + t.border, items: legendItems },
+      insidePuerto: !!s.inside && s.inside.type === 'puerto', insideAero: !!s.inside && s.inside.type === 'aeropuerto',
+      insideNode: s.inside || { id: '', name: '', type: '' }, exitNode: this.exitNode
     };
   }
 
@@ -487,6 +582,7 @@ class Component extends DCLogic {
       t: t, round: s.round, phases: phases, tops: tops, left: left, right: right, inPlay: inPlay,
       live: { label: s.paused ? 'En pausa' : 'En vivo', style: 'display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 6px 4px; color: ' + (s.paused ? t.quiet : t.alertText), dot: 'width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: ' + (s.paused ? t.quiet : '#D62839') },
       noGL: s.noGL, setCanvas: this.setCanvas, setWrap: this.setWrap, down: this.down, move: this.move, up: this.up,
+      ...this.nodeVals(t, s, act),
       tabs: tabs, actions: actions, cards: cards, log: log,
       rowEmpty: rowEmpty, rowEmptyText: s.tab === 'juego' ? 'No hay eventos en juego.' : 'Sin cartas en tu mano de eventos.',
       confirmOpen: !!cdef,
