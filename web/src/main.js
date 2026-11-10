@@ -5,6 +5,7 @@ import * as lv from './lv.js';
 import { ScreenHost } from './host.js';
 import { SCREENS } from './screens.gen.js';
 import { EventOverlay } from './overlay.js';
+import { Analitica, BancoRetos, Repeticion } from './teacher.js';
 
 window.THREE = THREE; // las escenas 3D esperan Three.js global (r160, igual que en el lienzo)
 const html = htm.bind(h);
@@ -33,6 +34,19 @@ const S = {
 };
 const Logo = () => html`<span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Logi<span style="color: ${C.accent}">Verse</span></span>`;
 
+let botNotesState = null;
+const notesSubs = new Set();
+const onBotNotes = (f) => { notesSubs.add(f); f(botNotesState); return () => notesSubs.delete(f); };
+let lastRoundAsked = null;
+lv.onBus((name, data) => {
+  const s = lv.session.get();
+  if (name !== 'logiverse-mundo' || !data || !lv.BOT_IA || !s || !s.docente || data.phase !== 'Mercado' || data.round === lastRoundAsked) return;
+  lastRoundAsked = data.round;
+  const mesa = window.__lv && window.__lv.Mesa;
+  if (!mesa) return;
+  const bots = mesa.companies().filter((c) => c.bot).map((c) => ({ id: c.id, nombre: c.name, operacion: c.op, tramos: c.filled + '/' + c.req, golpes: c.why.filter((w) => !w.up).map((w) => w.label), motivo: c.reason }));
+  lv.botNotes(bots, data).then((n) => { if (n) { botNotesState = n; notesSubs.forEach((f) => f(n)); } });
+});
 const empName = (id) => (lv.EMPRESAS.find((e) => e.id === id) || { name: id }).name;
 
 /* ---------------- enrutador ---------------- */
@@ -197,21 +211,30 @@ class ScreenPage extends Component {
     window.addEventListener('resize', this.onResize);
     lv.connectRealtime(this.props.name);
     lv.logEvent('pantalla', this.props.name, { ancho: window.innerWidth, alto: window.innerHeight });
-    if (lv.ONLINE) { const pull = () => lv.members().then((m) => this.setState({ mem: m })).catch(() => {}); pull(); this.iv = setInterval(pull, 10000); }
+    if (lv.ONLINE) {
+      const pull = () => lv.members().then((m) => this.setState({ mem: m })).catch(() => {});
+      pull(); this.iv = setInterval(pull, 10000);
+      lv.loadBanco().then((b) => this.setState({ banco: b })).catch(() => {});
+      lv.loadOficial().catch(() => {});
+    }
+    this.offs = [lv.onTrm((t) => this.setState({ trm: t && t.valor })), lv.onOficial((o) => this.setState({ oficial: o })), onBotNotes((n) => this.setState({ notes: n }))];
+    lv.loadTrm();
   }
-  componentWillUnmount() { window.removeEventListener('resize', this.onResize); clearInterval(this.iv); }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); clearInterval(this.iv); (this.offs || []).forEach((f) => f()); }
   screenProps(name, s, mem) {
-    const emp = s && !s.docente ? s.equipo : (lv.ONLINE ? null : lv.store.get('lv-local-empresa') || 'cafe');
+    const st = this.state, emp = s && !s.docente ? s.equipo : (lv.ONLINE ? null : lv.store.get('lv-local-empresa') || 'cafe');
+    const trm = st.trm || undefined;
     if (name === 'Jugador' && emp) {
-      if (!lv.ONLINE) return { empresa: emp };
+      const base = { empresa: emp, trm: trm, banco: st.banco && st.banco.length ? st.banco : undefined, oficial: (st.oficial || {})[emp] };
+      if (!lv.ONLINE) return base;
       const r = lv.rolesFor(mem, emp);
-      return { empresa: emp, roles: r.byAlias[s.alias] || lv.ROLES, owners: r.owners };
+      return Object.assign(base, { roles: r.byAlias[s.alias] || lv.ROLES, owners: r.owners });
     }
     if (name === 'Mundo') return emp ? { empresa: emp } : {};
-    if (name === 'Mesa' && lv.ONLINE) {
+    if (name === 'Mesa') {
       const roster = {};
       mem.forEach((m) => { (roster[m.equipo] = roster[m.equipo] || []).push(m.alias); });
-      return { roster: roster };
+      return { roster: lv.ONLINE ? roster : undefined, trm: trm, oficial: st.oficial, botNotes: st.notes };
     }
     return {};
   }
@@ -228,6 +251,7 @@ class ScreenPage extends Component {
         <span style="font-weight: 600">${scr.title}</span>
         <span style="flex: 1"></span>
         ${s ? html`<span>Sala ${s.partida.nombre} · ${s.alias} · ${s.docente ? 'Superusuario' : empName(s.equipo)}</span>` : html`<span>Modo local</span>`}
+        ${st.trm ? html`<span title="TRM vigente, fuente Superintendencia Financiera vía datos.gov.co">TRM ${String(st.trm).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</span>` : null}
         <span style="background: #FFFFFF; border-radius: 999px; padding: 2px 10px"><${Status} /></span>
       </nav>
       <div style=${'zoom: ' + zoom.toFixed(4) + '; width: ' + w + 'px; margin: 0 auto; background: #FFFFFF'}>
@@ -302,6 +326,13 @@ class Teacher extends Component {
             <a href="#/p/Mesa" style=${S.btn('primary') + '; display: inline-flex; align-items: center; text-decoration: none'}>Abrir Mesa del Superusuario</a>
             <button type="button" style=${S.btn()} onClick=${() => this.toggle(sel)}>${sel.estado === 'abierta' ? 'Cerrar la sala' : 'Reabrir la sala'}</button>
           </div>
+          <div role="tablist" aria-label="Herramientas del docente" style="display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid ${C.border}; padding-top: 12px">
+            ${[['panel', 'Empresas y datos'], ['analitica', 'Analítica de aprendizaje'], ['banco', 'Banco de retos'], ['repeticion', 'Repetición de la partida']].map((tb) => html`<button type="button" role="tab" aria-selected=${(st.tab || 'panel') === tb[0] ? 'true' : 'false'} style=${(st.tab || 'panel') === tb[0] ? S.btn('primary') : S.btn()} onClick=${() => this.setState({ tab: tb[0] })}>${tb[1]}</button>`)}
+          </div>
+          ${(st.tab || 'panel') === 'analitica' ? html`<${Analitica} key=${'a' + sel.id} />` : null}
+          ${st.tab === 'banco' ? html`<${BancoRetos} />` : null}
+          ${st.tab === 'repeticion' ? html`<${Repeticion} key=${'r' + sel.id} />` : null}
+          ${(st.tab || 'panel') === 'panel' ? html`<div style="display: flex; flex-direction: column; gap: 14px">
           <h2 style=${S.h2 + '; margin-top: 6px'}>Empresas con jugadores (se actualiza cada 5 s)</h2>
           <div style="overflow-x: auto"><table style="width: 100%; border-collapse: collapse; font-size: 14px">
             <thead><tr>${['Empresa', 'Incoterm', 'Visto CEO', 'Documentos', 'Glosas', 'Decisiones', 'Margen', 'OTIF', 'Liquidó', 'Actualizado'].map((x) => html`<th scope="col" style="text-align: left; padding: 8px; border-bottom: 2px solid ${C.border2}; font-size: 12px; color: ${C.quiet}">${x}</th>`)}</tr></thead>
@@ -313,7 +344,8 @@ class Teacher extends Component {
               <td style="padding: 8px; border-bottom: 1px solid ${C.border}">${m.executed ? 'sí' : 'no'}</td><td style="padding: 8px; border-bottom: 1px solid ${C.border}; font-size: 12px">${new Date(t.actualizado).toLocaleTimeString('es-CO')}</td></tr>`; })}</tbody>
           </table>${st.teams.length ? null : html`<p style=${S.quiet}>Ningún equipo ha jugado todavía.</p>`}</div>
           <h2 style=${S.h2 + '; margin-top: 6px'}>Datos del piloto (CSV)</h2>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px">${[['eventos', 'Decisiones y eventos'], ['participantes', 'Participantes'], ['encuestas', 'Encuestas SUS'], ['estado_canal', 'Estado final por equipo']].map((x) => html`<button type="button" style=${S.btn()} onClick=${() => this.dl(x[0])}>${x[1]}</button>`)}</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">${[['eventos', 'Decisiones, retos y eventos'], ['resultados', 'Liquidaciones oficiales'], ['participantes', 'Participantes'], ['encuestas', 'Encuestas SUS'], ['estado_canal', 'Estado final por empresa']].map((x) => html`<button type="button" style=${S.btn()} onClick=${() => this.dl(x[0])}>${x[1]}</button>`)}</div>
+          </div>` : null}
           ${st.err ? html`<p role="alert" style=${S.err}>${st.err}</p>` : null}${st.info ? html`<p role="status" style="font-size: 14px; margin: 0">${st.info}</p>` : null}
         </section>` : html`<section style=${S.card}><p style=${S.quiet}>Abre una sala con un nombre o elige una para abrir la Mesa del Superusuario, ver las empresas y descargar los datos.</p>${st.err ? html`<p role="alert" style=${S.err}>${st.err}</p>` : null}</section>`}
       </div>

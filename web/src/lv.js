@@ -2,7 +2,7 @@
 // Sin variables de Supabase la app funciona en «modo local»: las pantallas se comunican entre pestañas
 // del mismo navegador, como en el lienzo, y no se guarda nada.
 import { createClient } from '@supabase/supabase-js';
-import { screenHooks } from './host.js';
+import { screenHooks, headless } from './host.js';
 
 const URL_ = import.meta.env.VITE_SUPABASE_URL, KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const sb = URL_ && KEY ? createClient(URL_, KEY, { auth: { persistSession: true, storageKey: 'lv-auth' } }) : null;
@@ -35,6 +35,7 @@ export const EMPRESAS = [
   { id: 'cafe', name: 'Café Sinú S.A.S.', meta: 'Colombia · exporta café verde a Rotterdam', playable: true },
   { id: 'acui', name: 'Acuícola del Sinú', meta: 'Colombia · exporta tilapia congelada a Miami', playable: true },
   { id: 'shz', name: 'Shenzhen Parts Co.', meta: 'China · exporta repuestos a Cartagena', playable: true },
+  { id: 'gan', name: 'Ganadería del San Jorge', meta: 'Córdoba · exporta carne bovina congelada a Aqaba (Jordania)', playable: true },
   { id: 'caribe', name: 'Caribe Line', meta: 'Naviera · contraparte automática', playable: false },
   { id: 'rot', name: 'Rotterdam Foods B.V.', meta: 'Importadora · contraparte automática', playable: false },
   { id: 'aero', name: 'AeroCarga Andina', meta: 'Aerolínea de carga · contraparte automática', playable: false }
@@ -191,6 +192,7 @@ export function connectRealtime(pantalla) {
     if (!payload || payload.from === CLIENT || payload.empresa !== emisor()) return;
     applyPatch(payload.screen, payload.patch);
   });
+  rt.on('broadcast', { event: 'oficial' }, ({ payload }) => { if (payload && payload.res) setOficial(payload.res); });
   rt.on('presence', { event: 'sync' }, () => { presence = rt.presenceState(); emit(); });
   rt.subscribe((st) => {
     rtStatus = st === 'SUBSCRIBED' ? 'en línea' : (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' ? 'sin conexión' : 'conectando');
@@ -244,6 +246,9 @@ screenHooks.onState.push((screen, st, prev, embedded) => {
     const old = new Set(prev.log);
     st.log.filter((x) => !old.has(x)).forEach((x) => logEvent('bitacora', screen, x));
   }
+  if (Array.isArray(st.respuestas) && Array.isArray(prev.respuestas) && st.respuestas.length > prev.respuestas.length) {
+    st.respuestas.slice(prev.respuestas.length).forEach((x) => logEvent('reto', screen, x));
+  }
   (WATCH[screen] || []).forEach((k) => {
     if (st[k] !== prev[k] && JSON.stringify(st[k]) !== JSON.stringify(prev[k])) logEvent('cambio', screen, { clave: k, valor: st[k] });
   });
@@ -295,6 +300,105 @@ function applyPatch(screen, patch) {
   if (inst && inst.__host && !inst.__host.dead) { inst.state = mergeInto(inst.state, patch); inst.__host.redraw(); if (inst.later) inst.later(); }
   snaps[screen] = mergeInto(snaps[screen] || {}, patch);
 }
+
+
+/* ---------------- TRM de referencia (Superintendencia Financiera vía datos.gov.co) ---------------- */
+let trmCache = ls.get('lv-trm');
+const trmSubs = new Set();
+export const onTrm = (f) => { trmSubs.add(f); f(trmCache); return () => trmSubs.delete(f); };
+export async function loadTrm() {
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (trmCache && trmCache.dia === hoy) return trmCache;
+  try {
+    const r = await fetch('https://www.datos.gov.co/resource/32sa-8pi3.json?$order=vigenciadesde%20DESC&$limit=1');
+    const j = await r.json();
+    const v = Number(j && j[0] && j[0].valor);
+    if (v > 1000 && v < 10000) { trmCache = { valor: Math.round(v), fecha: String(j[0].vigenciadesde || '').slice(0, 10), dia: hoy, fuente: 'Superfinanciera · datos.gov.co' }; ls.set('lv-trm', trmCache); trmSubs.forEach((f) => f(trmCache)); }
+  } catch (e) { /* sin red o sin CORS: se usa la tasa base del juego */ }
+  return trmCache;
+}
+export const trmValue = () => (trmCache && trmCache.valor) || null;
+
+/* ---------------- banco de retos ---------------- */
+let bancoCache = [];
+export async function loadBanco() {
+  const pid = partidaId(); if (!sb || !pid) return bancoCache;
+  const { data, error } = await sb.rpc('banco_partida', { p: pid });
+  if (!error && data) bancoCache = data;
+  return bancoCache;
+}
+export const lastBanco = () => bancoCache;
+export const bancoBase = () => headless('Jugador', {}).bancoBase();
+export async function myRetos() {
+  const u = await currentUser(); if (!u) return [];
+  const { data, error } = await sb.from('retos').select('*').eq('docente_id', u.id).order('creado');
+  if (error) throw new Error(error.message);
+  return data;
+}
+export async function saveReto(r) {
+  const row = { eje: r.eje, competencia: r.competencia, dificultad: Number(r.dificultad) || 2, contexto: r.contexto || '', pregunta: r.pregunta, opciones: r.opciones, correcta: r.correcta, justificacion: r.justificacion || {}, activo: r.activo !== false };
+  const q = r.id ? sb.from('retos').update(row).eq('id', r.id) : sb.from('retos').insert(row);
+  const { error } = await q; if (error) throw new Error(error.message);
+}
+export async function deleteReto(id) { const { error } = await sb.from('retos').delete().eq('id', id); if (error) throw new Error(error.message); }
+
+/* ---------------- liquidación oficial (la calcula el dispositivo del Superusuario) ---------------- */
+let oficial = {};
+const ofSubs = new Set();
+export const onOficial = (f) => { ofSubs.add(f); f(oficial); return () => ofSubs.delete(f); };
+function setOficial(res) { oficial = Object.assign({}, oficial, res); ofSubs.forEach((f) => f(oficial)); }
+export async function loadOficial() {
+  const pid = partidaId(); if (!sb || !pid) return oficial;
+  const { data } = await sb.from('resultados').select('*').eq('partida_id', pid).order('ronda');
+  const res = {};
+  (data || []).forEach((r) => { res[r.empresa] = { ronda: r.ronda, puntaje: Number(r.puntaje), margenPct: r.margen_pct == null ? null : Number(r.margen_pct), otif: r.otif, exactitud: Number(r.exactitud), saberPct: Number(r.saber_pct) }; });
+  setOficial(res);
+  return oficial;
+}
+let lastLiq = '';
+export async function liquidarOficial(mundo) {
+  const pid = partidaId(), s = session.get();
+  if (!sb || !pid || !s || !s.docente) return null;
+  const key = pid + '·' + mundo.round; if (lastLiq === key) return null; lastLiq = key;
+  await new Promise((r) => setTimeout(r, 5000)); // espera a que lleguen las últimas jugadas de los equipos
+  const { data } = await sb.from('estado_canal').select('emisor, payload').eq('partida_id', pid).eq('canal', 'snap:Jugador');
+  const res = {}, rows = [];
+  (data || []).forEach((r) => {
+    try {
+      const st = Object.assign({}, r.payload, { world: { active: mundo.active || {}, phase: 'Liquidación', round: mundo.round }, connected: true });
+      const inst = headless('Jugador', { empresa: r.emisor, trm: trmValue() }, st);
+      const ev = inst.evaluate(), visto = st.visto === 'aprobada';
+      const puntaje = visto ? ev.score : 0;
+      res[r.emisor] = { ronda: mundo.round, puntaje: puntaje, margenPct: Math.round(ev.margenPct * 100) / 100, otif: visto && ev.otif, exactitud: ev.exact, saberPct: ev.saberPct };
+      rows.push({ partida_id: pid, ronda: mundo.round, empresa: r.emisor, humana: true, puntaje: puntaje, margen_pct: res[r.emisor].margenPct, otif: res[r.emisor].otif, exactitud: ev.exact, saber_pct: ev.saberPct,
+        datos: { visto: st.visto, incoterm: st.incoterm, costos: ev.costs, dias: ev.days, glosas: ev.glosas, faltan: ev.missing, eventos: (ev.events || []).map((e) => e.key) } });
+    } catch (e) { logError('liquidacion', e.message); }
+  });
+  if (rows.length) {
+    const { error } = await sb.from('resultados').upsert(rows);
+    if (error) logError('resultados', error.message);
+    setOficial(res);
+    if (rt) rt.send({ type: 'broadcast', event: 'oficial', payload: { res: res } });
+    logEvent('liquidacion', 'Mesa', { ronda: mundo.round, resultados: res });
+  }
+  return res;
+}
+// El docente liquida oficialmente cuando su Mesa entra en la fase Liquidación.
+onBus((name, data) => { if (name === 'logiverse-mundo' && data && data.phase === 'Liquidación') liquidarOficial(data); });
+
+/* ---------------- explicaciones de las empresas automáticas con IA (opcional) ---------------- */
+export const BOT_IA = import.meta.env.VITE_BOT_IA === '1';
+export async function botNotes(bots, mundo) {
+  if (!BOT_IA || !sb) return null;
+  try {
+    const { data, error } = await sb.functions.invoke('bot-explica', { body: { bots: bots, mundo: mundo } });
+    if (error) throw error;
+    return data && data.notes ? data.notes : null;
+  } catch (e) { logError('bot-ia', e.message || String(e)); return null; }
+}
+
+/* ---------------- lectura de datos para el docente ---------------- */
+export async function readAll(table) { const pid = partidaId(); return pid ? fetchAll(table, pid) : []; }
 
 /* ---------------- encuesta y exportación ---------------- */
 export async function saveSurvey(respuestas, puntaje, comentarios) {

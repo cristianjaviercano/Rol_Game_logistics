@@ -20,14 +20,14 @@ El proyecto integra tres módulos:
 | `tests/` | Pruebas en vacío de la lógica de cada pantalla y auditoría de accesibilidad |
 | `tools/` | Scripts de apoyo: generación de fronteras, armado de la mesa del Superusuario, escenas 3D de los nodos y extracción de texto de syllabus |
 | `web/` | App del piloto con estudiantes (Vite + Preact): monta las pantallas del mock-up fuera del lienzo, con partidas en Supabase |
-| `supabase/` | Migración SQL (tablas, permisos RLS, ingreso por código) y pruebas de permisos |
+| `supabase/` | Migraciones SQL (salas, permisos RLS, liquidación oficial, banco de retos), pruebas de permisos y función opcional de IA |
 
 ### Pantallas del mock-up
 
 | Archivo | Pantalla |
 | --- | --- |
-| `Mesa.dc.html` | v3 · Mesa del Superusuario: globo con nodos y animación de eventos; empresas humanas o automáticas; cartas plegables |
-| `Jugador.dc.html` | v3 · Mesa del jugador: 3 empresas jugables, roles por persona, turno guiado, mesa de 6 tramos, cartas y bitácora |
+| `Mesa.dc.html` | v4 · Mesa del Superusuario: globo con nodos y animación de eventos; 7 empresas humanas o automáticas; liquidación oficial; cartas plegables |
+| `Jugador.dc.html` | v4 · Mesa del jugador: 4 empresas jugables, roles por persona, reto de repaso adaptativo, mesa de 6 tramos, cartas y bitácora |
 | `Mundo.dc.html` | v3 · Mundo de la partida: globo del jugador con eventos en vivo y su empresa centrada |
 | `Main.dc.html` | v1 · Consola del Superusuario con globo 3D y eventos |
 | `Trafico.dc.html` | v1 · Planificador multimodal de expo e impo |

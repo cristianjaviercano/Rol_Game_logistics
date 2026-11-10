@@ -216,7 +216,7 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
   </footer>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"rotar":{"editor":"boolean","default":true},"roster":{"editor":null},"$preview":{"width":1440,"height":1240}}'>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"rotar":{"editor":"boolean","default":true},"roster":{"editor":null},"trm":{"editor":null},"oficial":{"editor":null},"botNotes":{"editor":null},"$preview":{"width":1440,"height":1240}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -325,7 +325,7 @@ class Component extends DCLogic {
   globeCtl(t, s) {
     const spinning = s.spin === null || s.spin === undefined ? this.props.rotar !== false : s.spin;
     const chip = (on) => 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer; ' + (on ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2);
-    const short = { cafe: 'Café Sinú', acui: 'Acuícola', caribe: 'Caribe Line', rot: 'Rotterdam', shz: 'Shenzhen', aero: 'AeroCarga' };
+    const short = { cafe: 'Café Sinú', acui: 'Acuícola', caribe: 'Caribe Line', rot: 'Rotterdam', shz: 'Shenzhen', gan: 'San Jorge', aero: 'AeroCarga' };
     return {
       spinLabel: spinning ? 'Detener giro' : 'Reanudar giro', spinPressed: spinning ? 'false' : 'true', spinStyle: chip(!spinning),
       toggleSpin: () => this.setState({ spin: !spinning }),
@@ -376,19 +376,19 @@ class Component extends DCLogic {
 
   eventCards() {
     return {
-      tormenta: { label: 'Tormenta tropical', dur: 1, sub: 'Cierra Cartagena', text: 'Puerto de Cartagena cerrado: los embarques se retrasan 3 días.', hit: 'Café Sinú, Acuícola del Sinú y Caribe Line: OTIF −9 pp.', counter: 'Ruta alterna: Santa Marta' },
+      tormenta: { label: 'Tormenta tropical', dur: 1, sub: 'Cierra Cartagena', text: 'Puerto de Cartagena cerrado: los embarques se retrasan 3 días.', hit: 'Café Sinú, Acuícola, Ganadería del San Jorge y Caribe Line: OTIF −9 pp.', counter: 'Ruta alterna: Santa Marta' },
       flete: { label: 'Alza de fletes', dur: 3, sub: 'Marítimo +18 %', text: 'Escasez de contenedores: el flete marítimo sube 18 %.', hit: 'Caribe Line: margen +3 pp; Café Sinú, Acuícola del Sinú y Shenzhen Parts: margen −1,5 pp.', counter: 'Contratar flete antes (FOB traslada el costo)' },
       inspeccion: { label: 'Inspección sorpresa', dur: 1, sub: 'Reto a Aduanas', text: 'La aduana revisa a una empresa: su rol de Aduanas responde un reto.', hit: 'Café Sinú: reto de Aduanas; si falla, 2 días de retención y USD 500.', counter: 'Operador OEA' },
       huelga: { label: 'Huelga en Rotterdam', dur: 2, sub: 'Puerto detenido', text: 'Los estibadores paran Rotterdam: llegadas +6 días.', hit: 'Rotterdam Foods: OTIF −12 pp y margen −2 pp.', counter: 'Incoterm con entrega en origen' },
-      revaluacion: { label: 'Revaluación del peso', dur: 2, sub: 'USD/COP −8 %', text: 'El peso se fortalece: los dólares de los exportadores valen menos.', hit: 'Café Sinú y Acuícola del Sinú: margen −2 pp en pesos.', counter: 'Forward de venta USD' },
-      devaluacion: { label: 'Devaluación del peso', dur: 2, sub: 'USD/COP +12 %', text: 'El peso se debilita: las deudas en dólares suben.', hit: 'Café Sinú y Acuícola del Sinú: margen +2,5 pp.', counter: 'Forward de compra (importadores)' },
-      marrojo: { label: 'Ataques en el mar Rojo', dur: 3, sub: 'Suez cerrado · +12 días', text: 'Las rutas Asia–Europa rodean el Cabo de Buena Esperanza.', hit: 'Shenzhen Parts y Rotterdam Foods: OTIF −8 pp y margen −1,5 pp; Caribe Line: margen +1 pp.', counter: 'Doble fuente' },
+      revaluacion: { label: 'Revaluación del peso', dur: 2, sub: 'USD/COP −8 %', text: 'El peso se fortalece: los dólares de los exportadores valen menos.', hit: 'Café Sinú, Acuícola y Ganadería del San Jorge: margen −2 pp en pesos.', counter: 'Forward de venta USD' },
+      devaluacion: { label: 'Devaluación del peso', dur: 2, sub: 'USD/COP +12 %', text: 'El peso se debilita: las deudas en dólares suben.', hit: 'Café Sinú, Acuícola y Ganadería del San Jorge: margen +2,5 pp.', counter: 'Forward de compra (importadores)' },
+      marrojo: { label: 'Ataques en el mar Rojo', dur: 3, sub: 'Suez cerrado · +12 días', text: 'Las rutas Asia–Europa rodean el Cabo de Buena Esperanza.', hit: 'Ganadería del San Jorge y Rotterdam Foods: OTIF −8 pp y margen −1,5 pp; Caribe Line: margen +1 pp.', counter: 'Doble fuente' },
       sequia: { label: 'Sequía en Panamá', dur: 2, sub: '+4 días por tránsito', text: 'El canal reduce el calado y los tránsitos.', hit: 'Shenzhen Parts y Caribe Line: OTIF −5 pp.', counter: 'Ruta por Buenaventura' },
-      pandemia: { label: 'Pandemia', dur: 3, sub: 'Cuarentenas', text: 'Plantas al 70 % y cuarentena en todos los puertos.', hit: 'Las 6 empresas: OTIF −6 pp y margen −1,5 pp.', counter: 'Inventario de seguridad' },
-      congestion: { label: 'Congestión en Cartagena', dur: 1, sub: '+2 días de espera', text: 'Filas de buques en la bahía de Cartagena.', hit: 'Café Sinú, Acuícola del Sinú y Caribe Line: OTIF −4 pp.', counter: 'Ruta alterna: Santa Marta' },
+      pandemia: { label: 'Pandemia', dur: 3, sub: 'Cuarentenas', text: 'Plantas al 70 % y cuarentena en todos los puertos.', hit: 'Las 7 empresas: OTIF −6 pp y margen −1,5 pp.', counter: 'Inventario de seguridad' },
+      congestion: { label: 'Congestión en Cartagena', dur: 1, sub: '+2 días de espera', text: 'Filas de buques en la bahía de Cartagena.', hit: 'Café Sinú, Acuícola, Ganadería del San Jorge y Caribe Line: OTIF −4 pp.', counter: 'Ruta alterna: Santa Marta' },
       alerta: { label: 'Alerta sanitaria en la UE', dur: 2, sub: 'Controles a alimentos', text: 'La UE exige certificados sanitarios en cada lote de alimentos.', hit: 'Café Sinú: OTIF −5 pp sin certificado fitosanitario; Rotterdam Foods: OTIF −3 pp.', counter: 'Certificado fitosanitario correcto' },
       ciber: { label: 'Ciberataque a la naviera', dur: 1, sub: 'Sistemas caídos', text: 'Una naviera pierde sus sistemas: los buques se demoran.', hit: 'Caribe Line: OTIF −6 pp; Rotterdam Foods: OTIF −2 pp.', counter: 'Diversificar navieras' },
-      impago: { label: 'Retraso en el pago', dur: 2, sub: 'Cobro a 60 días', text: 'Un comprador pide 60 días para pagar.', hit: 'Café Sinú y Acuícola del Sinú: margen −1 pp por costo financiero.', counter: 'Carta de crédito confirmada' }
+      impago: { label: 'Retraso en el pago', dur: 2, sub: 'Cobro a 60 días', text: 'Un comprador pide 60 días para pagar.', hit: 'Café Sinú, Acuícola y Ganadería del San Jorge: margen −1 pp por costo financiero.', counter: 'Carta de crédito confirmada' }
     };
   }
 
@@ -474,8 +474,9 @@ class Component extends DCLogic {
       if (closing) {
         if (b.filled >= c.req) { b.done += 1; b.filled = 0; b.closed = true; }
       } else if (b.filled < c.req) {
-        const hit = c.why.some((w) => !w.up);
-        if (!hit || roll(c.id) > 0.5) b.filled += 1;
+        const hit = c.why.filter((w) => !w.up).map((w) => w.label);
+        if (!hit.length || roll(c.id) > 0.5) { b.filled += 1; b.reason = hit.length ? 'Avanzó pese a ' + hit.join(' y ').toLowerCase() + ': activó su plan alterno.' : 'Avanzó un tramo según su plan.'; }
+        else b.reason = 'Esperó: ' + hit.join(' y ').toLowerCase() + ' frenó su operación.';
       }
       bots[c.id] = b;
     });
@@ -483,7 +484,7 @@ class Component extends DCLogic {
   }
 
   companyGeo() {
-    return { cafe: [8.75, -75.88], acui: [9.3, -75.4], caribe: [10.39, -75.51], rot: [51.92, 4.48], shz: [22.54, 114.06], aero: [4.7, -74.14] };
+    return { cafe: [8.75, -75.88], acui: [9.3, -75.4], caribe: [10.39, -75.51], rot: [51.92, 4.48], shz: [22.54, 114.06], gan: [8.3, -75.1], aero: [4.7, -74.14] };
   }
 
   togglePause() {
@@ -507,6 +508,7 @@ class Component extends DCLogic {
       { id: 'caribe', name: 'Caribe Line', meta: 'Colombia · naviera · COP', m: 7.9, o: 86, x: 94, ship: true, hand: 7, op: 'Rotación Caribe–Europa', filled: 4, req: 4 },
       { id: 'rot', name: 'Rotterdam Foods B.V.', meta: 'Países Bajos · importadora · EUR', m: 9.6, o: 95, x: 98, nl: true, hand: 5, op: 'Recibe C-07 en Rotterdam', filled: 1, req: 2 },
       { id: 'shz', name: 'Shenzhen Parts Co.', meta: 'China · manufactura · CNY', m: 12.4, o: 90, x: 93, cn: true, hand: 7, op: 'C-18 repuestos → Cartagena', filled: 2, req: 4 },
+      { id: 'gan', name: 'Ganadería del San Jorge', meta: 'Colombia · ganadera · COP', m: 13.1, o: 89, x: 92, co: true, food: true, suez: true, hand: 7, op: 'C-05 carne bovina → Aqaba', filled: 1, req: 5 },
       { id: 'aero', name: 'AeroCarga Andina', meta: 'Colombia · aerolínea de carga · COP', m: 10.1, o: 97, x: 95, air: true, hand: 6, op: 'Chárter Bogotá–Miami', filled: 3, req: 3 }
     ];
     return base.map((c) => {
@@ -521,7 +523,7 @@ class Component extends DCLogic {
       if (act.sequia && (c.cn || c.ship)) { o -= 5; hit('Sequía', -1); }
       if (act.flete) { if (c.ship) { m += 3; hit('Fletes', 1); } else if (c.co || c.cn) { m -= 1.5; hit('Fletes', -1); } }
       if (act.inspeccion && c.id === 'cafe') { x -= 4; hit('Inspección', -1); }
-      if (act.marrojo && (c.cn || c.nl)) { o -= 8; m -= 1.5; hit('Mar Rojo', -1); }
+      if (act.marrojo && (c.suez || c.nl)) { o -= 8; m -= 1.5; hit('Mar Rojo', -1); }
       if (act.marrojo && c.ship) { m += 1; hit('Mar Rojo', 1); }
       if (act.pandemia) { o -= 6; m -= 1.5; hit('Pandemia', -1); }
       if (act.alerta && c.id === 'cafe') { o -= 5; hit('Alerta UE', -1); }
@@ -536,7 +538,10 @@ class Component extends DCLogic {
       if (p) { filled = p.filled; req = p.required; hand = p.hand; live = true; glosas = p.glosas; days = p.days; inc = p.incoterm || ''; visto = p.visto || ''; if (p.executed) filled = req; if (typeof p.margenPct === 'number') m = p.margenPct; if (typeof p.otif === 'boolean') o = p.otif ? Math.max(o, 95) : Math.min(o, 80); }
       const b = bot ? (this.state.bots || {})[c.id] : null;
       if (b) filled = Math.min(req, b.filled);
-      return { id: c.id, name: c.name, meta: c.meta, m: m, o: o, x: x, why: why, hand: hand, op: c.op, filled: filled, req: req, live: live, glosas: glosas, days: days, inc: inc, visto: visto, executed: p ? p.executed : filled >= req, bot: bot, humans: humans, done: b ? b.done : 0 };
+      const of = (this.props.oficial || {})[c.id];
+      if (of && typeof of.puntaje === 'number') { if (typeof of.margenPct === 'number') m = of.margenPct; if (typeof of.otif === 'boolean') o = of.otif ? Math.max(o, 95) : Math.min(o, 80); }
+      const note = (this.props.botNotes || {})[c.id];
+      return { id: c.id, name: c.name, meta: c.meta, m: m, o: o, x: x, why: why, hand: hand, op: c.op, filled: filled, req: req, live: live, glosas: glosas, days: days, inc: inc, visto: visto, executed: p ? p.executed : filled >= req, bot: bot, humans: humans, done: b ? b.done : 0, oficial: of || null, reason: note || (b && b.reason) || '' };
     });
   }
 
@@ -573,9 +578,9 @@ class Component extends DCLogic {
       n: i + 1, label: p, current: i === s.phase ? 'step' : 'false',
       style: 'font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 999px; ' + (i === s.phase ? 'background: ' + t.accent + '; color: ' + t.accentInk : (i < s.phase ? 'background: ' + t.pBlue + '; color: ' + t.text : 'background: ' + t.soft + '; color: ' + t.quiet))
     }));
-    const usd = 3200 * (act.devaluacion ? 1.12 : 1) * (act.revaluacion ? 0.92 : 1);
+    const T0 = Number(this.props.trm) > 1000 ? Number(this.props.trm) : 3200, usd = T0 * (act.devaluacion ? 1.12 : 1) * (act.revaluacion ? 0.92 : 1);
     const tops = [
-      { label: 'USD/COP', value: this.fmt(usd), delta: act.devaluacion || act.revaluacion ? (usd > 3200 ? '+' : '−') + this.fmt(Math.abs(usd / 3200 - 1) * 100, 1) + ' %' : 'estable', warn: !!(act.devaluacion || act.revaluacion) },
+      { label: 'USD/COP', value: this.fmt(usd), delta: act.devaluacion || act.revaluacion ? (usd > T0 ? '+' : '−') + this.fmt(Math.abs(usd / T0 - 1) * 100, 1) + ' %' : (Number(this.props.trm) > 1000 ? 'TRM de referencia' : 'estable'), warn: !!(act.devaluacion || act.revaluacion) },
       { label: 'Índice de fletes', value: act.flete ? '118' : '100', delta: act.flete ? '+18 %' : 'base 100', warn: !!act.flete },
       { label: 'Eventos en juego', value: String(Object.keys(act).length), delta: s.hand.length + ' en tu mano · ' + s.deck.length + ' en el mazo', warn: Object.keys(act).length > 0 },
       { label: 'Contratos en el mercado', value: String(s.market.length), delta: s.hidden.length + ' por revelar', warn: false },
@@ -583,14 +588,15 @@ class Component extends DCLogic {
     ].map((x) => ({ label: x.label, value: x.value, delta: x.delta, box: 'display: flex; flex-direction: column; gap: 1px; padding: 8px 12px; border-radius: 12px; min-width: 150px; background: ' + t.card + '; border: 1px solid ' + t.border, deltaStyle: 'font-size: 12px; font-weight: 600; color: ' + (x.warn ? t.alertText : t.quiet) }));
 
     const rows = this.companies();
-    const ranked = rows.slice().sort((a, b) => b.m - a.m).map((r) => r.id);
+    const scoreOf = (r) => (r.oficial && typeof r.oficial.puntaje === 'number' ? 1000 + r.oficial.puntaje : r.m);
+    const ranked = rows.slice().sort((a, b) => scoreOf(b) - scoreOf(a)).map((r) => r.id);
     const medal = night ? ['#3DD6D0', '#9FB0C3', '#F2A93B'] : ['#FFC93C', '#E4ECFF', '#FFE3E6'];
     const view = (c) => {
       const rank = ranked.indexOf(c.id);
       const pct = Math.round(c.filled / Math.max(1, c.req) * 100);
       return {
         name: c.name, meta: c.meta, rank: rank + 1,
-        who: c.bot ? 'Automática' + (c.done ? ' · ' + c.done + ' operación' + (c.done === 1 ? '' : 'es') + ' liquidada' + (c.done === 1 ? '' : 's') : '') : 'Equipo: ' + (c.humans.length ? c.humans.join(', ') : 'conectado'),
+        who: c.bot ? 'Automática' + (c.done ? ' · ' + c.done + ' operación' + (c.done === 1 ? '' : 'es') + ' liquidada' + (c.done === 1 ? '' : 's') : '') + (c.reason ? ' · ' + c.reason : '') : 'Equipo: ' + (c.humans.length ? c.humans.join(', ') : 'conectado') + (c.oficial ? ' · oficial R' + c.oficial.ronda + ': ' + String(c.oficial.puntaje).replace('.', ',') + ' pts' : ''),
         whoStyle: 'align-self: flex-start; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; ' + (c.bot ? 'background: ' + t.soft + '; color: ' + t.quiet : 'background: ' + t.okBg + '; color: ' + (night ? t.text : '#0E7C55')),
         rankStyle: 'display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-family: \'IBM Plex Mono\', monospace; font-weight: 600; color: ' + (night && rank < 3 ? '#0B1320' : t.text) + '; background: ' + (rank < 3 ? medal[rank] : t.soft),
         kpis: [['Margen', this.fmt(c.m, 1) + ' %', false], ['OTIF', c.o + ' %', c.o < 85], ['Exactitud', c.x + ' %', false]].map((k) => ({ label: k[0], value: k[1], box: 'display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-radius: 10px; background: ' + (k[2] ? t.pRed : t.soft) })),
@@ -601,7 +607,7 @@ class Component extends DCLogic {
         box: 'background: ' + t.card + '; border: 1px solid ' + (c.why.some((w) => !w.up) ? '#D62839' : t.border) + '; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 6px'
       };
     };
-    const left = rows.slice(0, 3).map(view), right = rows.slice(3).map(view);
+    const half = Math.ceil(rows.length / 2), left = rows.slice(0, half).map(view), right = rows.slice(half).map(view);
 
     const inPlay = Object.keys(act).map((k) => ({ label: E[k].label, left: s.dur[k] + ' ronda' + (s.dur[k] === 1 ? '' : 's') }));
 

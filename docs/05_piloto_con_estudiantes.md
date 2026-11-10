@@ -17,7 +17,7 @@ Sin variables de Supabase la app arranca en **modo local**: las pantallas se com
 ## Puesta en marcha (una vez)
 
 1. **Crear el proyecto** en [supabase.com](https://supabase.com): región *South America (São Paulo)*, la más cercana a Colombia.
-2. **Crear las tablas:** en *SQL Editor*, pegar y ejecutar `supabase/migrations/001_piloto.sql` y luego `002_salas_empresas.sql`. Se pueden volver a ejecutar sin perder datos.
+2. **Crear las tablas:** en *SQL Editor*, pegar y ejecutar, en orden, `001_piloto.sql`, `002_salas_empresas.sql` y `003_motor_banco_analitica.sql` (carpeta `supabase/migrations/`). Se pueden volver a ejecutar sin perder datos.
 3. **Activar el ingreso anónimo:** *Authentication → Sign In / Providers → Allow anonymous sign-ins*.
 4. **Cuenta del docente:** en la app, *Soy docente → Crear cuenta*. Si Supabase pide confirmar el correo, confirmarlo una vez.
 5. **Conectar Vercel:** en el proyecto `rol-game-logistics`, *Settings → Environment Variables*:
@@ -36,14 +36,37 @@ Sin variables de Supabase la app arranca en **modo local**: las pantallas se com
 | 75–85 min | Revisa la tabla de equipos del panel | Encuesta final (SUS + 2 preguntas abiertas) |
 | Después | Descarga los CSV y cierra la partida | — |
 
-Hay 3 empresas jugables (Café Sinú, Acuícola del Sinú, Shenzhen Parts) y 3 contrapartes automáticas; una empresa jugable sin integrantes también la maneja el computador. Con 2 a 6 personas por empresa se cubren de 6 a 18 estudiantes por sala; para grupos más grandes se abren varias salas.
+Hay 4 empresas jugables (Café Sinú, Acuícola del Sinú, Shenzhen Parts y Ganadería del San Jorge) y 3 contrapartes automáticas; una empresa jugable sin integrantes también la maneja el computador. Con 2 a 6 personas por empresa se cubren de 8 a 24 estudiantes por sala; para grupos más grandes se abren varias salas.
+
+## Herramientas del docente
+
+En el panel docente, al elegir una sala:
+
+- **Empresas y datos:** estado en vivo de cada empresa y descargas en CSV (eventos, liquidaciones oficiales, participantes, encuestas y estado final).
+- **Analítica de aprendizaje:** puntaje oficial por ronda; aciertos por competencia Saber Pro, por eje y por nivel; competencias por empresa; informe individual imprimible.
+- **Banco de retos:** retos propios con eje, competencia, nivel y justificación por opción; importación y exportación en CSV. Si está vacío, se usan los 18 retos base.
+- **Repetición de la partida:** línea de tiempo reproducible con preguntas de cierre.
+
+La **liquidación oficial** la calcula el dispositivo del docente cuando su Mesa entra en Liquidación. Por eso la Mesa del Superusuario debe estar abierta en ese momento.
+
+La **TRM** se toma una vez al día de datos.gov.co (Superintendencia Financiera).
+
+### Explicaciones con IA (opcional)
+
+1. Instalar la CLI de Supabase y desplegar la función: `supabase functions deploy bot-explica`.
+2. Guardar la clave de la API de Claude: `supabase secrets set ANTHROPIC_API_KEY=...`.
+3. En Vercel, agregar `VITE_BOT_IA=1` y volver a desplegar.
+
+Cada empresa automática hace una llamada a Claude Haiku por ronda. Sin esta configuración, las razones se generan por reglas.
 
 ## Datos que se guardan
 
 | Tabla | Contenido |
 | --- | --- |
 | `participantes` | alias, equipo, consentimiento, hora de ingreso (sin nombre, correo ni documento) |
-| `eventos` | `bitacora` (cada decisión por rol, con alternativa, efecto y costo), `cambio` (fase, Incoterm, visto del CEO, retos, documentos, liquidación…), `pantalla` (qué abrió y con qué tamaño de pantalla) y `error` |
+| `eventos` | `bitacora` (cada decisión por rol, con alternativa, efecto y costo), `reto` (cada respuesta con eje, competencia, nivel, rol y acierto), `cambio` (fase, Incoterm, visto del CEO, documentos…), `liquidacion`, `pantalla` y `error` |
+| `resultados` | liquidación oficial por ronda y empresa: puntaje, margen, OTIF, exactitud, Saber Pro y detalle de costos |
+| `retos` | banco de retos del docente |
 | `estado_canal` | último estado de cada equipo y del mundo, e instantáneas para retomar tras recargar |
 | `encuestas` | 10 ítems SUS (puntaje 0–100) y comentarios |
 
@@ -72,5 +95,6 @@ Desde el panel docente se descargan como CSV (UTF-8, abre en Excel).
 
 - **Mesa compartida:** si dos integrantes cambian lo mismo al mismo tiempo, gana el último cambio.
 - **Contrapartes:** Caribe Line, Rotterdam Foods y AeroCarga todavía no son jugables.
+- **Liquidación oficial desde el navegador del docente:** evita cálculos distintos entre equipos, pero no impide que un estudiante con conocimientos técnicos altere su propio estado. Para una versión comercial, la liquidación debe correr en el servidor.
 - **Escenas 3D:** son ilustrativas; no cambian los indicadores del juego.
 - **Tamaños de pantalla:** las pantallas se diseñaron a 1440 px y se escalan al ancho del navegador; las de rol están a 390 px, para celular.

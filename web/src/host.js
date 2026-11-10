@@ -31,6 +31,13 @@ function treeOf(name) {
   return trees[name];
 }
 
+// Instancia la lógica de una pantalla sin interfaz: sirve para el cálculo oficial y para leer datos base.
+export function headless(screen, props, state) {
+  const Cls = classOf(screen), inst = new Cls(Object.assign({}, SCREENS[screen].defaults, props || {}));
+  if (state) inst.state = Object.assign({}, inst.state, state);
+  return inst;
+}
+
 export class ScreenHost extends Component {
   constructor(props) {
     super(props);

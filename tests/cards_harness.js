@@ -148,5 +148,45 @@ test('E5', 'La Mesa marca empresas automáticas y las avanza; el evento sale com
   } finally { delete global.window; global.BroadcastChannel = prev; }
 });
 
+// ---------- v4: caso regional, banco adaptativo, TRM y liquidación oficial
+test('M1', 'Ganadería del San Jorge: carne congelada a Aqaba por Suez, con cadena de frío', () => {
+  const g = loadP('Jugador.dc.html', { empresa: 'gan' });
+  eq(g.contract().dest, 'Aqaba'); eq(g.contract().cargo, 'refrigerada');
+  g.setState({ world: { active: { marrojo: true } } });
+  const e = g.eventEffects().find((x) => x.key === 'marrojo'); eq(e.arrival, 12); eq(e.cost, 2400);
+});
+test('M2', 'Reto de repaso: dificultad adaptativa, justificación y registro por competencia', () => {
+  const c = loadP('Jugador.dc.html', {});
+  eq(c.pickReto().dificultad, 2);
+  c.setState({ saber: { ok: 4, n: 4 } }); eq(c.pickReto().dificultad, 3);
+  c.setState({ saber: { ok: 0, n: 4 } }); eq(c.pickReto().dificultad, 1);
+  c.startRepaso(); const it = c.state.quiz.item;
+  v(c).quiz.options.find((o) => o.id !== it.correcta).pick();
+  ok(/Incorrecto/.test(c.state.msg.text) && c.state.msg.text.length > 40, c.state.msg.text);
+  eq(c.state.respuestas.length, 1); eq(c.state.respuestas[0].competencia, it.competencia); eq(c.state.respuestas[0].ok, false);
+  c.startRepaso(); ok(/Ya respondieron/.test(c.state.msg.text));
+});
+test('M3', 'El banco del docente reemplaza al base', () => {
+  const banco = [{ id: 'x1', eje: 'finanzas', competencia: 'proposicion', dificultad: 2, contexto: '', pregunta: '¿Prueba?', opciones: [{ id: 'A', text: 'Sí' }, { id: 'B', text: 'No' }], correcta: 'A', justificacion: { A: 'Porque sí.' } }];
+  const c = loadP('Jugador.dc.html', { banco: banco });
+  eq(c.pickReto().id, 'x1');
+});
+test('M4', 'La TRM de referencia mueve la tasa del juego', () => {
+  const c = loadP('Jugador.dc.html', { trm: 4100 }); eq(c.evaluate().rate, 4100);
+  c.setState({ world: { active: { devaluacion: true } } }); eq(Math.round(c.evaluate().rate), Math.round(4100 * 1.12));
+});
+test('M5', 'La Mesa ordena por liquidación oficial y muestra la razón de las automáticas', () => {
+  const prevW = global.window; global.window = { localStorage: { getItem: () => null, setItem() {} } };
+  try {
+    const gm = loadP('Mesa.dc.html', { oficial: { acui: { ronda: 3, puntaje: 88, margenPct: 12, otif: true } }, roster: { acui: ['Ana'] }, trm: 4000 });
+    const r = v(gm);
+    eq(r.left.concat(r.right).find((c) => c.rank === 1).name, 'Acuícola del Sinú');
+    ok(/oficial R3: 88 pts/.test(r.left.concat(r.right).find((c) => c.rank === 1).who));
+    eq(r.left.length + r.right.length, 7); eq(r.tops[0].value, '4.000');
+    gm.setState({ active: { tormenta: true } }); gm.nextPhase();
+    ok(/Esperó|Avanzó/.test(gm.companies().find((c) => c.id === 'rot').reason), gm.companies().find((c) => c.id === 'rot').reason);
+  } finally { global.window = prevW; }
+});
+
 results.forEach((r) => console.log(r.status.padEnd(6), r.id.padEnd(4), r.name, r.detail ? '→ ' + r.detail : ''));
 const f = results.filter((r) => r.status !== 'OK').length; console.log(JSON.stringify({ OK: results.length - f, FALLA: f }));

@@ -51,3 +51,13 @@ select 'T24 forastero no ve miembros', (select count(*) from miembros_partida(:'
 reset role; select pg_temp.como('00000000-0000-0000-0000-0000000000a1', true);
 select 'T25 participante ve miembros', (select count(*) from miembros_partida(:'pid')) = 2;
 reset role;
+-- 26-31 motor central, banco y analítica (migración 003)
+reset role; select pg_temp.como('00000000-0000-0000-0000-00000000000d', false);
+insert into resultados (partida_id, ronda, empresa, puntaje, margen_pct, otif) values (:'pid', 3, 'cafe', 72.5, 8.2, true) returning 'T26 docente escribe resultado ok';
+insert into retos (eje, competencia, pregunta, opciones, correcta) values ('incoterms', 'interpretacion', '¿Quién paga el flete en FOB?', '[{"id":"A","text":"El comprador"},{"id":"B","text":"El vendedor"}]', 'A') returning 'T27 docente crea reto ok';
+reset role; select pg_temp.como('00000000-0000-0000-0000-0000000000a1', true);
+select 'T28 estudiante escribe resultado (debe fallar)'; insert into resultados (partida_id, ronda, empresa, puntaje) values (:'pid', 3, 'acui', 99);
+select 'T29 estudiante lee resultados de su sala', (select count(*) from resultados) = 1;
+select 'T30 estudiante ve el banco de su sala, no la tabla', (select count(*) from banco_partida(:'pid')) >= 1, (select count(*) from retos) = 0;
+insert into eventos (partida_id, emisor, tipo, datos) values (:'pid', 'Equipo 1', 'reto', '{"ok":true}') returning 'T31 evento tipo reto ok';
+reset role;
