@@ -1,0 +1,22 @@
+{
+  "name": "logiverse-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "App del piloto de LogiVerse: las pantallas del mock-up servidas fuera del lienzo, con partidas en Supabase.",
+  "scripts": {
+    "gen": "node scripts/gen-screens.mjs",
+    "dev": "npm run gen && vite",
+    "build": "npm run gen && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.45.4",
+    "htm": "3.1.1",
+    "preact": "10.24.3",
+    "three": "0.160.0"
+  },
+  "devDependencies": {
+    "vite": "5.4.11"
+  }
+}

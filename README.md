@@ -18,13 +18,15 @@ El proyecto integra tres módulos:
 | `mockup/` | Las 9 pantallas del mock-up (`*.dc.html`) y el índice del lienzo (`canvas.json`) |
 | `data/` | Fronteras de 231 países para el globo 3D, derivadas de world-atlas (Natural Earth) |
 | `tests/` | Pruebas en vacío de la lógica de cada pantalla y auditoría de accesibilidad |
-| `tools/` | Scripts de apoyo: generación de fronteras, armado de la mesa del Superusuario y extracción de texto de syllabus |
+| `tools/` | Scripts de apoyo: generación de fronteras, armado de la mesa del Superusuario, escenas 3D de los nodos y extracción de texto de syllabus |
+| `web/` | App del piloto con estudiantes (Vite + Preact): monta las pantallas del mock-up fuera del lienzo, con partidas en Supabase |
+| `supabase/` | Migración SQL (tablas, permisos RLS, ingreso por código) y pruebas de permisos |
 
 ### Pantallas del mock-up
 
 | Archivo | Pantalla |
 | --- | --- |
-| `Mesa.dc.html` | v2 · Mesa del Superusuario: globo al centro, empresas a los lados, cartas de evento abajo |
+| `Mesa.dc.html` | v2 · Mesa del Superusuario: globo con puertos, aeropuertos y terminal; empresas a los lados, cartas de evento abajo |
 | `Jugador.dc.html` | v2 · Mesa del jugador: turno guiado por fase, mesa de 6 tramos, mano de cartas y bitácora |
 | `Main.dc.html` | v1 · Consola del Superusuario con globo 3D y eventos |
 | `Trafico.dc.html` | v1 · Planificador multimodal de expo e impo |
@@ -33,10 +35,23 @@ El proyecto integra tres módulos:
 | `Aduana.dc.html` | v1 · Retos ECAES por eje temático |
 | `Seleccion.dc.html` | v1 · Lobby: 17 empresas en 14 países |
 | `Cadena.dc.html` | v1 · Cadena de suministro y negociación entre pares |
+| `Puerto.dc.html` | Nodo 3D · terminal de contenedores (adaptado de puerto-animation) |
+| `Aeropuerto.dc.html` | Nodo 3D · terminal de carga aérea |
+| `Terminal.dc.html` | Nodo 3D · paso fronterizo terrestre con aduana y trasbordo |
 
 ## Cómo usarlo
 
-Las pantallas son componentes del lienzo de diseño de Claude: dependen de su entorno (`support.js`) y de dos recursos alojados allí (Three.js y las fronteras), por lo que no abren directamente en el navegador. Se ven e interactúan desde el lienzo publicado; en este repositorio quedan como fuente versionada.
+### App web del piloto
+
+```bash
+cd web && npm install && npm run dev
+```
+
+Sin variables de Supabase funciona en modo local (pestañas del mismo navegador). La guía para conectar Supabase, desplegar en Vercel y conducir una sesión con estudiantes está en `docs/05_piloto_con_estudiantes.md`.
+
+### Lienzo de diseño
+
+Las pantallas son componentes del lienzo de diseño de Claude y también se sirven, sin cambios, en la app de `web/`.
 
 Las pruebas sí corren localmente con Node.js 18 o superior:
 
