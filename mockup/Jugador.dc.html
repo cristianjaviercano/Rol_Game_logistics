@@ -19,7 +19,7 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
   <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; background: {{t.card}}; border-bottom: 1px solid {{t.border}}">
     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
       <span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Logi<span style="color: {{t.accent}}">Verse</span></span>
-      <span style="font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: {{t.pBlue}}">Café Sinú S.A.S. · Colombia · COP</span>
+      <span style="font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: {{t.pBlue}}">{{emp.label}}</span>
       <span style="font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: {{t.soft}}; color: {{t.quiet}}">{{modeLabel}}</span>
     </div>
     <div style="display: flex; flex-wrap: wrap; gap: 8px">
@@ -86,7 +86,7 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
 
       <section style="flex: 999 1 640px; min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
-          <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Mesa de operación · Montería → Cartagena → Rotterdam</h1>
+          <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">{{emp.route}}</h1>
           <span style="font-size: 13px; color: {{t.quiet}}">{{selHint}}</span>
         </div>
         <div style="overflow-x: auto">
@@ -188,13 +188,13 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
   </footer>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1180}}'>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"empresa":{"editor":null},"roles":{"editor":null},"owners":{"editor":null},"$preview":{"width":1440,"height":1180}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = {
       round: 3, phaseIdx: 0, connected: false,
-      role: 'Comercial',
+      role: (props && Array.isArray(props.roles) && props.roles.length ? (props.roles.indexOf('Comercial') >= 0 ? 'Comercial' : props.roles[0]) : 'Comercial'),
       tab: 'mano',
       incoterm: 'CIF', incDecided: false,
       visto: 'none', motivo: '',
@@ -245,7 +245,7 @@ class Component extends DCLogic {
 
   sync() {
     const s = this.state, r = this.evaluate();
-    const msg = { company: 'cafe', filled: r.filled, required: r.required, glosas: r.glosas, days: r.days, plazo: r.plazo, executed: !!s.executed, otif: r.otif, margenPct: r.margenPct, hand: s.hand.length, incoterm: s.incoterm, visto: s.visto, decisions: s.log.length, interest: Object.keys(s.interest).filter((k) => s.interest[k]) };
+    const msg = { company: this.caso().id, filled: r.filled, required: r.required, glosas: r.glosas, days: r.days, plazo: r.plazo, executed: !!s.executed, otif: r.otif, margenPct: r.margenPct, hand: s.hand.length, incoterm: s.incoterm, visto: s.visto, decisions: s.log.length, interest: Object.keys(s.interest).filter((k) => s.interest[k]) };
     try { window.localStorage.setItem('logiverse-jugador', JSON.stringify(msg)); } catch (err) {}
     try {
       if (!this.out && window.BroadcastChannel) this.out = new BroadcastChannel('logiverse-jugador');
@@ -315,27 +315,82 @@ class Component extends DCLogic {
     return this.phaseRoles()[this.phaseName()].indexOf(role) >= 0;
   }
 
+  caso() {
+    const san = (name, q, a, b, ok) => ({ name: name, q: q, options: [{ id: 'A', text: a }, { id: 'B', text: b }], ok: ok });
+    const C = {
+      cafe: {
+        id: 'cafe', name: 'Café Sinú S.A.S.', country: 'Colombia', cur: 'COP', peso: true, product: 'café',
+        code: 'C-07', title: 'Café verde especial', buyer: 'Rotterdam Foods B.V.', qty: "2 × 40' · 38 t", fob: 44000, cif: 48100, cogs: 38000,
+        plazo: 7, transit: 14, cargo: 'seca', origin: 'Montería', port: 'Cartagena', dest: 'Rotterdam', alt: 'Santa Marta', carrier: 'Caribe Line',
+        cont: 2, dry: 3700, reefer: 8200, air: 76000, airText: 'USD 1,90 por kg facturable · 38 t · incluye la AWB.',
+        pref: 'del acuerdo UE–Colombia', prefBonus: true, buyerZone: 'europeo', portCo: true, rtm: true, panama: false, ue: true,
+        dexQ: ['¿Ante quién se presenta la declaración de exportación en Colombia?', 'La DIAN, por el sistema aduanero', 'La Cámara de Comercio'],
+        san: san('Certificado fitosanitario', '¿Qué entidad certifica la condición fitosanitaria del café de exportación?', 'El Invima', 'El ICA', 'B'),
+        market: [
+          { id: 'C-07', title: 'Café verde especial → Rotterdam', text: "2 × 40' · USD 48.100 CIF o 44.000 FOB · embarque en 7 días.", tags: 'En curso' },
+          { id: 'C-11', title: 'Tilapia congelada → Miami', text: '22 t · USD 88.000 DAP · entrega en 10 días · cadena de frío.', tags: 'Disponible' },
+          { id: 'C-14', title: 'Café tostado → Yokohama', text: "1 × 40' · USD 61.500 CIP · embarque en 12 días.", tags: 'Disponible' }
+        ]
+      },
+      acui: {
+        id: 'acui', name: 'Acuícola del Sinú', country: 'Colombia', cur: 'COP', peso: true, product: 'tilapia congelada',
+        code: 'C-03', title: 'Filete de tilapia congelado', buyer: 'Ocean Fresh Imports (Miami)', qty: "1 × 40' reefer · 22 t", fob: 79500, cif: 83600, cogs: 68000,
+        plazo: 7, transit: 5, cargo: 'refrigerada', origin: 'Montería', port: 'Cartagena', dest: 'Miami', alt: 'Santa Marta', carrier: 'Caribe Line',
+        cont: 1, dry: 1900, reefer: 3400, air: 41800, airText: 'USD 1,90 por kg facturable · 22 t · incluye la AWB.',
+        pref: 'del TLC Colombia–EE. UU.', prefBonus: true, buyerZone: 'estadounidense', portCo: true, rtm: false, panama: false, ue: false,
+        dexQ: ['¿Ante quién se presenta la declaración de exportación en Colombia?', 'La DIAN, por el sistema aduanero', 'El Invima'],
+        san: san('Certificado sanitario de exportación', '¿Qué entidad expide el certificado sanitario para exportar filete de tilapia congelado desde Colombia?', 'El Invima', 'La DIAN', 'A'),
+        market: [
+          { id: 'C-03', title: 'Filete de tilapia congelado → Miami', text: "1 × 40' reefer · USD 83.600 CIF o 79.500 FOB · embarque en 7 días.", tags: 'En curso' },
+          { id: 'C-12', title: 'Tilapia entera → Houston', text: '18 t · USD 61.000 CFR · cadena de frío · embarque en 9 días.', tags: 'Disponible' },
+          { id: 'C-16', title: 'Filete fresco → Nueva York', text: '4 t · USD 31.000 CPT aéreo · entrega en 3 días.', tags: 'Disponible' }
+        ]
+      },
+      shz: {
+        id: 'shz', name: 'Shenzhen Parts Co.', country: 'China', cur: 'CNY', peso: false, product: 'repuestos',
+        code: 'C-18', title: 'Repuestos para maquinaria agrícola', buyer: 'Agroindustrias del Caribe (Cartagena)', qty: "2 × 40' · 31 t", fob: 61000, cif: 67150, cogs: 52000,
+        plazo: 9, transit: 32, cargo: 'seca', origin: 'Dongguan', port: 'Shenzhen (Yantian)', dest: 'Cartagena', alt: 'Hong Kong', carrier: 'una naviera asiática',
+        cont: 2, dry: 5600, reefer: 11800, air: 62000, airText: 'USD 2,00 por kg facturable · 31 t · incluye la AWB.',
+        pref: '', prefBonus: false, buyerZone: 'colombiano', portCo: false, rtm: false, panama: true, ue: false,
+        dexQ: ['¿Ante quién se presenta la declaración de exportación en China?', 'La Administración General de Aduanas (GACC)', 'El Ministerio de Comercio'],
+        san: san('Certificado NIMF 15 de embalajes', '¿Qué exige la norma NIMF 15 a los pallets de madera del embarque?', 'Tratamiento térmico o fumigación certificada, con sello visible', 'Que la madera esté pintada', 'A'),
+        market: [
+          { id: 'C-18', title: 'Repuestos agrícolas → Cartagena', text: "2 × 40' · USD 67.150 CIF o 61.000 FOB · embarque en 9 días.", tags: 'En curso' },
+          { id: 'C-21', title: 'Motores eléctricos → Buenaventura', text: "1 × 40' · USD 48.000 CFR · embarque en 12 días.", tags: 'Disponible' },
+          { id: 'C-24', title: 'Sensores → Ciudad de México', text: '3 t · USD 39.000 CPT aéreo · entrega en 4 días.', tags: 'Disponible' }
+        ]
+      }
+    };
+    return C[this.props.empresa] || C.cafe;
+  }
+
+  owns(role) {
+    const r = this.props.roles;
+    return !Array.isArray(r) || !r.length || r.indexOf(role) >= 0;
+  }
+
   contract() {
-    const inc = this.state.incoterm;
+    const inc = this.state.incoterm, k = this.caso();
     return {
-      code: 'C-07', title: 'Café verde especial', buyer: 'Rotterdam Foods B.V.', qty: "2 × 40' · 38 t",
-      price: inc === 'FOB' ? 44000 : 48100, cogs: 38000,
-      incoterm: inc, plazo: 7, transit: 14, cargo: 'seca', origin: 'Montería', port: 'Cartagena', dest: 'Rotterdam'
+      code: k.code, title: k.title, buyer: k.buyer, qty: k.qty,
+      price: inc === 'FOB' ? k.fob : k.cif, cogs: k.cogs,
+      incoterm: inc, plazo: k.plazo, transit: k.transit, cargo: k.cargo, origin: k.origin, port: k.port, dest: k.dest
     };
   }
 
   catalog() {
+    const k = this.caso(), cn = k.cont + " × 40'", trips = k.cont + ' viaje' + (k.cont === 1 ? '' : 's');
     return {
-      trs: { fam: 'transporte', sub: 'terrestre', name: 'Tractomula seca', cost: 1700, days: 1, reefer: false, text: '2 viajes Montería → Cartagena · USD 850 por viaje.', tags: 'Terrestre · carga seca' },
-      trf: { fam: 'transporte', sub: 'terrestre', name: 'Tractomula refrigerada', cost: 2500, days: 1, reefer: true, text: '2 viajes · USD 1.250 por viaje · mantiene −18 °C.', tags: 'Terrestre · refrigerada' },
-      hc40: { fam: 'transporte', sub: 'principal', mode: 'mar', name: "2 × 40' High Cube", cost: 3700, days: 14, reefer: false, text: 'Caribe Line · Cartagena → Rotterdam · incluye el BL.', tags: 'Marítimo · carga seca' },
-      rf40: { fam: 'transporte', sub: 'principal', mode: 'mar', name: "2 × 40' Reefer", cost: 8200, days: 14, reefer: true, text: 'Cartagena → Rotterdam · incluye el BL.', tags: 'Marítimo · refrigerada' },
-      pmc: { fam: 'transporte', sub: 'principal', mode: 'air', name: 'Carga aérea en pallets', cost: 76000, days: 1, reefer: true, text: 'USD 1,90 por kg facturable · 40 t · incluye la AWB.', tags: 'Aéreo' },
+      trs: { fam: 'transporte', sub: 'terrestre', name: 'Tractomula seca', cost: 850 * k.cont, days: 1, reefer: false, text: trips + ' ' + k.origin + ' → ' + k.port + ' · USD 850 por viaje.', tags: 'Terrestre · carga seca' },
+      trf: { fam: 'transporte', sub: 'terrestre', name: 'Tractomula refrigerada', cost: 1250 * k.cont, days: 1, reefer: true, text: trips + ' · USD 1.250 por viaje · mantiene −18 °C.', tags: 'Terrestre · refrigerada' },
+      hc40: { fam: 'transporte', sub: 'principal', mode: 'mar', name: cn + ' High Cube', cost: k.dry, days: k.transit, reefer: false, text: k.carrier + ' · ' + k.port + ' → ' + k.dest + ' · incluye el BL.', tags: 'Marítimo · carga seca' },
+      rf40: { fam: 'transporte', sub: 'principal', mode: 'mar', name: cn + ' Reefer', cost: k.reefer, days: k.transit, reefer: true, text: k.port + ' → ' + k.dest + ' · incluye el BL.', tags: 'Marítimo · refrigerada' },
+      pmc: { fam: 'transporte', sub: 'principal', mode: 'air', name: 'Carga aérea en pallets', cost: k.air, days: 1, reefer: true, text: k.airText, tags: 'Aéreo' },
       iccc: { fam: 'finanzas', sub: 'poliza', cover: 'C', rate: 0.0075, name: 'Póliza ICC (C)', text: 'Riesgos mayores · asegura el 110 % del valor CIF.', tags: 'Seguro · 0,75 %' },
       icca: { fam: 'finanzas', sub: 'poliza', cover: 'A', rate: 0.011, name: 'Póliza ICC (A)', text: 'Todo riesgo · asegura el 110 % del valor CIF.', tags: 'Seguro · 1,1 %' },
-      fwd: { fam: 'finanzas', sub: 'cobertura', costRate: 0.003, name: 'Forward de venta USD', text: 'Fija hoy la tasa (3.200) de los dólares que cobrarás.', tags: 'Divisas · 0,3 %' },
+      fwd: { fam: 'finanzas', sub: 'cobertura', costRate: 0.003, name: 'Forward de venta USD', text: 'Fija hoy la tasa (' + (k.peso ? '3.200 COP' : '7,10 CNY') + ') de los dólares que cobrarás.', tags: 'Divisas · 0,3 %' },
       cl: { fam: 'finanzas', sub: 'cobertura', costRate: 0.008, name: 'Carta de crédito confirmada', text: 'El banco garantiza el pago contra documentos correctos.', tags: 'Medio de pago · 0,8 %' },
-      smr: { fam: 'mitigacion', sub: 'cobertura', cost: 0, useCost: 600, name: 'Ruta alterna: Santa Marta', text: 'Si Cartagena cierra o se congestiona, embarcas por Santa Marta sin retraso (USD 600 si se usa).', tags: 'Puerto alterno' },
+      smr: { fam: 'mitigacion', sub: 'cobertura', cost: 0, useCost: 600, name: 'Ruta alterna: ' + k.alt, text: 'Si ' + k.port + ' cierra o se congestiona, embarcas por ' + k.alt + ' sin retraso (USD 600 si se usa).', tags: 'Puerto alterno' },
       oea: { fam: 'mitigacion', sub: 'cobertura', cost: 250, name: 'Operador OEA', text: 'Operador económico autorizado: evita la próxima inspección sorpresa.', tags: 'Aduana · USD 250' }
     };
   }
@@ -345,21 +400,18 @@ class Component extends DCLogic {
   }
 
   docDefs() {
+    const k = this.caso();
     return {
       factura: { name: 'Factura comercial', req: true, q: '¿Qué valor declara la factura comercial en esta venta?', options: [{ id: 'A', text: 'El precio pactado con el Incoterm del contrato' }, { id: 'B', text: 'Solo el costo de producción' }], ok: 'A' },
       lista: { name: 'Lista de empaque', req: true, q: '¿Qué información es indispensable en la lista de empaque?', options: [{ id: 'A', text: 'El precio unitario y el margen' }, { id: 'B', text: 'Pesos bruto y neto, volumen y marcas por bulto' }], ok: 'B' },
-      dex: { name: 'Declaración de exportación', req: true, q: '¿Ante quién se presenta la declaración de exportación en Colombia?', options: [{ id: 'A', text: 'La DIAN, por el sistema aduanero' }, { id: 'B', text: 'La Cámara de Comercio' }], ok: 'A' },
-      fito: { name: 'Certificado fitosanitario', req: true, q: '¿Qué entidad certifica la condición fitosanitaria del café de exportación?', options: [{ id: 'A', text: 'El Invima' }, { id: 'B', text: 'El ICA' }], ok: 'B' },
-      origen: { name: 'Certificado de origen', req: false, q: '¿Para qué sirve el certificado de origen ante el comprador europeo?', options: [{ id: 'A', text: 'Para aplicar la preferencia arancelaria del acuerdo UE–Colombia' }, { id: 'B', text: 'Para reemplazar la factura comercial' }], ok: 'A' }
+      dex: { name: 'Declaración de exportación', req: true, q: k.dexQ[0], options: [{ id: 'A', text: k.dexQ[1] }, { id: 'B', text: k.dexQ[2] }], ok: 'A' },
+      fito: { name: k.san.name, req: true, q: k.san.q, options: k.san.options, ok: k.san.ok },
+      origen: { name: 'Certificado de origen', req: false, q: '¿Para qué sirve el certificado de origen ante el comprador ' + k.buyerZone + '?', options: [{ id: 'A', text: k.prefBonus ? 'Para aplicar la preferencia arancelaria ' + k.pref : 'Para acreditar el país de origen ante la aduana de destino, aunque no haya preferencia' }, { id: 'B', text: 'Para reemplazar la factura comercial' }], ok: 'A' }
     };
   }
 
   marketDefs() {
-    return [
-      { id: 'C-07', title: 'Café verde especial → Rotterdam', text: "2 × 40' · USD 48.100 CIF o 44.000 FOB · embarque en 7 días.", tags: 'En curso' },
-      { id: 'C-11', title: 'Tilapia congelada → Miami', text: '22 t · USD 88.000 DAP · entrega en 10 días · cadena de frío.', tags: 'Disponible' },
-      { id: 'C-14', title: 'Café tostado → Yokohama', text: "1 × 40' · USD 61.500 CIP · embarque en 12 días.", tags: 'Disponible' }
-    ];
+    return this.caso().market;
   }
 
   slotDefs() {
@@ -445,7 +497,7 @@ class Component extends DCLogic {
       const fx = {
         smr: ['Sin ruta alterna', 'Si hay tormenta evita 3 días de retraso (2 por congestión); cuesta USD 600 solo si se usa.'],
         oea: ['Sin operador OEA', 'Paga USD 250 para evitar una inspección; si la falla, perdería USD 500 y 2 días.'],
-        fwd: ['Quedar expuesto a la tasa', 'Paga USD ' + this.fmt(cost) + ' para cobrar a 3.200 pase lo que pase con el peso.'],
+        fwd: ['Quedar expuesto a la tasa', 'Paga USD ' + this.fmt(cost) + ' para cobrar a ' + (this.caso().peso ? '3.200 pase lo que pase con el peso.' : '7,10 CNY pase lo que pase con el yuan.')],
         cl: ['Cobrar sin garantía', 'Paga USD ' + this.fmt(cost) + ' para asegurar el cobro; sin carta, un retraso costaría USD 480.']
       }[id];
       return this.entry(role, 'Jugó «' + k.name + '» en coberturas', fx[0], fx[1], cost);
@@ -554,10 +606,11 @@ class Component extends DCLogic {
     let hand = s.hand.slice();
     const moved = [];
     if (term === 'FOB') ['flete', 'seguro'].forEach((k) => { board[k].forEach((id) => { hand.push(id); moved.push(this.catalog()[id].name); }); board[k] = []; });
+    const k = this.caso(), dif = this.fmt(k.cif - k.fob);
     const e = term === 'CIF'
-      ? this.entry('Comercial', 'Confirmó CIF a USD 48.100', 'Renegociar FOB a USD 44.000', 'Ingresa USD 4.100 más, pero paga flete y seguro (≈ USD 4.100) y asume el alza de fletes.', 0)
-      : this.entry('Comercial', 'Renegoció FOB a USD 44.000', 'Mantener CIF a USD 48.100', 'Ingresa USD 4.100 menos y deja flete, seguro y alza de fletes al comprador.' + (moved.length ? ' Volvieron a la mano: ' + moved.join(', ') + '.' : ''), 0);
-    this.setState({ incoterm: term, incDecided: true, board: board, hand: hand, quiz: null, seq: e.seq, log: s.log.concat([e]), msg: { text: 'Contrato C-07 en ' + term + '.', tone: 'ok' } });
+      ? this.entry('Comercial', 'Confirmó CIF a USD ' + this.fmt(k.cif), 'Renegociar FOB a USD ' + this.fmt(k.fob), 'Ingresa USD ' + dif + ' más, pero paga flete y seguro (≈ USD ' + dif + ') y asume el alza de fletes.', 0)
+      : this.entry('Comercial', 'Renegoció FOB a USD ' + this.fmt(k.fob), 'Mantener CIF a USD ' + this.fmt(k.cif), 'Ingresa USD ' + dif + ' menos y deja flete, seguro y alza de fletes al comprador.' + (moved.length ? ' Volvieron a la mano: ' + moved.join(', ') + '.' : ''), 0);
+    this.setState({ incoterm: term, incDecided: true, board: board, hand: hand, quiz: null, seq: e.seq, log: s.log.concat([e]), msg: { text: 'Contrato ' + k.code + ' en ' + term + '.', tone: 'ok' } });
     this.later();
   }
 
@@ -669,28 +722,38 @@ class Component extends DCLogic {
   }
 
   toggleInterest(id) {
-    if (id === 'C-07') { this.say('Este contrato ya está en curso en tu mesa.', 'info'); return; }
+    if (id === this.caso().code) { this.say('Este contrato ya está en curso en tu mesa.', 'info'); return; }
     this.setState((s) => ({ interest: Object.assign({}, s.interest, { [id]: !s.interest[id] }), msg: { text: s.interest[id] ? 'Retiraste tu interés en ' + id + '.' : 'Marcaste interés en ' + id + ': el Superusuario lo verá en la fase de Mercado.', tone: 'info' } }));
     this.later();
   }
 
   eventEffects() {
-    const act = (this.state.world && this.state.world.active) || {}, cob = this.state.board.cobertura, c = this.contract();
+    const act = (this.state.world && this.state.world.active) || {}, cob = this.state.board.cobertura, c = this.contract(), k = this.caso();
     const has = (id) => cob.indexOf(id) >= 0;
     const payFreight = this.resp('flete') === 'V';
     const fleteCard = this.catalog()[this.state.board.flete[0]];
     const out = [];
     const add = (key, label, o) => { if (act[key]) out.push(Object.assign({ key: key, label: label, days: 0, cost: 0, arrival: 0 }, o)); };
-    add('tormenta', 'Tormenta tropical', has('smr') ? { cost: 600, text: 'Cartagena cerró, pero embarcas por Santa Marta sin retraso (USD 600).' } : { days: 3, text: 'Cartagena cerrado: tu embarque se retrasa 3 días. Riesgos puede jugar «Ruta alterna: Santa Marta».' });
-    add('congestion', 'Congestión en Cartagena', has('smr') ? { cost: 600, text: 'Desvías por Santa Marta sin retraso (USD 600).' } : { days: 2, text: 'Espera de 2 días para cargar el buque.' });
-    add('huelga', 'Huelga en Rotterdam', { arrival: 6, text: 'En ' + c.incoterm + ' el riesgo pasó al comprador cuando la carga quedó a bordo: no afecta tu entrega, aunque la llegada se demora 6 días.' });
+    if (k.portCo) {
+      add('tormenta', 'Tormenta tropical', has('smr') ? { cost: 600, text: 'Cartagena cerró, pero embarcas por Santa Marta sin retraso (USD 600).' } : { days: 3, text: 'Cartagena cerrado: tu embarque se retrasa 3 días. Riesgos puede jugar «Ruta alterna: Santa Marta».' });
+      add('congestion', 'Congestión en Cartagena', has('smr') ? { cost: 600, text: 'Desvías por Santa Marta sin retraso (USD 600).' } : { days: 2, text: 'Espera de 2 días para cargar el buque.' });
+    } else {
+      add('tormenta', 'Tormenta tropical', { arrival: 3, text: 'Cartagena, tu destino, cerró 3 días: la llegada se demora, pero en ' + c.incoterm + ' el riesgo ya pasó al comprador al quedar la carga a bordo.' });
+      add('congestion', 'Congestión en Cartagena', { arrival: 2, text: 'Tu buque espera 2 días para atracar en Cartagena; tu entrega a bordo en origen no cambia.' });
+    }
+    add('huelga', 'Huelga en Rotterdam', k.rtm ? { arrival: 6, text: 'En ' + c.incoterm + ' el riesgo pasó al comprador cuando la carga quedó a bordo: no afecta tu entrega, aunque la llegada se demora 6 días.' } : { text: 'Tu ruta no toca Rotterdam. Sin efecto.' });
     add('flete', 'Alza de fletes', payFreight ? { cost: fleteCard ? Math.round(fleteCard.cost * 0.18) : 0, text: fleteCard ? 'En ' + c.incoterm + ' tú pagas el flete: +18 % (USD ' + this.fmt(fleteCard.cost * 0.18) + ').' : 'En ' + c.incoterm + ' tú pagas el flete: subirá 18 % cuando lo contrates.' } : { text: 'En FOB el flete lo contrata el comprador: el alza no toca tu margen.' });
     add('marrojo', 'Ataques en el mar Rojo', { text: 'Tu ruta cruza el Atlántico: no pasa por Suez. Sin efecto.' });
-    add('sequia', 'Sequía en Panamá', { text: 'Tu ruta no cruza el Canal de Panamá. Sin efecto.' });
+    add('sequia', 'Sequía en Panamá', k.panama ? { arrival: 4, text: 'Tu buque cruza el Canal de Panamá: la llegada se demora 4 días; en ' + c.incoterm + ' el riesgo ya es del comprador.' } : { text: 'Tu ruta no cruza el Canal de Panamá. Sin efecto.' });
     add('pandemia', 'Pandemia', { days: 2, cost: 400, text: 'Cuarentena en puerto: 2 días y USD 400 de sobrecosto logístico.' });
-    add('devaluacion', 'Devaluación del peso', { text: has('fwd') ? 'Tu forward fija la tasa en 3.200: renuncias a la ganancia cambiaria a cambio de certeza.' : 'Cobras en USD: tu margen en pesos sube 12 %.' });
-    add('revaluacion', 'Revaluación del peso', { text: has('fwd') ? 'Tu forward te protege: cobras a 3.200.' : 'Cobras en USD: tu margen en pesos cae 8 %. El CFO puede jugar «Forward de venta USD».' });
-    add('alerta', 'Alerta sanitaria en la UE', this.state.docs.fito === 'ok' ? { text: 'Tu certificado fitosanitario cubre la alerta.' } : { days: 5, cost: 900, text: 'Sin certificado fitosanitario válido la carga queda retenida 5 días (USD 900).' });
+    if (k.peso) {
+      add('devaluacion', 'Devaluación del peso', { text: has('fwd') ? 'Tu forward fija la tasa en 3.200: renuncias a la ganancia cambiaria a cambio de certeza.' : 'Cobras en USD: tu margen en pesos sube 12 %.' });
+      add('revaluacion', 'Revaluación del peso', { text: has('fwd') ? 'Tu forward te protege: cobras a 3.200.' : 'Cobras en USD: tu margen en pesos cae 8 %. El CFO puede jugar «Forward de venta USD».' });
+    } else {
+      add('devaluacion', 'Devaluación del peso', { text: 'Cobras en USD y conviertes a yuanes: el peso colombiano no te afecta.' });
+      add('revaluacion', 'Revaluación del peso', { text: 'Cobras en USD y conviertes a yuanes: el peso colombiano no te afecta.' });
+    }
+    add('alerta', 'Alerta sanitaria en la UE', !k.ue ? { text: 'Tu destino no está en la UE. Sin efecto.' } : (this.state.docs.fito === 'ok' ? { text: 'Tu certificado fitosanitario cubre la alerta.' } : { days: 5, cost: 900, text: 'Sin certificado fitosanitario válido la carga queda retenida 5 días (USD 900).' }));
     add('ciber', 'Ciberataque a la naviera', { arrival: 3, text: 'Afecta el tránsito después del embarque: la llegada se demora 3 días; tu entrega no cambia.' });
     add('impago', 'El comprador retrasa el pago', has('cl') ? { text: 'Tu carta de crédito garantiza el cobro contra documentos.' } : { cost: 480, text: 'Cobro a 60 días: costo financiero de USD 480. El CFO puede jugar «Carta de crédito confirmada».' });
     if (act.inspeccion) {
@@ -706,6 +769,7 @@ class Component extends DCLogic {
     const act = (s.world && s.world.active) || {};
     const b = s.board;
     const card = (slot) => (b[slot][0] ? K[b[slot][0]] : null);
+    const k = this.caso(), frio = c.cargo === 'refrigerada';
     const missing = [];
     let filled = 0, required = 0;
     this.slotDefs().forEach((sd) => {
@@ -714,7 +778,10 @@ class Component extends DCLogic {
       if (sd.key === 'expo') {
         const lack = Object.keys(D).filter((d) => D[d].req && s.docs[d] === 'pendiente').map((d) => D[d].name);
         if (lack.length) missing.push('documentos (' + lack.join(', ') + ')'); else filled += 1;
-      } else if (b[sd.key].length) filled += 1; else missing.push(sd.label.toLowerCase());
+      } else if (b[sd.key].length) {
+        const kc = K[b[sd.key][0]];
+        if (frio && kc && kc.fam === 'transporte' && !kc.reefer) missing.push(sd.label.toLowerCase() + ' con equipo refrigerado'); else filled += 1;
+      } else missing.push(sd.label.toLowerCase());
     });
     const origen = card('origen'), flete = this.resp('flete') === 'V' ? card('flete') : null, seguro = this.resp('seguro') !== 'C' ? card('seguro') : null;
     const docsPlaced = Object.keys(D).filter((d) => s.docs[d] !== 'pendiente');
@@ -730,13 +797,13 @@ class Component extends DCLogic {
       eventos: evCost + glosas * 500
     };
     const total = costs.acarreo + costs.aduana + costs.flete + costs.seguro + costs.cobertura + costs.eventos;
-    const bonus = s.docs.origen === 'ok' ? Math.round(c.price * 0.01) : 0;
+    const bonus = s.docs.origen === 'ok' && k.prefBonus ? Math.round(c.price * 0.01) : 0;
     const margen = c.price - c.cogs - total + bonus;
     const margenPct = margen / c.price * 100;
     const days = (origen ? origen.days : 0) + (docsPlaced.length ? 1 : 0) + evDays + glosas * 2 + (this.resp('destino') === 'V' && flete ? flete.days : 0);
     const arrival = days + (card('flete') ? card('flete').days : c.transit) + evArr;
     const fwd = b.cobertura.indexOf('fwd') >= 0;
-    const rate = fwd ? 3200 : 3200 * (act.devaluacion ? 1.12 : 1) * (act.revaluacion ? 0.92 : 1);
+    const rate = !k.peso ? 7.1 : (fwd ? 3200 : 3200 * (act.devaluacion ? 1.12 : 1) * (act.revaluacion ? 0.92 : 1));
     const reqDocs = Object.keys(D).filter((d) => D[d].req).length;
     const okDocs = docsPlaced.filter((d) => s.docs[d] === 'ok').length;
     const exact = Math.round(okDocs / Math.max(reqDocs, docsPlaced.length) * 100);
@@ -747,6 +814,8 @@ class Component extends DCLogic {
     if (origen && origen.reefer && c.cargo === 'seca') warn.push('Tractomula refrigerada para carga seca: sobrecosto de USD 800 frente a la seca.');
     if (flete && flete.reefer && c.cargo === 'seca') warn.push("Contenedores reefer para carga seca: sobrecosto de USD 4.500 frente a los 40' HC.");
     if (seguro && seguro.cover === 'A' && c.incoterm === 'CIF') warn.push('CIF solo exige ICC (C); la ICC (A) protege más al comprador pero cuesta más.');
+    if (frio && origen && !origen.reefer) warn.push('La ' + k.product + ' viaja a −18 °C: una tractomula seca rompe la cadena de frío. Usa la refrigerada.');
+    if (frio && flete && !flete.reefer) warn.push('La ' + k.product + ' necesita contenedor reefer en el flete principal.');
     if (glosas) warn.push(glosas + ' documento(s) con error: glosa de USD 500 y 2 días por cada uno. Aduanas puede corregirlos desde el archivo.');
     if (days > c.plazo) warn.push('Entregas a bordo en ' + days + ' días: superas el plazo de ' + c.plazo + ' y pierdes el OTIF.');
     return { missing: missing, filled: filled, required: required, glosas: glosas, costs: costs, total: total, bonus: bonus, margen: margen, margenPct: margenPct, days: days, plazo: c.plazo, arrival: arrival, rate: rate, exact: exact, otif: otif, saberPct: saberPct, score: score, warn: warn, events: ev };
@@ -769,7 +838,7 @@ class Component extends DCLogic {
     let fam, name, text, tags, cost;
     if (from === 'doc') {
       const st = s.docs[id];
-      fam = 'documento'; name = D[id].name; text = st === 'error' ? 'Emitido con error: corrígelo antes del visto.' : (D[id].req ? 'Obligatorio para exportar café.' : 'Opcional: el comprador paga 1 % más por la preferencia arancelaria.');
+      fam = 'documento'; name = D[id].name; text = st === 'error' ? 'Emitido con error: corrígelo antes del visto.' : (D[id].req ? 'Obligatorio para exportar ' + this.caso().product + '.' : 'Opcional: el comprador paga 1 % más por la preferencia arancelaria.');
       tags = st === 'error' ? 'Con error · Aduanas' : 'Por emitir · Aduanas'; cost = 'Emitir';
     } else if (from === 'market') {
       const m = this.marketDefs().filter((x) => x.id === id)[0];
@@ -802,7 +871,7 @@ class Component extends DCLogic {
       style: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; cursor: pointer; ' + (kind === 'primary' ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : (kind === 'dark' ? 'background: ' + t.text + '; color: ' + t.bg + '; border: 1px solid ' + t.text : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2)) + (disabled ? '; opacity: 0.55' : '')
     });
     const texts = {
-      'Mercado': ['Comercial: confirma el Incoterm del contrato C-07', s.incDecided || s.visto === 'aprobada' ? 'Incoterm decidido: ' + c.incoterm + '. Avanza a Robo.' : 'CIF paga más (USD 48.100) pero te obliga a contratar flete y seguro; FOB (USD 44.000) los deja al comprador.'],
+      'Mercado': ['Comercial: confirma el Incoterm del contrato ' + c.code, s.incDecided || s.visto === 'aprobada' ? 'Incoterm decidido: ' + c.incoterm + '. Avanza a Robo.' : 'CIF paga más (USD ' + this.fmt(this.caso().cif) + ') pero te obliga a contratar flete y seguro; FOB (USD ' + this.fmt(this.caso().fob) + ') los deja al comprador.'],
       'Robo': ['El equipo roba 2 cartas del mazo de operaciones', s.drew ? 'Ya robaron en esta ronda. Si la mano supera 8, guarden o descarten.' : 'Cualquier rol operativo puede robar; se roba una vez por ronda.'],
       'Planeación': ['Tráfico, Aduanas, CFO y Riesgos cubren los tramos a su cargo', 'Cada rol tiene 3 jugadas. Faltan: ' + (this.evaluate().missing.join(', ') || 'nada, la operación está completa') + '.'],
       'Visto del CEO': ['CEO: revisa el resumen y decide', s.visto === 'aprobada' ? 'Visto dado: la operación se liquida al final de la ronda.' : (s.visto === 'devuelta' ? 'Devuelta: ' + s.motivo.toLowerCase() + '.' : 'Da el visto si la operación está completa o devuélvela con un motivo.')],
@@ -834,13 +903,14 @@ class Component extends DCLogic {
     const ph = this.phaseName();
     const roles = ['CEO', 'Comercial', 'Tráfico', 'Aduanas', 'CFO', 'Riesgos'].map((ro) => {
       const on = ro === s.role, act = this.isActive(ro), left = ro === 'CEO' || ro === 'Comercial' ? '' : String(this.playsLeft(ro));
+      const mine = this.owns(ro), who = (this.props.owners && this.props.owners[ro]) || '';
       return {
-        label: ro, left: left,
+        label: mine ? ro : ro + ' · ' + (who || 'otro integrante'), left: left,
         pressed: on ? 'true' : 'false',
         aria: ro + (act ? ', tiene turno' : ', en espera') + (left ? ', ' + left + ' jugadas' : ''),
         leftStyle: left === '' ? 'display: none' : 'display: inline-block; min-width: 18px; margin-left: 6px; padding: 1px 6px; border-radius: 999px; font-size: 12px; font-family: \'IBM Plex Mono\', monospace; ' + (on ? 'background: ' + t.accentInk + '; color: ' + t.accent : 'background: ' + t.soft + '; color: ' + t.text),
         style: 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer; ' + (on ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : (act ? 'background: ' + t.card + '; color: ' + t.text + '; border: 2px solid ' + t.selRing : 'background: ' + t.card + '; color: ' + t.quiet + '; border: 1px dashed ' + t.border2)),
-        pick: () => this.setState({ role: ro, sel: null, msg: null })
+        pick: () => (mine ? this.setState({ role: ro, sel: null, msg: null }) : this.say('El rol ' + ro + ' lo juega ' + (who || 'otro integrante') + ' en su dispositivo: verás sus jugadas aquí.', 'info'))
       };
     });
     const roleHints = { CEO: 'Da el visto o devuelve la operación.', Comercial: 'Decide el Incoterm en Mercado.', 'Tráfico': 'Juega transporte en Planeación.', Aduanas: 'Emite documentos y responde inspecciones.', CFO: 'Juega pólizas, forwards y cartas de crédito.', Riesgos: 'Juega mitigación en Planeación y Reacción.' };
@@ -910,8 +980,9 @@ class Component extends DCLogic {
       ['Preferencia arancelaria', R.bonus, false],
       ['Margen', R.margen, true]
     ].map((x) => ({ label: x[0], value: (x[1] < 0 ? '−' : '') + 'USD ' + this.fmt(Math.abs(x[1])), style: 'display: flex; justify-content: space-between; gap: 8px; font-size: ' + (x[2] ? '15px; font-weight: 700; border-top: 1px solid ' + t.border2 + '; padding-top: 8px; margin-top: 2px' : '13px') + '; color: ' + t.text }));
-    sum.push({ label: 'Margen en COP a ' + this.fmt(R.rate), value: 'COP ' + this.fmt(R.margen * R.rate), style: 'display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: ' + t.quiet });
-    sum.push({ label: 'Llegada estimada a Rotterdam', value: 'día ' + R.arrival, style: 'display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: ' + t.quiet });
+    const kk = this.caso();
+    sum.push({ label: 'Margen en ' + kk.cur + ' a ' + (kk.peso ? this.fmt(R.rate) : '7,10'), value: kk.cur + ' ' + this.fmt(R.margen * R.rate), style: 'display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: ' + t.quiet });
+    sum.push({ label: 'Llegada estimada a ' + c.dest, value: 'día ' + R.arrival, style: 'display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: ' + t.quiet });
     const alerts = R.warn.map((w) => ({ text: w, style: 'font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 10px; background: ' + t.pYellow + '; color: ' + t.text }));
     if (R.missing.length) alerts.unshift({ text: 'Faltan: ' + R.missing.join(', ') + '.', style: 'font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 10px; background: ' + t.pRed + '; color: ' + t.text });
 
@@ -963,11 +1034,12 @@ class Component extends DCLogic {
         const d = D[s.quiz.id];
         quiz = { kicker: 'EMITIR · ' + d.name.toUpperCase() + ' · RETO TIPO SABER PRO', q: d.q, options: d.options };
       } else if (s.quiz.kind === 'incoterm') {
-        quiz = { kicker: 'DECISIÓN DEL COMERCIAL · FASE MERCADO', q: '¿Con qué Incoterm cierras el contrato C-07 con Rotterdam Foods?', options: [{ id: 'A', text: 'CIF a USD 48.100: contratas flete y seguro hasta Rotterdam' }, { id: 'B', text: 'FOB a USD 44.000: el comprador contrata flete y seguro' }] };
+        const kq = this.caso();
+        quiz = { kicker: 'DECISIÓN DEL COMERCIAL · FASE MERCADO', q: '¿Con qué Incoterm cierras el contrato ' + kq.code + ' con ' + kq.buyer + '?', options: [{ id: 'A', text: 'CIF a USD ' + this.fmt(kq.cif) + ': contratas flete y seguro hasta ' + kq.dest }, { id: 'B', text: 'FOB a USD ' + this.fmt(kq.fob) + ': el comprador contrata flete y seguro' }] };
       } else if (s.quiz.kind === 'motivo') {
         quiz = { kicker: 'DECISIÓN DEL CEO · DEVOLVER LA OPERACIÓN', q: '¿Por qué devuelves la operación al equipo?', options: [{ id: 'A', text: 'Faltan tramos o documentos' }, { id: 'B', text: 'El costo es demasiado alto' }, { id: 'C', text: 'Hay un riesgo sin cubrir' }] };
       } else {
-        quiz = { kicker: 'INSPECCIÓN SORPRESA · RETO TIPO SABER PRO', q: 'La aduana revisa tu póliza: cubre USD 44.000, el valor FOB, en una venta CIF. ¿Qué debes corregir antes del levante?', options: [{ id: 'A', text: 'Nada: en CIF el seguro es del comprador' }, { id: 'B', text: 'Asegurar al menos el 110 % del valor del contrato' }, { id: 'C', text: 'Cambiar el Incoterm a FOB' }] };
+        quiz = { kicker: 'INSPECCIÓN SORPRESA · RETO TIPO SABER PRO', q: 'La aduana revisa tu póliza: cubre USD ' + this.fmt(this.caso().fob) + ', el valor FOB, en una venta CIF. ¿Qué debes corregir antes del levante?', options: [{ id: 'A', text: 'Nada: en CIF el seguro es del comprador' }, { id: 'B', text: 'Asegurar al menos el 110 % del valor del contrato' }, { id: 'C', text: 'Cambiar el Incoterm a FOB' }] };
       }
       quiz.options = quiz.options.map((o) => ({ id: o.id, text: o.text, pick: () => this.answer(o.id), style: 'font: inherit; font-size: 14px; text-align: left; min-height: 44px; padding: 8px 14px; border-radius: 12px; cursor: pointer; background: ' + t.soft + '; color: ' + t.text + '; border: 1px solid ' + t.border2 }));
     }
@@ -982,11 +1054,12 @@ class Component extends DCLogic {
     const vistoTxt = { none: 'Pendiente', aprobada: 'Aprobado', devuelta: 'Devuelto' }[s.visto];
     const m = s.msg;
     return {
+      emp: { label: this.caso().name + ' · ' + this.caso().country + ' · ' + this.caso().cur, route: 'Mesa de operación · ' + c.origin + ' → ' + c.port + ' → ' + c.dest },
       t: t, modeLabel: s.connected ? 'Fases controladas por el Superusuario' : 'Modo práctica: el equipo avanza las fases',
       kpis: kpis, phases: phases, guide: guide, decisions: guide.decisions,
       roles: roles, roleHint: roleHints[s.role],
       hasEvents: evs.length > 0, evs: evs,
-      c: { code: c.code, title: c.title, buyer: c.buyer, qty: c.qty, price: this.fmt(c.price), incoterm: c.incoterm, delivery: 'A bordo en ' + c.port, plazoText: 'Embarque en ' + c.plazo + ' días', visto: vistoTxt, riskText: c.incoterm === 'CIF' ? 'El riesgo pasa al comprador cuando la carga queda a bordo; tú pagas flete y seguro hasta Rotterdam.' : 'El riesgo pasa al comprador a bordo en Cartagena; él contrata y paga flete y seguro.' },
+      c: { code: c.code, title: c.title, buyer: c.buyer, qty: c.qty, price: this.fmt(c.price), incoterm: c.incoterm, delivery: 'A bordo en ' + c.port, plazoText: 'Embarque en ' + c.plazo + ' días', visto: vistoTxt, riskText: c.incoterm === 'CIF' ? 'El riesgo pasa al comprador cuando la carga queda a bordo; tú pagas flete y seguro hasta ' + c.dest + '.' : 'El riesgo pasa al comprador a bordo en ' + c.port + '; él contrata y paga flete y seguro.' },
       slots: slots, cob: cob, selHint: selHint,
       sumTitle: ex ? 'Liquidación de la operación' : 'Resumen en vivo',
       sum: sum, alerts: alerts,

@@ -228,6 +228,86 @@
       [0, 0.5].forEach((o, k) => { const m = makeTruck(tints[(i * 2 + k) % tints.length]); globe.add(m); trucks.push({ m: m, pts: pts, t: o, dir: k ? -1 : 1, a: rt.a, b: rt.b, speed: 0.0025 }); });
     });
 
+
+    // ---------- efectos visuales de los eventos y pines de empresa ----------
+    const fxRoot = new T.Group(); globe.add(fxRoot);
+    const surf = (lat, lon, h) => this.ll(T, lat, lon, R * (1 + (h || 0)));
+    const anchor = (lat, lon, h) => { const g = new T.Group(); const p = surf(lat, lon, h); g.position.copy(p); g.quaternion.setFromUnitVectors(UP, p.clone().normalize()); fxRoot.add(g); return g; };
+    const label = (text, bg, fg) => {
+      const cnv = document.createElement('canvas'); cnv.width = 1024; cnv.height = 128;
+      const x = cnv.getContext('2d');
+      if (x) {
+        x.font = '700 54px "IBM Plex Sans", Arial, sans-serif';
+        const w = Math.min(1010, x.measureText(text).width + 56);
+        x.fillStyle = bg; x.beginPath(); if (x.roundRect) x.roundRect((1024 - w) / 2, 14, w, 100, 50); else x.rect((1024 - w) / 2, 14, w, 100); x.fill();
+        x.fillStyle = fg || '#FFFFFF'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, 512, 66);
+      }
+      const tex = new T.CanvasTexture(cnv); if (T.SRGBColorSpace) tex.colorSpace = T.SRGBColorSpace;
+      const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+      sp.scale.set(0.48, 0.06, 1); sp.userData.isLabel = true;
+      return sp;
+    };
+    const ring = (g, color, r) => { const m = new T.Mesh(new T.RingGeometry(r * 0.82, r, 48), new T.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8, side: T.DoubleSide, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.y = 0.003; g.add(m); return m; };
+    const spiralTex = (() => {
+      const cnv = document.createElement('canvas'); cnv.width = cnv.height = 256; const x = cnv.getContext('2d');
+      if (x) {
+        x.translate(128, 128);
+        for (let arm = 0; arm < 3; arm++) {
+          for (let i = 0; i < 140; i++) {
+            const t2 = i / 140, a = arm * 2.094 + t2 * 5.2, r = 10 + t2 * 112;
+            x.fillStyle = 'rgba(255,255,255,' + (0.85 * (1 - t2 * 0.75)).toFixed(3) + ')';
+            x.beginPath(); x.arc(Math.cos(a) * r, Math.sin(a) * r, 14 * (1 - t2 * 0.6), 0, Math.PI * 2); x.fill();
+          }
+        }
+        x.fillStyle = 'rgba(40,60,110,0.9)'; x.beginPath(); x.arc(0, 0, 9, 0, Math.PI * 2); x.fill();
+      }
+      const tx = new T.CanvasTexture(cnv); return tx;
+    })();
+    const FX = {};
+    const fx = (key, lat, lon, build) => { const g = anchor(lat, lon, 0.004); g.visible = false; FX[key] = { g: g, t: 0, parts: build(g) || {} }; };
+    fx('tormenta', 14.5, -74, (g) => {
+      const disc = new T.Mesh(new T.CircleGeometry(0.16, 48), new T.MeshBasicMaterial({ map: spiralTex, transparent: true, depthWrite: false, side: T.DoubleSide }));
+      disc.rotation.x = -Math.PI / 2; disc.position.y = 0.025; g.add(disc);
+      const bolt = new T.Mesh(new T.PlaneGeometry(0.02, 0.09), new T.MeshBasicMaterial({ color: 0xFFF3A0, transparent: true, depthWrite: false, side: T.DoubleSide }));
+      bolt.position.set(0.05, 0.05, 0.03); g.add(bolt);
+      const lb = label('Tormenta tropical', '#2F55E6'); lb.position.y = 0.12; g.add(lb);
+      return { disc: disc, bolt: bolt };
+    });
+    fx('congestion', 11.4, -76.4, (g) => {
+      const fleet = [];
+      for (let i = 0; i < 6; i++) { const m = makeShip(tints[i % tints.length]); m.scale.setScalar(0.045); m.position.set((i % 3) * 0.035 - 0.035, 0.002, Math.floor(i / 3) * 0.03); m.rotation.y = 0.4; g.add(m); fleet.push(m); }
+      const lb = label('Congestión: buques en fila', '#B3600C'); lb.position.y = 0.09; g.add(lb);
+      return { fleet: fleet };
+    });
+    fx('huelga', 51.92, 4.48, (g) => { const r1 = ring(g, 0xD62839, 0.07), r2 = ring(g, 0xD62839, 0.07); const lb = label('Huelga portuaria', '#D62839'); lb.position.y = 0.1; g.add(lb); return { rings: [r1, r2] }; });
+    fx('marrojo', 13.5, 42.5, (g) => {
+      const r1 = ring(g, 0xD62839, 0.08), r2 = ring(g, 0xF2A93B, 0.08);
+      const smoke = []; for (let i = 0; i < 8; i++) { const m = new T.Mesh(new T.SphereGeometry(0.012, 8, 6), new T.MeshBasicMaterial({ color: 0x555555, transparent: true, opacity: 0.6, depthWrite: false })); g.add(m); smoke.push(m); }
+      const lb = label('Mar Rojo: ruta cerrada', '#D62839'); lb.position.y = 0.12; g.add(lb);
+      return { rings: [r1, r2], smoke: smoke };
+    });
+    fx('sequia', 9.1, -79.7, (g) => { const r1 = ring(g, 0xB3600C, 0.06), r2 = ring(g, 0xF2A93B, 0.06); const sun = new T.Mesh(new T.SphereGeometry(0.018, 12, 10), new T.MeshBasicMaterial({ color: 0xFFC93C })); sun.position.y = 0.05; g.add(sun); const lb = label('Sequía en el canal', '#B3600C'); lb.position.y = 0.11; g.add(lb); return { rings: [r1, r2], sun: sun }; });
+    const coins = (g, color) => { const arr = []; for (let i = 0; i < 6; i++) { const sp = label('$', color); sp.scale.set(0.16, 0.02, 1); sp.userData.isLabel = false; g.add(sp); arr.push(sp); } return arr; };
+    fx('devaluacion', 4.6, -74, (g) => { const lb = label('Peso más débil · dólar sube', '#0E7C55'); lb.position.y = 0.13; g.add(lb); return { coins: coins(g, '#0E7C55'), dir: 1 }; });
+    fx('revaluacion', 4.6, -74, (g) => { const lb = label('Peso más fuerte · dólar baja', '#B01F2E'); lb.position.y = 0.13; g.add(lb); return { coins: coins(g, '#B01F2E'), dir: -1 }; });
+    fx('flete', 30, -40, (g) => { const lb = label('Fletes +18 %', '#1F5EFF'); lb.position.y = 0.06; g.add(lb); const box = new T.Mesh(new T.BoxGeometry(0.05, 0.025, 0.025), mat(0xF26A1B)); box.position.y = 0.02; g.add(box); return { box: box, lb: lb }; });
+    fx('alerta', 50, 9, (g) => { const r1 = ring(g, 0x1F5EFF, 0.09); const lb = label('Alerta sanitaria UE', '#1F5EFF'); lb.position.y = 0.11; g.add(lb); return { rings: [r1] }; });
+    fx('inspeccion', 10.39, -75.51, (g) => { const r1 = ring(g, 0x14213D, 0.05); const lb = label('Inspección sorpresa', '#14213D'); lb.position.y = 0.08; g.add(lb); return { rings: [r1] }; });
+    fx('impago', 6.5, -72, (g) => { const lb = label('Pago a 60 días', '#55627A'); lb.position.y = 0.07; g.add(lb); return { lb: lb }; });
+    fx('ciber', 20, -55, (g) => { const lb = label('Ciberataque a la naviera', '#14213D', '#3DD6D0'); lb.position.y = 0.05; g.add(lb); return { lb: lb }; });
+    const shell = new T.Mesh(new T.SphereGeometry(R * 1.035, 48, 32), new T.MeshBasicMaterial({ color: 0x8B5CF6, transparent: true, opacity: 0.1, depthWrite: false }));
+    shell.visible = false; scene.add(shell);
+    const capeRoute = new T.Line(new T.BufferGeometry().setFromPoints(pathOf([P.SHA, [10, 110], [1.3, 104], [-8, 80], [-30, 45], [-35.5, 20], [-20, 5], [5, -15], [30, -15], [45, -10], [51.2, 2], P.RTM], 0.005)), new T.LineDashedMaterial({ color: 0xF26A1B, dashSize: 0.02, gapSize: 0.012 }));
+    capeRoute.computeLineDistances(); capeRoute.visible = false; globe.add(capeRoute);
+    // Pines de empresa: se resaltan al centrar el globo en una de ellas.
+    const geo = this.companyGeo ? this.companyGeo() : {};
+    const pins = {};
+    Object.keys(geo).forEach((id) => { const g = anchor(geo[id][0], geo[id][1], 0.003); const r = ring(g, 0xFFC93C, 0.035); g.visible = false; pins[id] = { g: g, r: r }; });
+    const focusTarget = (lat, lon) => { const v = this.ll(T, lat, lon, 1); return { ry: Math.atan2(-v.x, v.z), tx: Math.max(-0.5, Math.min(0.9, lat * Math.PI / 180)) }; };
+    const angDiff = (a, b) => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
+    const evGeo = { tormenta: [14.5, -74], congestion: [11, -76], huelga: [51.92, 4.48], marrojo: [13.5, 42.5], sequia: [9.1, -79.7], devaluacion: [4.6, -74], revaluacion: [4.6, -74], flete: [30, -40], alerta: [50, 9], inspeccion: [10.39, -75.51], impago: [6.5, -72], ciber: [20, -55], pandemia: [10, -40] };
+    this.g.focusOn = (key) => { const ll = geo[key] || evGeo[key]; return ll ? focusTarget(ll[0], ll[1]) : null; };
+
     const resize = () => {
       const w = wrap.clientWidth, h = wrap.clientHeight;
       if (!w || !h) return;
@@ -273,6 +353,33 @@
         o.ring.material.color.setHex(alert[n.id] ? 0xD62839 : this.nodeTypeInfo(n.type).color);
         o.ring.material.opacity = n.id === sel ? 0.75 : (n.soon ? 0.25 : 0.4);
       });
+      // efectos de eventos
+      Object.keys(FX).forEach((k) => {
+        const f = FX[k], on = !!act[k];
+        f.g.visible = on; if (!on) return;
+        f.t += 0.016; const q = f.parts;
+        const nw = this.state.news, fresh = nw && nw.key === k && !nw.undone && Date.now() - nw.at < 12000;
+        f.g.children.forEach((c) => { if (c.userData.isLabel) c.visible = !!fresh; });
+        if (q.disc) { q.disc.rotation.z -= 0.03; q.bolt.visible = Math.sin(f.t * 17) > 0.85; }
+        if (q.rings) q.rings.forEach((r, i) => { const u = ((f.t * 0.6) + i * 0.5) % 1; r.scale.setScalar(0.4 + u * 1.4); r.material.opacity = 0.85 * (1 - u); });
+        if (q.smoke) q.smoke.forEach((m, i) => { const u = ((f.t * 0.4) + i / q.smoke.length) % 1; m.position.set(Math.sin(i * 2.1) * 0.02, 0.01 + u * 0.09, Math.cos(i * 1.7) * 0.02); m.scale.setScalar(0.6 + u * 1.6); m.material.opacity = 0.55 * (1 - u); });
+        if (q.sun) q.sun.scale.setScalar(1 + 0.25 * Math.sin(f.t * 4));
+        if (q.coins) q.coins.forEach((c, i) => { const u = ((f.t * 0.5) + i / q.coins.length) % 1; const y = q.dir > 0 ? u : 1 - u; c.position.set(Math.sin(i * 2.4) * 0.05, 0.01 + y * 0.1, Math.cos(i * 1.3) * 0.05); c.material.opacity = Math.sin(u * Math.PI); });
+        if (q.box) { q.box.position.y = 0.02 + 0.01 * Math.sin(f.t * 3); q.lb.position.y = 0.06 + 0.008 * Math.sin(f.t * 3); }
+        if (q.fleet) q.fleet.forEach((m, i) => { m.position.y = 0.002 + 0.001 * Math.sin(f.t * 2 + i); });
+        if (k === 'ciber' && q.lb) q.lb.material.opacity = Math.sin(f.t * 23) > -0.3 ? 1 : 0.2;
+      });
+      shell.visible = !!act.pandemia; if (shell.visible) shell.material.opacity = 0.07 + 0.05 * Math.sin(ph * 1.2);
+      capeRoute.visible = !!act.marrojo;
+      if (act.ciber) ships.forEach((s2) => { s2.line.material.opacity = Math.random() > 0.15 ? 0.8 : 0.1; });
+      else ships.forEach((s2) => { s2.line.material.opacity = 0.8; });
+      // pines de empresa y centrado
+      const focus = this.state.focus;
+      Object.keys(pins).forEach((id) => { const pn = pins[id]; pn.g.visible = id === focus; if (pn.g.visible) { const u = (ph * 0.3) % 1; pn.r.scale.setScalar(0.5 + u * 1.5); pn.r.material.opacity = 1 - u; } });
+      if (focus && this.g.focusOn && !this.drag) {
+        const tg = this.g.focusOn(focus);
+        if (tg) { globe.rotation.y += angDiff(globe.rotation.y, tg.ry) * 0.06; tilt.rotation.x += (tg.tx - tilt.rotation.x) * 0.06; }
+      }
       const paused = this.state.paused, slowAll = (act.pandemia ? 0.5 : 1) * (act.ciber ? 0.6 : 1);
       ships.forEach((s) => {
         const blocked = (alert.CTG && (s.a === 'CTG' || s.b === 'CTG')) || (alert.RTM && (s.a === 'RTM' || s.b === 'RTM')) || (alert.SUE && (s.a === 'SUE' || s.b === 'SUE'));
@@ -282,7 +389,8 @@
       });
       planes.forEach((p) => move(p, paused ? 0 : p.speed * (act.pandemia ? 0.4 : 1)));
       trucks.forEach((k) => move(k, paused ? 0 : k.speed * (act.tormenta && (k.b === 'CTG') ? 0.3 : 1)));
-      if (!this.drag && !this.state.nodeSel && this.props.rotar !== false) globe.rotation.y += 0.0012;
+      const spinning = this.state.spin === null || this.state.spin === undefined ? this.props.rotar !== false : this.state.spin;
+      if (!this.drag && !this.state.nodeSel && !focus && spinning) globe.rotation.y += 0.0012;
       renderer.render(scene, camera);
     };
     tick();

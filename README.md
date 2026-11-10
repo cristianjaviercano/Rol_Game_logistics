@@ -26,8 +26,9 @@ El proyecto integra tres módulos:
 
 | Archivo | Pantalla |
 | --- | --- |
-| `Mesa.dc.html` | v2 · Mesa del Superusuario: globo con puertos, aeropuertos y terminal; empresas a los lados, cartas de evento abajo |
-| `Jugador.dc.html` | v2 · Mesa del jugador: turno guiado por fase, mesa de 6 tramos, mano de cartas y bitácora |
+| `Mesa.dc.html` | v3 · Mesa del Superusuario: globo con nodos y animación de eventos; empresas humanas o automáticas; cartas plegables |
+| `Jugador.dc.html` | v3 · Mesa del jugador: 3 empresas jugables, roles por persona, turno guiado, mesa de 6 tramos, cartas y bitácora |
+| `Mundo.dc.html` | v3 · Mundo de la partida: globo del jugador con eventos en vivo y su empresa centrada |
 | `Main.dc.html` | v1 · Consola del Superusuario con globo 3D y eventos |
 | `Trafico.dc.html` | v1 · Planificador multimodal de expo e impo |
 | `Comercial.dc.html` | v1 · Matriz Incoterms y precio por término |

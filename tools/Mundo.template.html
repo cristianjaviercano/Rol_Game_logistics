@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mundo de la partida</title>
+<script src="./support.js"></script>
+<script src="/_blob/478300407335490ca021634fb285ef8f"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F5EFF}a:hover{color:#1446C8}
+</style>
+</helmet>
+<div style="min-height: 1000px; background: {{t.bg}}; color: {{t.text}}; font-family: 'IBM Plex Sans', system-ui, sans-serif; display: flex; flex-direction: column">
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; background: {{t.card}}; border-bottom: 1px solid {{t.border}}">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Logi<span style="color: {{t.accent}}">Verse</span></span>
+      <span style="font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: {{t.pBlue}}">Mundo de la partida · {{empName}}</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 6px 12px; border-radius: 999px; background: {{t.pYellow}}">Ronda {{round}} · {{phase}}</span>
+      <span role="status" style="{{live.style}}">{{live.label}}</span>
+    </div>
+    <div role="group" aria-label="Control del globo" style="display: flex; flex-wrap: wrap; gap: 6px">
+      <button type="button" onClick="{{toggleSpin}}" aria-pressed="{{spinPressed}}" style="{{spinStyle}}">{{spinLabel}}</button>
+      <button type="button" onClick="{{centerMine}}" aria-pressed="{{minePressed}}" style="{{mineStyle}}">Centrar en mi empresa</button>
+    </div>
+  </header>
+
+  <sc-if value="{{hasNews}}" hint-placeholder-val="{{false}}">
+    <div role="alert" style="{{news.box}}">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.04em">{{news.kicker}}</span>
+      <span style="font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700">{{news.label}}</span>
+      <span style="font-size: 14px; line-height: 1.45">{{news.text}}</span>
+    </div>
+  </sc-if>
+
+  <main style="flex: 1; padding: 16px 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 16px; align-items: start">
+    <section style="min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 12px; color: {{t.quiet}}">Arrastra para girar · los marcadores muestran puertos, aeropuertos y la terminal · clic en un nodo para ver su operación</span>
+      <div ref="{{setWrap}}" style="position: relative; height: 720px; border-radius: 14px; overflow: hidden; background: {{t.sky}}">
+        <canvas ref="{{setCanvas}}" onPointerDown="{{down}}" onPointerMove="{{move}}" onPointerUp="{{up}}" onPointerLeave="{{up}}" role="img" aria-label="Globo 3D de la partida con los eventos en juego" style="display: block; width: 100%; height: 100%; cursor: {{globeCursor}}; touch-action: none"></canvas>
+        <sc-if value="{{hasTip}}" hint-placeholder-val="{{false}}">
+          <div role="tooltip" style="{{tip.style}}"><span style="font-weight: 700">{{tip.name}}</span><span style="font-size: 12px; opacity: 0.85">{{tip.sub}}</span></div>
+        </sc-if>
+        <sc-if value="{{hasNode}}" hint-placeholder-val="{{false}}">
+          <div role="dialog" aria-label="{{nodeCard.name}}" style="{{nodeCard.box}}">
+            <span style="{{nodeCard.badge}}">{{nodeCard.type}}</span>
+            <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">{{nodeCard.name}}</h2>
+            <span style="font-size: 13px; line-height: 1.45; color: {{t.quiet}}">{{nodeCard.desc}}</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <sc-if value="{{nodeCard.goPuerto}}" hint-placeholder-val="{{false}}"><a href="Puerto.dc.html" onClick="{{rememberNode}}" style="{{nodeCard.linkStyle}}">Ver operación</a></sc-if>
+              <sc-if value="{{nodeCard.goAero}}" hint-placeholder-val="{{false}}"><a href="Aeropuerto.dc.html" onClick="{{rememberNode}}" style="{{nodeCard.linkStyle}}">Ver operación</a></sc-if>
+              <sc-if value="{{nodeCard.goTerminal}}" hint-placeholder-val="{{false}}"><a href="Terminal.dc.html" onClick="{{rememberNode}}" style="{{nodeCard.linkStyle}}">Ver operación</a></sc-if>
+              <button type="button" onClick="{{closeNode}}" style="{{nodeCard.closeStyle}}">Cerrar</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{noGL}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: {{t.quiet}}; font-size: 14px">Este navegador no admite WebGL: el globo 3D no está disponible.</div>
+        </sc-if>
+      </div>
+    </section>
+
+    <aside aria-label="Eventos en juego" style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600">Eventos en juego</h2>
+      <sc-for list="{{events}}" as="ev" hint-placeholder-count="2">
+        <button type="button" onClick="{{ev.pick}}" aria-pressed="{{ev.pressed}}" style="{{ev.box}}">
+          <span style="display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 700"><span>{{ev.sub}}</span><span>{{ev.left}}</span></span>
+          <span style="font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700">{{ev.label}}</span>
+          <span style="font-size: 13px; line-height: 1.45">{{ev.text}}</span>
+          <span style="font-size: 12px; line-height: 1.45; color: {{t.quiet}}">Afecta a: {{ev.hit}}</span>
+          <span style="font-size: 12px; font-weight: 600">Se mitiga con: {{ev.counter}}</span>
+        </button>
+      </sc-for>
+      <sc-if value="{{noEvents}}" hint-placeholder-val="{{false}}">
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: {{t.quiet}}">El mundo está en calma. Cuando el Superusuario juegue un evento, aparecerá aquí y en el globo.</p>
+      </sc-if>
+      <p style="margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: {{t.quiet}}">Clic en un evento para ubicarlo en el globo.</p>
+    </aside>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"rotar":{"editor":"boolean","default":true},"empresa":{"editor":null},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { active: {}, info: {}, round: 1, phase: 'Mercado', paused: false, connected: false, news: null, noGL: false, hover: null, nodeSel: null, inside: null, spin: null, focus: null, evFocus: null };
+    this.inited = false; this.tries = 0; this.drag = null;
+    this.setCanvas = (el) => { this.cv = el; this.tryInit(); };
+    this.setWrap = (el) => { this.wrap = el; this.tryInit(); };
+    this.down = (e) => {
+      if (!this.g) return;
+      this.drag = { x: e.clientX, y: e.clientY, ry: this.g.globe.rotation.y, rx: this.g.tilt.rotation.x, moved: 0 };
+      if (this.state.focus) this.setState({ focus: null });
+      if (e.currentTarget && e.currentTarget.setPointerCapture) { try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {} }
+    };
+    this.move = (e) => {
+      if (!this.g) return;
+      if (!this.drag) {
+        const hit = this.pickNode(e), cur = this.state.hover;
+        if (hit && (!cur || cur.id !== hit.node.id)) this.setState({ hover: { id: hit.node.id, x: hit.x, y: hit.y } });
+        else if (!hit && cur) this.setState({ hover: null });
+        return;
+      }
+      this.drag.moved = Math.abs(e.clientX - this.drag.x) + Math.abs(e.clientY - this.drag.y);
+      this.g.globe.rotation.y = this.drag.ry + (e.clientX - this.drag.x) * 0.006;
+      this.g.tilt.rotation.x = Math.max(-0.5, Math.min(0.9, this.drag.rx + (e.clientY - this.drag.y) * 0.004));
+    };
+    this.up = (e) => {
+      const d = this.drag;
+      this.drag = null;
+      if (!d || !e || e.type !== 'pointerup' || d.moved > 5) return;
+      const hit = this.pickNode(e);
+      this.setState({ nodeSel: hit ? hit.node : null, hover: null });
+    };
+    this.closeNode = () => this.setState({ nodeSel: null });
+    this.rememberNode = () => {
+      const n = this.state.nodeSel;
+      if (!n) return;
+      try { window.localStorage.setItem('logiverse-nodo', JSON.stringify({ id: n.id, name: n.name, city: n.city || '', country: n.country, type: n.type })); } catch (err) {}
+    };
+  }
+
+  componentDidMount() {
+    const read = (m) => {
+      if (!m) return;
+      const patch = { connected: true };
+      ['active', 'info', 'round', 'phase', 'paused'].forEach((k) => { if (m[k] !== undefined) patch[k] = m[k]; });
+      if (m.news && (!this.state.news || m.news.at !== this.state.news.at)) patch.news = Object.assign({}, m.news, { seen: Date.now() });
+      this.setState(patch);
+    };
+    try { const raw = window.localStorage.getItem('logiverse-mundo'); if (raw) { const m = JSON.parse(raw); read(Object.assign({}, m, { news: null })); } } catch (err) {}
+    try { this.bc = new BroadcastChannel('logiverse-mundo'); this.bc.onmessage = (e) => read(e.data); } catch (err) { this.bc = null; }
+    if (this.props.empresa) this.setState({ focus: this.props.empresa, spin: false });
+    this.tick = setInterval(() => { if (this.state.news && Date.now() - this.state.news.seen > 12000) this.setState({ news: null }); }, 1000);
+    this.tryInit();
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.tick);
+    clearTimeout(this.retry);
+    if (this.raf) cancelAnimationFrame(this.raf);
+    if (this.ro) this.ro.disconnect();
+    if (this.renderer) this.renderer.dispose();
+    try { if (this.bc) this.bc.close(); } catch (err) {}
+  }
+
+  isNight() { return this.props.nocturno === true; }
+
+  theme() {
+    if (this.isNight()) {
+      return {
+        bg: '#0B1320', card: '#0F1A2B', soft: '#13213A', border: '#1E2E44', border2: '#2C4260', text: '#E6EDF5', quiet: '#9FB0C3',
+        accent: '#3DD6D0', accentInk: '#06201F', alert: '#F2A93B', alertText: '#F2A93B', pBlue: '#13213A', pYellow: '#13213A', pRed: '#33141A', okBg: '#0F2E33', sky: '#0B1320',
+        g: { core: 0x0F2236, grat: 0x2A4A68, atm: 0x3DD6D0, route: 0x3DD6D0, port: 0x3DD6D0, ship: 0xFFFFFF, alert: 0xF2A93B }
+      };
+    }
+    return {
+      bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A',
+      accent: '#1F5EFF', accentInk: '#FFFFFF', alert: '#D62839', alertText: '#B01F2E', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', okBg: '#DDF4EA', sky: '#EEF4FF',
+      g: { core: 0xCFE0FF, grat: 0x9DB8F0, atm: 0x1F5EFF, route: 0x1F5EFF, port: 0x1F5EFF, ship: 0x14213D, alert: 0xD62839 }
+    };
+  }
+
+  companyGeo() {
+    return { cafe: [8.75, -75.88], acui: [9.3, -75.4], caribe: [10.39, -75.51], rot: [51.92, 4.48], shz: [22.54, 114.06], aero: [4.7, -74.14] };
+  }
+
+  companyName(id) {
+    return { cafe: 'Café Sinú S.A.S.', acui: 'Acuícola del Sinú', caribe: 'Caribe Line', rot: 'Rotterdam Foods B.V.', shz: 'Shenzhen Parts Co.', aero: 'AeroCarga Andina' }[id] || 'Café Sinú S.A.S.';
+  }
+
+  renderVals() {
+    const t = this.theme(), s = this.state, mine = this.props.empresa || 'cafe';
+    const chip = (on) => 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer; ' + (on ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2);
+    const spinning = s.spin === null || s.spin === undefined ? this.props.rotar !== false : s.spin;
+    const events = Object.keys(s.active || {}).map((k) => {
+      const e = (s.info || {})[k] || { label: k, sub: '', text: '', hit: '', counter: '' };
+      const on = s.focus === k;
+      return {
+        label: e.label, sub: e.sub, text: e.text, hit: e.hit, counter: e.counter, left: e.left ? e.left + ' ronda' + (e.left === 1 ? '' : 's') : '',
+        pressed: on ? 'true' : 'false',
+        box: 'text-align: left; font: inherit; color: ' + t.text + '; display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 16px; cursor: pointer; background: ' + t.pRed + '; border: ' + (on ? '3px solid ' + t.accent : '2px solid #D62839'),
+        pick: () => this.setState({ focus: on ? null : k, spin: false })
+      };
+    });
+    const n = s.news;
+    const nv = this.nodeVals ? this.nodeVals(t, s, s.active || {}) : {};
+    const sel = s.nodeSel;
+    return Object.assign({}, nv, {
+      t: t, empName: this.companyName(mine), round: s.round, phase: s.phase || '—',
+      live: { label: s.connected ? (s.paused ? 'En pausa' : 'En vivo con el Superusuario') : 'Sin conexión con el Superusuario', style: 'font-size: 13px; font-weight: 600; color: ' + (s.connected && !s.paused ? t.alertText : t.quiet) },
+      spinLabel: spinning ? 'Detener giro' : 'Reanudar giro', spinPressed: spinning ? 'false' : 'true', spinStyle: chip(!spinning),
+      toggleSpin: () => this.setState({ spin: !spinning, focus: spinning ? s.focus : null }),
+      minePressed: s.focus === mine ? 'true' : 'false', mineStyle: chip(s.focus === mine),
+      centerMine: () => this.setState({ focus: s.focus === mine ? null : mine, spin: false }),
+      events: events, noEvents: !events.length,
+      hasNews: !!n, news: n ? { kicker: n.undone ? 'EVENTO DESHECHO' : 'NUEVO EVENTO · RONDA ' + (n.round || s.round), label: n.label, text: n.undone ? 'El Superusuario retiró la carta.' : (n.text || '') + (n.hit ? ' Afecta a: ' + n.hit : ''), box: 'margin: 12px 24px 0; padding: 12px 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 4px; color: #FFFFFF; background: ' + (n.undone ? '#55627A' : '#D62839') } : { kicker: '', label: '', text: '', box: '' },
+      noGL: s.noGL, setCanvas: this.setCanvas, setWrap: this.setWrap, down: this.down, move: this.move, up: this.up,
+      closeNode: this.closeNode, rememberNode: this.rememberNode,
+      globeCursor: s.hover ? 'pointer' : 'grab',
+      nodeCard: Object.assign({}, nv.nodeCard || {}, {
+        goPuerto: !!sel && sel.type === 'puerto', goAero: !!sel && sel.type === 'aeropuerto', goTerminal: !!sel && sel.type === 'terminal',
+        linkStyle: 'display: inline-flex; align-items: center; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; text-decoration: none; background: ' + t.accent + '; color: ' + t.accentInk
+      })
+    });
+  }
+
+  nodeVals(t, s, act) {
+    const nodes = this.globeNodes();
+    const byId = (id) => nodes.find((x) => x.id === id);
+    const hex = (c) => '#' + c.toString(16).padStart(6, '0');
+    const hv = s.hover ? byId(s.hover.id) : null, sel = s.nodeSel;
+    const title = (x) => (x.type === 'aeropuerto' ? 'Aeropuerto ' + x.name + (x.city ? ' (' + x.city + ')' : '') : (x.type === 'puerto' ? 'Puerto de ' + x.name : this.nodeTypeInfo(x.type).label + ' de ' + x.name));
+    let nodeCard = { name: '', type: '', desc: '', box: '', badge: '', closeStyle: '' };
+    if (sel) {
+      const col = hex(this.nodeTypeInfo(sel.type).color);
+      nodeCard = {
+        name: title(sel), type: this.nodeTypeInfo(sel.type).label + (sel.soon ? ' · próximamente' : ''), desc: sel.desc,
+        box: 'position: absolute; left: 12px; bottom: 12px; width: 300px; max-width: calc(100% - 24px); box-sizing: border-box; background: ' + t.card + '; color: ' + t.text + '; border: 2px solid ' + col + '; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 10px 28px rgba(20, 33, 61, 0.18)',
+        badge: 'align-self: flex-start; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; color: #FFFFFF; background: ' + (sel.type === 'aeropuerto' ? '#B4490F' : (sel.type === 'terminal' ? '#0B7A55' : col)),
+        closeStyle: 'font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; padding: 0 14px; border-radius: 12px; cursor: pointer; color: ' + t.text + '; background: ' + t.card + '; border: 1px solid ' + t.border2
+      };
+    }
+    return {
+      hasTip: !!hv && !sel,
+      tip: hv ? { name: title(hv), sub: hv.soon ? 'Próximamente' : 'Clic para ver la operación', style: 'position: absolute; left: ' + (s.hover.x + 14) + 'px; top: ' + Math.max(s.hover.y - 52, 8) + 'px; pointer-events: none; display: flex; flex-direction: column; gap: 2px; font-size: 13px; padding: 8px 10px; border-radius: 10px; background: ' + t.text + '; color: ' + t.bg + '; white-space: nowrap' } : { name: '', sub: '', style: '' },
+      hasNode: !!sel, nodeCard: nodeCard
+    };
+  }
+%%GLOBE%%
+}
+</script>
+</body>
+</html>

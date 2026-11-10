@@ -43,3 +43,11 @@ reset role; select pg_temp.como('00000000-0000-0000-0000-0000000000a3', true);
 select 'T21 unirse a cerrada (debe fallar)'; select unirse_partida(:'cod', 'Ceci', 'Equipo 3', true);
 reset role;
 select 'T22 anon sin login no lee'; set role anon; select count(*) from partidas;
+-- 23-25 salas y miembros (migración 002)
+reset role; update partidas set estado = 'abierta';
+select pg_temp.como('00000000-0000-0000-0000-0000000000a3', true);
+select 'T23 forastero lista salas abiertas', (select count(*) from listar_salas()) = 1, (select empresas::text from listar_salas() limit 1);
+select 'T24 forastero no ve miembros', (select count(*) from miembros_partida(:'pid')) = 0;
+reset role; select pg_temp.como('00000000-0000-0000-0000-0000000000a1', true);
+select 'T25 participante ve miembros', (select count(*) from miembros_partida(:'pid')) = 2;
+reset role;

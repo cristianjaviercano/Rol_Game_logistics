@@ -4,19 +4,19 @@ import htm from 'htm';
 import * as lv from './lv.js';
 import { ScreenHost } from './host.js';
 import { SCREENS } from './screens.gen.js';
+import { EventOverlay } from './overlay.js';
 
 window.THREE = THREE; // las escenas 3D esperan Three.js global (r160, igual que en el lienzo)
 const html = htm.bind(h);
 
 /* ---------------- catálogo de pantallas ---------------- */
 const GROUPS = [
-  { title: 'Mesa del equipo', note: 'Una pantalla grande por equipo: turno guiado por fases, cartas y bitácora.', items: [['Jugador', 'Mesa del jugador']] },
+  { title: 'Mi empresa', note: 'Cada integrante juega sus roles en su dispositivo; la mesa se sincroniza con el resto del equipo.', items: [['Jugador', 'Mesa del jugador'], ['Mundo', 'Mundo de la partida (globo)']] },
   { title: 'Vistas por rol (celular)', note: 'Cada integrante puede abrir su rol en el teléfono.', items: [['Comercial', 'Gerente Comercial · Incoterms'], ['CFO', 'CFO · Tesorería'], ['Aduana', 'Retos tipo Saber Pro']] },
   { title: 'Planeación', note: 'Herramientas de apoyo para Tráfico y la cadena de suministro.', items: [['Trafico', 'Planificador multimodal'], ['Cadena', 'Cadena y negociación'], ['Seleccion', 'Lobby de empresas']] },
   { title: 'Nodos 3D', note: 'Operación de puerto, aeropuerto y terminal terrestre.', items: [['Puerto', 'Puerto de Cartagena'], ['Aeropuerto', 'Aeropuerto El Dorado'], ['Terminal', 'Terminal de Laredo']] },
   { title: 'Docente', note: 'Mueve el mundo de la partida: fases, eventos y nodos.', items: [['Mesa', 'Mesa del Superusuario'], ['Main', 'Consola v1']], teacher: true }
 ];
-const TEAMS = ['Equipo 1', 'Equipo 2', 'Equipo 3', 'Equipo 4', 'Equipo 5', 'Equipo 6'];
 
 /* ---------------- estilos ---------------- */
 const C = { bg: '#EEF1F8', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A', accent: '#1F5EFF', ok: '#0E7C55', bad: '#B01F2E', yellow: '#FFF4CC' };
@@ -33,6 +33,8 @@ const S = {
 };
 const Logo = () => html`<span style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700">Logi<span style="color: ${C.accent}">Verse</span></span>`;
 
+const empName = (id) => (lv.EMPRESAS.find((e) => e.id === id) || { name: id }).name;
+
 /* ---------------- enrutador ---------------- */
 function route() { const r = (location.hash || '#/').slice(1); const parts = r.split('/').filter(Boolean); return { page: parts[0] || '', arg: parts[1] || '' }; }
 const go = (h2) => { location.hash = h2; };
@@ -43,47 +45,97 @@ class App extends Component {
   componentWillUnmount() { window.removeEventListener('hashchange', this.onHash); }
   render() {
     const r = this.state.r, s = lv.session.get();
+    return html`<div>${this.page(r, s)}<${EventOverlay} /></div>`;
+  }
+  page(r, s) {
     if (r.page === 'p') return html`<${ScreenPage} key=${r.arg} name=${r.arg} />`;
     if (r.page === 'docente') return html`<${Teacher} />`;
     if (r.page === 'encuesta') return html`<${Survey} />`;
     if (!lv.ONLINE) return html`<${Menu} local=${true} />`;
-    return s && s.partida ? html`<${Menu} />` : html`<${Join} />`;
+    if (s && s.partida) return html`<${Menu} />`;
+    if (r.page === 'salas') return html`<${Join} />`;
+    return html`<${Landing} />`;
   }
 }
 
+/* ---------------- identificación ---------------- */
+const Landing = () => html`<main style=${S.page}>
+  <div style="margin-bottom: 22px"><${Logo} /></div>
+  <h1 style=${S.h1 + '; margin-bottom: 8px'}>¿Cómo participas?</h1>
+  <p style=${S.quiet + '; margin: 0 0 18px'}>El Superusuario abre la sala y mueve el mundo; los jugadores eligen una sala y una empresa.</p>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px">
+    <a href="#/docente" style=${S.card + '; text-decoration: none; color: ' + C.text + '; display: flex; flex-direction: column; gap: 8px; border: 2px solid ' + C.text}>
+      <span style="font-size: 13px; font-weight: 700; color: ${C.quiet}">DOCENTE</span><span style=${S.h2}>Soy el Superusuario</span>
+      <span style=${S.quiet}>Ingreso con correo, abro una sala con nombre y dirijo las fases y los eventos desde la Mesa del Superusuario.</span></a>
+    <a href="#/salas" style=${S.card + '; text-decoration: none; color: ' + C.text + '; display: flex; flex-direction: column; gap: 8px; border: 2px solid ' + C.accent}>
+      <span style="font-size: 13px; font-weight: 700; color: ${C.accent}">ESTUDIANTE</span><span style=${S.h2}>Soy jugador</span>
+      <span style=${S.quiet}>Elijo una sala abierta, mi empresa y un alias. Si mi empresa ya tiene integrantes, nos repartimos los roles.</span></a>
+  </div>
+</main>`;
+
 /* ---------------- ingreso del estudiante ---------------- */
 class Join extends Component {
-  constructor() { super(); this.state = { codigo: new URLSearchParams(location.search).get('c') || '', alias: '', equipo: 'Equipo 1', ok: false, busy: false, err: '' }; }
+  constructor() { super(); this.state = { rooms: null, room: null, empresa: '', alias: '', ok: false, busy: false, err: '', codigo: new URLSearchParams(location.search).get('c') || '' }; }
+  componentDidMount() { this.load(); this.iv = setInterval(() => this.load(), 8000); }
+  componentWillUnmount() { clearInterval(this.iv); }
+  async load() {
+    try {
+      const rooms = await lv.listRooms();
+      const st = this.state;
+      const pre = st.room ? rooms.find((r) => r.id === st.room.id) : (st.codigo ? rooms.find((r) => r.codigo === st.codigo.toUpperCase()) : null);
+      this.setState({ rooms: rooms, room: pre || st.room, err: '' });
+    } catch (e) { this.setState({ rooms: [], err: e.message }); }
+  }
   async submit(e) {
     e.preventDefault();
     const st = this.state;
-    if (!/^[A-Za-z0-9]{6}$/.test(st.codigo.trim())) { this.setState({ err: 'El código de la partida tiene 6 caracteres.' }); return; }
+    if (!st.room) { this.setState({ err: 'Elige una sala.' }); return; }
+    if (!st.empresa) { this.setState({ err: 'Elige tu empresa.' }); return; }
     if (!st.alias.trim()) { this.setState({ err: 'Escribe un alias (no uses tu nombre completo).' }); return; }
     if (!st.ok) { this.setState({ err: 'Para participar debes aceptar el consentimiento.' }); return; }
     this.setState({ busy: true, err: '' });
-    try { await lv.joinGame(st.codigo, st.alias, st.equipo, st.ok); go('#/'); this.props.done && this.props.done(); location.reload(); }
+    try { await lv.joinGame(st.room.codigo, st.alias, st.empresa, st.ok); go('#/'); location.reload(); }
     catch (x) { this.setState({ busy: false, err: x.message }); }
   }
   render(p, st) {
+    const room = st.room, taken = room ? room.empresas || {} : {};
+    const preview = (id) => {
+      const list = (taken[id] || []).slice(); const me = st.alias.trim() || 'tú';
+      if (st.empresa === id) list.push(me);
+      const r = lv.rolesFor(list.map((a) => ({ alias: a, equipo: id })), id);
+      return { list: list, mine: r.byAlias[me] || [] };
+    };
     return html`<main style=${S.page}>
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px"><${Logo} /><a href="#/docente" style="font-size: 14px; font-weight: 600">Soy docente</a></div>
-      <form onSubmit=${(e) => this.submit(e)} style=${S.card + '; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px'}>
-        <h1 style=${S.h1}>Entrar a la partida</h1>
-        <p style=${S.quiet + '; margin: 0'}>Tu docente proyecta un código de 6 caracteres. Usa un alias: no se guarda tu nombre ni tu correo.</p>
-        <label style=${S.label}>Código de la partida
-          <input style=${S.input + '; text-transform: uppercase; letter-spacing: 0.2em; font-family: IBM Plex Mono, monospace'} maxlength="6" autocomplete="off" value=${st.codigo} onInput=${(e) => this.setState({ codigo: e.target.value })} /></label>
-        <label style=${S.label}>Alias
-          <input style=${S.input} maxlength="40" autocomplete="nickname" value=${st.alias} onInput=${(e) => this.setState({ alias: e.target.value })} /></label>
-        <label style=${S.label}>Equipo
-          <select style=${S.input} value=${st.equipo} onChange=${(e) => this.setState({ equipo: e.target.value })}>${TEAMS.map((t) => html`<option value=${t}>${t}</option>`)}</select></label>
-        <details style="font-size: 14px; line-height: 1.5; background: ${C.soft}; border-radius: 12px; padding: 10px 12px">
-          <summary style="font-weight: 600; cursor: pointer">Consentimiento informado</summary>
-          <p>Participas en una prueba de un laboratorio virtual de logística internacional de la Universidad Pontificia Bolivariana (Montería). La aplicación guarda tu alias, tu equipo, tus decisiones en el juego, tus respuestas a los retos y, si la respondes, una encuesta de usabilidad. No pide nombre, documento ni correo.</p>
-          <p>Los datos se usan solo para evaluar y mejorar el laboratorio y, de forma agregada y anónima, en informes académicos. Tu participación es voluntaria, no afecta tu calificación y puedes retirarte cuando quieras. Tratamiento conforme a la Ley 1581 de 2012; para consultas o retirar tus datos, escribe a tu docente.</p>
-        </details>
-        <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer"><input type="checkbox" checked=${st.ok} onChange=${(e) => this.setState({ ok: e.target.checked })} style="width: 22px; height: 22px; flex: none; margin: 0" />Leí el consentimiento y acepto participar.</label>
-        ${st.err ? html`<p role="alert" style=${S.err + '; margin: 0'}>${st.err}</p>` : null}
-        <button type="submit" disabled=${st.busy} style=${S.btn('primary')}>${st.busy ? 'Entrando…' : 'Entrar'}</button>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px"><${Logo} /><a href="#/" style="font-size: 14px; font-weight: 600">← Volver</a></div>
+      <form onSubmit=${(e) => this.submit(e)} style="display: flex; flex-direction: column; gap: 16px">
+        <section style=${S.card}>
+          <h1 style=${S.h1 + '; font-size: 24px; margin-bottom: 10px'}>1. Elige la sala</h1>
+          ${st.rooms === null ? html`<p style=${S.quiet}>Buscando salas abiertas…</p>` : null}
+          ${st.rooms && !st.rooms.length ? html`<p style=${S.quiet}>No hay salas abiertas. Pide al Superusuario que abra una (se actualiza sola).</p>` : null}
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px">${(st.rooms || []).map((r) => { const on = room && room.id === r.id; const n = Object.values(r.empresas || {}).reduce((a, x) => a + x.length, 0); return html`<button type="button" aria-pressed=${on ? 'true' : 'false'} onClick=${() => this.setState({ room: r, empresa: '' })} style=${'text-align: left; font: inherit; padding: 12px 14px; border-radius: 14px; cursor: pointer; color: ' + C.text + '; background: ' + (on ? '#E4ECFF' : C.soft) + '; border: ' + (on ? '2px solid ' + C.accent : '1px solid ' + C.border)}>
+            <span style="display: block; font-weight: 700; font-size: 16px">${r.nombre}</span>
+            <span style="font-size: 13px; color: ${C.quiet}">${n} jugador${n === 1 ? '' : 'es'} · abierta ${new Date(r.creada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span></button>`; })}</div>
+        </section>
+        ${room ? html`<section style=${S.card}>
+          <h2 style=${S.h1 + '; font-size: 24px; margin-bottom: 4px'}>2. Elige tu empresa</h2>
+          <p style=${S.quiet + '; margin: 0 0 12px'}>Las empresas sin jugadores las maneja el computador. Si entras a una empresa con integrantes, los 6 roles se reparten entre todos por orden de llegada.</p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px">${lv.EMPRESAS.map((e) => { const on = st.empresa === e.id; const pv = preview(e.id); return html`<button type="button" disabled=${!e.playable} aria-pressed=${on ? 'true' : 'false'} onClick=${() => this.setState({ empresa: e.id })} style=${'text-align: left; font: inherit; padding: 12px 14px; border-radius: 14px; display: flex; flex-direction: column; gap: 4px; color: ' + C.text + '; cursor: ' + (e.playable ? 'pointer' : 'not-allowed') + '; opacity: ' + (e.playable ? 1 : 0.62) + '; background: ' + (on ? '#E4ECFF' : C.soft) + '; border: ' + (on ? '2px solid ' + C.accent : '1px solid ' + C.border)}>
+            <span style="font-weight: 700; font-size: 16px">${e.name}</span><span style="font-size: 13px; color: ${C.quiet}">${e.meta}</span>
+            <span style="font-size: 13px; font-weight: 600">${!e.playable ? 'Automática' : ((taken[e.id] || []).length ? 'Integrantes: ' + taken[e.id].join(', ') : 'Sin jugadores: la maneja el computador')}</span>
+            ${on ? html`<span style="font-size: 13px; color: ${C.ok}; font-weight: 600">Tus roles: ${pv.mine.join(', ')}</span>` : null}</button>`; })}</div>
+        </section>` : null}
+        ${room && st.empresa ? html`<section style=${S.card + '; display: flex; flex-direction: column; gap: 14px; max-width: 620px'}>
+          <h2 style=${S.h1 + '; font-size: 24px'}>3. Tu alias</h2>
+          <label style=${S.label}>Alias<input style=${S.input} maxlength="40" autocomplete="nickname" value=${st.alias} onInput=${(e) => this.setState({ alias: e.target.value })} /></label>
+          <details style="font-size: 14px; line-height: 1.5; background: ${C.soft}; border-radius: 12px; padding: 10px 12px">
+            <summary style="font-weight: 600; cursor: pointer">Consentimiento informado</summary>
+            <p>Participas en una prueba de un laboratorio virtual de logística internacional de la Universidad Pontificia Bolivariana (Montería). La aplicación guarda tu alias, tu empresa, tus decisiones en el juego, tus respuestas a los retos y, si la respondes, una encuesta de usabilidad. No pide nombre, documento ni correo.</p>
+            <p>Los datos se usan solo para evaluar y mejorar el laboratorio y, de forma agregada y anónima, en informes académicos. Tu participación es voluntaria, no afecta tu calificación y puedes retirarte cuando quieras. Tratamiento conforme a la Ley 1581 de 2012; para consultas o retirar tus datos, escribe a tu docente.</p>
+          </details>
+          <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer"><input type="checkbox" checked=${st.ok} onChange=${(e) => this.setState({ ok: e.target.checked })} style="width: 22px; height: 22px; flex: none; margin: 0" />Leí el consentimiento y acepto participar.</label>
+          ${st.err ? html`<p role="alert" style=${S.err + '; margin: 0'}>${st.err}</p>` : null}
+          <button type="submit" disabled=${st.busy} style=${S.btn('primary')}>${st.busy ? 'Entrando…' : 'Entrar a la sala'}</button>
+        </section>` : (st.err ? html`<p role="alert" style=${S.err}>${st.err}</p>` : null)}
       </form>
     </main>`;
   }
@@ -91,20 +143,34 @@ class Join extends Component {
 
 /* ---------------- menú de pantallas ---------------- */
 class Menu extends Component {
-  componentDidMount() { if (!this.props.local) lv.connectRealtime('menú'); }
-  render(p) {
+  constructor() { super(); this.state = { mem: lv.lastMembers() }; }
+  componentDidMount() {
+    if (this.props.local) return;
+    lv.connectRealtime('menú');
+    const pull = () => lv.members().then((m) => this.setState({ mem: m })).catch(() => {});
+    pull(); this.iv = setInterval(pull, 10000);
+  }
+  componentWillUnmount() { clearInterval(this.iv); }
+  render(p, st) {
     const s = lv.session.get() || {}, teacher = p.local || s.docente;
+    const mine = !p.local && !s.docente ? lv.rolesFor(st.mem || [], s.equipo) : null;
+    const localEmp = lv.store.get('lv-local-empresa') || 'cafe';
     return html`<main style=${S.page}>
       <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px">
         <${Logo} />
         ${p.local ? html`<a href="#/docente" style="font-size: 14px; font-weight: 600">Panel docente</a>` : html`<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
-          <span style="font-family: IBM Plex Mono, monospace; font-size: 14px; padding: 6px 12px; border-radius: 999px; background: ${C.yellow}">Partida ${s.partida.codigo}</span>
-          <span style="font-size: 14px; font-weight: 600">${s.alias} · ${s.docente ? 'Docente' : s.equipo}</span>
+          <span style="font-size: 14px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: ${C.yellow}">Sala ${s.partida.nombre}</span>
+          <span style="font-size: 14px; font-weight: 600">${s.alias} · ${s.docente ? 'Superusuario' : empName(s.equipo)}</span>
           <${Status} />
           ${s.docente ? html`<a href="#/docente" style="font-size: 14px; font-weight: 600">Panel docente</a>` : html`<a href="#/encuesta" style="font-size: 14px; font-weight: 600">Encuesta final</a>`}
           <button type="button" style=${S.btn()} onClick=${async () => { await lv.signOut(); location.hash = '#/'; location.reload(); }}>Salir</button></div>`}
       </div>
-      ${p.local ? html`<p role="note" style="margin: 0 0 18px; padding: 12px 14px; border-radius: 12px; background: ${C.yellow}; font-size: 14px; line-height: 1.5"><strong>Modo local de demostración.</strong> Las pantallas se comunican entre pestañas de este navegador y no se guarda ningún dato. Para jugar entre varios computadores hay que conectar Supabase.</p>` : null}
+      ${p.local ? html`<div role="note" style="margin: 0 0 18px; padding: 12px 14px; border-radius: 12px; background: ${C.yellow}; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; gap: 10px; align-items: center"><span style="flex: 1 1 420px"><strong>Modo local de demostración.</strong> Las pantallas se comunican entre pestañas de este navegador y no se guarda ningún dato. Para jugar entre varios computadores hay que conectar Supabase.</span>
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600">Empresa del jugador<select style=${S.input + '; width: auto'} value=${localEmp} onChange=${(e) => { lv.store.set('lv-local-empresa', e.target.value); this.setState({}); }}>${lv.EMPRESAS.filter((e) => e.playable).map((e) => html`<option value=${e.id}>${e.name}</option>`)}</select></label></div>` : null}
+      ${mine ? html`<section style=${S.card + '; margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between'}>
+        <div><h2 style=${S.h2 + '; margin: 0'}>${empName(s.equipo)}</h2><span style=${S.quiet}>Tus roles: <strong>${(mine.byAlias[s.alias] || []).join(', ') || '—'}</strong></span></div>
+        <div style="font-size: 13px; line-height: 1.6">${lv.ROLES.map((r) => html`<span style="display: inline-block; margin: 2px 4px; padding: 2px 8px; border-radius: 999px; background: ${mine.owners[r] === s.alias ? '#DDF4EA' : C.soft}">${r}: ${mine.owners[r] || '—'}</span>`)}</div>
+      </section>` : null}
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px">
         ${GROUPS.filter((g) => !g.teacher || teacher).map((g) => html`<section style=${S.card}>
           <h2 style=${S.h2}>${g.title}</h2><p style=${S.quiet + '; margin: 0 0 12px'}>${g.note}</p>
@@ -126,13 +192,29 @@ class Status extends Component {
 
 /* ---------------- página de una pantalla ---------------- */
 class ScreenPage extends Component {
-  constructor(props) { super(props); this.state = { w: window.innerWidth }; this.onResize = () => this.setState({ w: window.innerWidth }); }
+  constructor(props) { super(props); this.state = { w: window.innerWidth, mem: lv.lastMembers() }; this.onResize = () => this.setState({ w: window.innerWidth }); }
   componentDidMount() {
     window.addEventListener('resize', this.onResize);
     lv.connectRealtime(this.props.name);
     lv.logEvent('pantalla', this.props.name, { ancho: window.innerWidth, alto: window.innerHeight });
+    if (lv.ONLINE) { const pull = () => lv.members().then((m) => this.setState({ mem: m })).catch(() => {}); pull(); this.iv = setInterval(pull, 10000); }
   }
-  componentWillUnmount() { window.removeEventListener('resize', this.onResize); }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); clearInterval(this.iv); }
+  screenProps(name, s, mem) {
+    const emp = s && !s.docente ? s.equipo : (lv.ONLINE ? null : lv.store.get('lv-local-empresa') || 'cafe');
+    if (name === 'Jugador' && emp) {
+      if (!lv.ONLINE) return { empresa: emp };
+      const r = lv.rolesFor(mem, emp);
+      return { empresa: emp, roles: r.byAlias[s.alias] || lv.ROLES, owners: r.owners };
+    }
+    if (name === 'Mundo') return emp ? { empresa: emp } : {};
+    if (name === 'Mesa' && lv.ONLINE) {
+      const roster = {};
+      mem.forEach((m) => { (roster[m.equipo] = roster[m.equipo] || []).push(m.alias); });
+      return { roster: roster };
+    }
+    return {};
+  }
   render(p, st) {
     const scr = SCREENS[p.name], s = lv.session.get();
     if (!scr) return html`<main style=${S.page}><p>No existe esa pantalla. <a href="#/">Volver al menú</a></p></main>`;
@@ -145,11 +227,11 @@ class ScreenPage extends Component {
         <a href="#/" style="color: #FFFFFF; font-weight: 700; min-height: 32px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.35); text-decoration: none">← Menú</a>
         <span style="font-weight: 600">${scr.title}</span>
         <span style="flex: 1"></span>
-        ${s ? html`<span>Partida ${s.partida.codigo} · ${s.alias} · ${s.docente ? 'Docente' : s.equipo}</span>` : html`<span>Modo local</span>`}
+        ${s ? html`<span>Sala ${s.partida.nombre} · ${s.alias} · ${s.docente ? 'Superusuario' : empName(s.equipo)}</span>` : html`<span>Modo local</span>`}
         <span style="background: #FFFFFF; border-radius: 999px; padding: 2px 10px"><${Status} /></span>
       </nav>
       <div style=${'zoom: ' + zoom.toFixed(4) + '; width: ' + w + 'px; margin: 0 auto; background: #FFFFFF'}>
-        <${ScreenHost} screen=${p.name} />
+        <${ScreenHost} screen=${p.name} props=${this.screenProps(p.name, s, st.mem || [])} />
       </div>
     </div>`;
   }
@@ -181,7 +263,7 @@ class Teacher extends Component {
   }
   async create(e) {
     e.preventDefault(); if (!this.state.name.trim()) return;
-    try { const g = await lv.createGame(this.state.name.trim()); await lv.openAsTeacher(g); this.setState({ name: '' }); this.load(); } catch (x) { this.setState({ err: x.message }); }
+    try { const g = await lv.createGame(this.state.name.trim()); await lv.openAsTeacher(g); this.setState({ name: '' }); go('#/p/Mesa'); } catch (x) { this.setState({ err: x.message }); }
   }
   async pick(g) { await lv.openAsTeacher(g); lv.connectRealtime('panel docente'); this.setState({ sel: g, teams: [] }); this.refreshTeams(); }
   async toggle(g) { await lv.setGameState(g.id, g.estado === 'abierta' ? 'cerrada' : 'abierta'); this.load(); }
@@ -203,28 +285,28 @@ class Teacher extends Component {
     return html`<main style=${S.page}>${head}
       <div style="display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 14px; align-items: start">
         <section style=${S.card}>
-          <h2 style=${S.h2}>Partidas</h2>
-          <form onSubmit=${(e) => this.create(e)} style="display: flex; gap: 8px; margin-bottom: 12px"><input aria-label="Nombre de la nueva partida" placeholder="Ej.: Logística internacional · grupo 1" style=${S.input} value=${st.name} onInput=${(e) => this.setState({ name: e.target.value })} /><button type="submit" style=${S.btn('primary')}>Crear</button></form>
+          <h2 style=${S.h2}>Salas</h2>
+          <form onSubmit=${(e) => this.create(e)} style="display: flex; gap: 8px; margin-bottom: 12px"><input aria-label="Nombre de la nueva sala" placeholder="Nombre de la sala, p. ej. Logística · grupo 1" style=${S.input} value=${st.name} onInput=${(e) => this.setState({ name: e.target.value })} /><button type="submit" style=${S.btn('primary')}>Abrir sala</button></form>
           <div style="display: flex; flex-direction: column; gap: 6px">${st.games.map((g) => html`<button type="button" onClick=${() => this.pick(g)} aria-pressed=${sel && sel.id === g.id ? 'true' : 'false'} style=${'text-align: left; font: inherit; padding: 10px 12px; border-radius: 12px; cursor: pointer; color: ' + C.text + '; background: ' + (sel && sel.id === g.id ? '#E4ECFF' : C.soft) + '; border: ' + (sel && sel.id === g.id ? '2px solid ' + C.accent : '1px solid ' + C.border)}>
             <span style="display: block; font-weight: 600">${g.nombre}</span><span style="font-size: 13px; color: ${C.quiet}; font-family: IBM Plex Mono, monospace">${g.codigo} · ${g.estado} · ${new Date(g.creada).toLocaleDateString('es-CO')}</span></button>`)}
-            ${st.games.length ? null : html`<p style=${S.quiet}>Aún no tienes partidas.</p>`}</div>
+            ${st.games.length ? null : html`<p style=${S.quiet}>Aún no has abierto salas.</p>`}</div>
           <button type="button" style=${S.btn() + '; margin-top: 12px'} onClick=${async () => { await lv.signOut(); location.reload(); }}>Cerrar sesión (${st.user.email})</button>
         </section>
         ${sel ? html`<section style=${S.card + '; display: flex; flex-direction: column; gap: 14px'}>
           <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center">
             <div><h2 style=${S.h2}>${sel.nombre}</h2><${Status} /></div>
-            <div style="text-align: center"><span style="display: block; font-size: 13px; color: ${C.quiet}">Código para proyectar</span><span style="font-family: IBM Plex Mono, monospace; font-size: 40px; font-weight: 600; letter-spacing: 0.15em">${sel.codigo}</span></div>
+            <div style="text-align: center"><span style="display: block; font-size: 13px; color: ${C.quiet}">Código de la sala</span><span style="font-family: IBM Plex Mono, monospace; font-size: 40px; font-weight: 600; letter-spacing: 0.15em">${sel.codigo}</span></div>
           </div>
-          <p style=${S.quiet + '; margin: 0'}>Los estudiantes entran en ${location.origin}/?c=${sel.codigo} con alias y equipo. Abre la Mesa del Superusuario en el proyector y avanza las fases desde allí.</p>
+          <p style=${S.quiet + '; margin: 0'}>Los estudiantes entran en ${location.origin}, eligen «Soy jugador», esta sala y su empresa. Abre la Mesa del Superusuario en el proyector y avanza las fases desde allí.</p>
           <div style="display: flex; flex-wrap: wrap; gap: 8px">
             <a href="#/p/Mesa" style=${S.btn('primary') + '; display: inline-flex; align-items: center; text-decoration: none'}>Abrir Mesa del Superusuario</a>
-            <button type="button" style=${S.btn()} onClick=${() => this.toggle(sel)}>${sel.estado === 'abierta' ? 'Cerrar inscripciones' : 'Reabrir partida'}</button>
+            <button type="button" style=${S.btn()} onClick=${() => this.toggle(sel)}>${sel.estado === 'abierta' ? 'Cerrar la sala' : 'Reabrir la sala'}</button>
           </div>
-          <h2 style=${S.h2 + '; margin-top: 6px'}>Equipos (se actualiza cada 5 s)</h2>
+          <h2 style=${S.h2 + '; margin-top: 6px'}>Empresas con jugadores (se actualiza cada 5 s)</h2>
           <div style="overflow-x: auto"><table style="width: 100%; border-collapse: collapse; font-size: 14px">
-            <thead><tr>${['Equipo', 'Incoterm', 'Visto CEO', 'Documentos', 'Glosas', 'Decisiones', 'Margen', 'OTIF', 'Liquidó', 'Actualizado'].map((x) => html`<th scope="col" style="text-align: left; padding: 8px; border-bottom: 2px solid ${C.border2}; font-size: 12px; color: ${C.quiet}">${x}</th>`)}</tr></thead>
+            <thead><tr>${['Empresa', 'Incoterm', 'Visto CEO', 'Documentos', 'Glosas', 'Decisiones', 'Margen', 'OTIF', 'Liquidó', 'Actualizado'].map((x) => html`<th scope="col" style="text-align: left; padding: 8px; border-bottom: 2px solid ${C.border2}; font-size: 12px; color: ${C.quiet}">${x}</th>`)}</tr></thead>
             <tbody>${st.teams.sort((a, b) => a.emisor.localeCompare(b.emisor)).map((t) => { const m = t.payload || {}; return html`<tr>
-              <td style="padding: 8px; border-bottom: 1px solid ${C.border}; font-weight: 600">${t.emisor}</td><td style="padding: 8px; border-bottom: 1px solid ${C.border}">${m.incoterm || '–'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid ${C.border}; font-weight: 600">${empName(t.emisor)}</td><td style="padding: 8px; border-bottom: 1px solid ${C.border}">${m.incoterm || '–'}</td>
               <td style="padding: 8px; border-bottom: 1px solid ${C.border}">${m.visto || '–'}</td><td style="padding: 8px; border-bottom: 1px solid ${C.border}">${m.filled != null ? m.filled + ' de ' + m.required : '–'}</td>
               <td style="padding: 8px; border-bottom: 1px solid ${C.border}">${m.glosas != null ? m.glosas : '–'}</td><td style="padding: 8px; border-bottom: 1px solid ${C.border}">${m.decisions != null ? m.decisions : '–'}</td>
               <td style="padding: 8px; border-bottom: 1px solid ${C.border}">${m.margenPct != null ? m.margenPct.toFixed(1) + ' %' : '–'}</td><td style="padding: 8px; border-bottom: 1px solid ${C.border}">${m.otif == null ? '–' : (m.otif ? 'sí' : 'no')}</td>
@@ -233,7 +315,7 @@ class Teacher extends Component {
           <h2 style=${S.h2 + '; margin-top: 6px'}>Datos del piloto (CSV)</h2>
           <div style="display: flex; flex-wrap: wrap; gap: 8px">${[['eventos', 'Decisiones y eventos'], ['participantes', 'Participantes'], ['encuestas', 'Encuestas SUS'], ['estado_canal', 'Estado final por equipo']].map((x) => html`<button type="button" style=${S.btn()} onClick=${() => this.dl(x[0])}>${x[1]}</button>`)}</div>
           ${st.err ? html`<p role="alert" style=${S.err}>${st.err}</p>` : null}${st.info ? html`<p role="status" style="font-size: 14px; margin: 0">${st.info}</p>` : null}
-        </section>` : html`<section style=${S.card}><p style=${S.quiet}>Crea una partida o elige una para ver su código, abrir la Mesa del Superusuario y descargar los datos.</p>${st.err ? html`<p role="alert" style=${S.err}>${st.err}</p>` : null}</section>`}
+        </section>` : html`<section style=${S.card}><p style=${S.quiet}>Abre una sala con un nombre o elige una para abrir la Mesa del Superusuario, ver las empresas y descargar los datos.</p>${st.err ? html`<p role="alert" style=${S.err}>${st.err}</p>` : null}</section>`}
       </div>
     </main>`;
   }

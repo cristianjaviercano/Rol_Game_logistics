@@ -50,6 +50,7 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
             <span style="{{co.rankStyle}}">{{co.rank}}</span>
           </div>
           <span style="font-size: 12px; color: {{t.quiet}}">{{co.meta}}</span>
+          <span style="{{co.whoStyle}}">{{co.who}}</span>
           <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
             <sc-for list="{{co.kpis}}" as="kk" hint-placeholder-count="3">
               <div style="{{kk.box}}"><span style="font-size: 12px; color: {{t.quiet}}">{{kk.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600">{{kk.value}}</span></div>
@@ -70,7 +71,14 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
     <section style="min-width: 0; background: {{t.card}}; border: 1px solid {{t.border}}; border-radius: 20px; padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
       <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
         <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600">Mundo de la partida</h1>
-        <span style="font-size: 12px; color: {{t.quiet}}">Arrastra para girar · pasa el cursor sobre un puerto o un aeropuerto · haz clic para ver su operación</span>
+        <span style="font-size: 12px; color: {{t.quiet}}">Arrastra para girar · pasa el cursor sobre un nodo · clic para ver su operación</span>
+      </div>
+      <div role="group" aria-label="Control del globo" style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+        <button type="button" onClick="{{toggleSpin}}" aria-pressed="{{spinPressed}}" style="{{spinStyle}}">{{spinLabel}}</button>
+        <span style="font-size: 12px; font-weight: 600; color: {{t.quiet}}; margin-left: 4px">Centrar en</span>
+        <sc-for list="{{focusBtns}}" as="fb" hint-placeholder-count="6">
+          <button type="button" onClick="{{fb.pick}}" aria-pressed="{{fb.pressed}}" style="{{fb.style}}">{{fb.label}}</button>
+        </sc-for>
       </div>
       <div ref="{{setWrap}}" style="position: relative; height: 700px; border-radius: 14px; overflow: hidden; background: {{t.sky}}">
         <canvas ref="{{setCanvas}}" onPointerDown="{{down}}" onPointerMove="{{move}}" onPointerUp="{{up}}" onPointerLeave="{{up}}" role="img" aria-label="Globo 3D con puertos, aeropuertos, rutas marítimas, aéreas y terrestres, buques, aviones y camiones" style="display: block; width: 100%; height: 100%; cursor: {{globeCursor}}; touch-action: none"></canvas>
@@ -118,6 +126,7 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
             <span style="{{co.rankStyle}}">{{co.rank}}</span>
           </div>
           <span style="font-size: 12px; color: {{t.quiet}}">{{co.meta}}</span>
+          <span style="{{co.whoStyle}}">{{co.who}}</span>
           <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
             <sc-for list="{{co.kpis}}" as="kk" hint-placeholder-count="3">
               <div style="{{kk.box}}"><span style="font-size: 12px; color: {{t.quiet}}">{{kk.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600">{{kk.value}}</span></div>
@@ -186,6 +195,7 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
     <sc-if value="{{hasMsg}}" hint-placeholder-val="{{false}}">
       <div role="status" aria-live="polite" style="{{msgStyle}}">{{msg}}</div>
     </sc-if>
+    <sc-if value="{{handOpen}}" hint-placeholder-val="{{true}}">
     <div style="display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 8px">
       <sc-for list="{{cards}}" as="cd" hint-placeholder-count="5">
         <button type="button" onClick="{{cd.pick}}" aria-pressed="{{cd.pressed}}" aria-label="{{cd.aria}}" style="{{cd.style}}">
@@ -202,10 +212,11 @@ a{color:#1F5EFF}a:hover{color:#1446C8}
         <span style="font-size: 14px; color: {{t.quiet}}; padding: 20px 0">{{rowEmptyText}}</span>
       </sc-if>
     </div>
+    </sc-if>
   </footer>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"rotar":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1240}}'>
+<script type="text/x-dc" data-dc-script data-props='{"nocturno":{"editor":"boolean","default":false},"rotar":{"editor":"boolean","default":true},"roster":{"editor":null},"$preview":{"width":1440,"height":1240}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -218,7 +229,8 @@ class Component extends DCLogic {
       tab: 'eventos', sel: null, confirm: null, undo: null, msg: null,
       market: ['C-07', 'C-11', 'C-14'], hidden: ['C-18', 'C-21'],
       log: [{ round: 3, text: 'Café Sinú S.A.S. firmó el contrato C-07: café verde CIF Rotterdam.' }, { round: 1, text: 'Se abre el mercado: 6 empresas, 4 países y 4 divisas.' }],
-      player: null, hover: null, nodeSel: null, inside: null
+      player: null, hover: null, nodeSel: null, inside: null,
+      players: {}, bots: {}, handOpen: true, spin: null, focus: null, news: null
     };
     this.inited = false; this.tries = 0; this.drag = null;
     this.setCanvas = (el) => { this.cv = el; this.tryInit(); };
@@ -226,6 +238,7 @@ class Component extends DCLogic {
     this.down = (e) => {
       if (!this.g) return;
       this.drag = { x: e.clientX, y: e.clientY, ry: this.g.globe.rotation.y, rx: this.g.tilt.rotation.x, moved: 0 };
+      if (this.state.focus) this.setState({ focus: null });
       if (e.currentTarget && e.currentTarget.setPointerCapture) { try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {} }
     };
     this.move = (e) => {
@@ -263,7 +276,7 @@ class Component extends DCLogic {
 
   componentDidMount() {
     this.sec = setInterval(() => this.setState((s) => (s.undo ? { undo: s.undo.left <= 1 ? null : Object.assign({}, s.undo, { left: s.undo.left - 1 }) } : null)), 1000);
-    const read = (m) => { if (m && m.company) this.setState({ player: m }); };
+    const read = (m) => { if (m && m.company) this.setState((st) => ({ player: m.company === 'cafe' ? m : st.player, players: Object.assign({}, st.players, { [m.company]: m }) })); };
     try { const raw = window.localStorage.getItem('logiverse-jugador'); if (raw) read(JSON.parse(raw)); } catch (err) {}
     try { this.inBc = new BroadcastChannel('logiverse-jugador'); this.inBc.onmessage = (e) => read(e.data); } catch (err) { this.inBc = null; }
     this.tryInit();
@@ -282,7 +295,9 @@ class Component extends DCLogic {
 
   send(over) {
     const s = Object.assign({}, this.state, over || {});
-    const msg = { active: s.active, paused: s.paused, round: s.round, phase: this.phaseList()[s.phase] };
+    const E = this.eventCards(), info = {};
+    Object.keys(s.active || {}).forEach((k) => { const e = E[k]; if (e) info[k] = { label: e.label, sub: e.sub, text: e.text, hit: e.hit, counter: e.counter, left: (s.dur || {})[k] || e.dur }; });
+    const msg = { active: s.active, paused: s.paused, round: s.round, phase: this.phaseList()[s.phase], info: info, news: s.news || null };
     try { window.localStorage.setItem('logiverse-mundo', JSON.stringify(msg)); } catch (err) {}
     try {
       if (!this.bc && window.BroadcastChannel) this.bc = new BroadcastChannel('logiverse-mundo');
@@ -304,6 +319,17 @@ class Component extends DCLogic {
       bg: '#F7F8FC', card: '#FFFFFF', soft: '#F1F4FB', border: '#E3E7F0', border2: '#C9D2E6', text: '#14213D', quiet: '#55627A',
       accent: '#1F5EFF', accentInk: '#FFFFFF', alert: '#D62839', alertText: '#B01F2E', pBlue: '#E4ECFF', pYellow: '#FFF4CC', pRed: '#FFE3E6', okBg: '#DDF4EA', sky: '#EEF4FF', selRing: '#1F5EFF',
       g: { core: 0xCFE0FF, grat: 0x9DB8F0, atm: 0x1F5EFF, route: 0x1F5EFF, port: 0x1F5EFF, ship: 0x14213D, alert: 0xD62839 }
+    };
+  }
+
+  globeCtl(t, s) {
+    const spinning = s.spin === null || s.spin === undefined ? this.props.rotar !== false : s.spin;
+    const chip = (on) => 'font: inherit; font-size: 13px; font-weight: 600; min-height: 44px; padding: 0 12px; border-radius: 12px; cursor: pointer; ' + (on ? 'background: ' + t.accent + '; color: ' + t.accentInk + '; border: 1px solid ' + t.accent : 'background: ' + t.card + '; color: ' + t.text + '; border: 1px solid ' + t.border2);
+    const short = { cafe: 'Café Sinú', acui: 'Acuícola', caribe: 'Caribe Line', rot: 'Rotterdam', shz: 'Shenzhen', aero: 'AeroCarga' };
+    return {
+      spinLabel: spinning ? 'Detener giro' : 'Reanudar giro', spinPressed: spinning ? 'false' : 'true', spinStyle: chip(!spinning),
+      toggleSpin: () => this.setState({ spin: !spinning }),
+      focusBtns: Object.keys(short).map((id) => ({ label: short[id], pressed: s.focus === id ? 'true' : 'false', style: chip(s.focus === id), pick: () => this.setState({ focus: s.focus === id ? null : id, spin: false }) }))
     };
   }
 
@@ -384,17 +410,19 @@ class Component extends DCLogic {
     const s = this.state, E = this.eventCards();
     const active = Object.assign({}, s.active, { [key]: true });
     const dur = Object.assign({}, s.dur, { [key]: E[key].dur });
-    const patch = { active: active, dur: dur, hand: s.hand.filter((k) => k !== key), confirm: null, sel: null, undo: { key: key, left: 10 }, log: [{ round: s.round, text: 'Evento jugado: ' + E[key].label + '. ' + E[key].text }].concat(s.log).slice(0, 14) };
+    const news = { key: key, label: E[key].label, sub: E[key].sub, text: E[key].text, hit: E[key].hit, counter: E[key].counter, round: s.round, at: Date.now() };
+    const patch = { active: active, dur: dur, news: news, hand: s.hand.filter((k) => k !== key), confirm: null, sel: null, undo: { key: key, left: 10 }, log: [{ round: s.round, text: 'Evento jugado: ' + E[key].label + '. ' + E[key].text }].concat(s.log).slice(0, 14) };
     this.setState(patch);
-    this.send({ active: active });
+    this.send({ active: active, dur: dur, news: news });
   }
 
   revert(key) {
     const s = this.state;
     const active = Object.assign({}, s.active); delete active[key];
     const dur = Object.assign({}, s.dur); delete dur[key];
-    this.setState({ active: active, dur: dur, hand: s.hand.concat([key]), undo: null, log: s.log.slice(1), msg: { text: 'Evento deshecho: la carta volvió a tu mano.', tone: 'info' } });
-    this.send({ active: active });
+    const news = { key: key, label: this.eventCards()[key].label, undone: true, at: Date.now() };
+    this.setState({ active: active, dur: dur, news: news, hand: s.hand.concat([key]), undo: null, log: s.log.slice(1), msg: { text: 'Evento deshecho: la carta volvió a tu mano.', tone: 'info' } });
+    this.send({ active: active, dur: dur, news: news });
   }
 
   retire(key) {
@@ -419,7 +447,7 @@ class Component extends DCLogic {
     if (s.phase < n - 1) {
       const nx = this.phaseList()[s.phase + 1];
       const tips = { 'Robo': 'Los equipos roban 2 cartas.', 'Planeación': 'Tráfico, Aduanas, CFO y Riesgos juegan sus cartas.', 'Visto del CEO': 'Cada CEO aprueba o devuelve su operación.', 'Evento': 'Tu turno: juega una carta de evento desde tu mano.', 'Reacción': 'Riesgos y CFO pueden jugar coberturas.', 'Liquidación': 'Se liquidan las operaciones con visto del CEO.' };
-      this.setState({ phase: s.phase + 1, msg: { text: 'Fase ' + nx + ': ' + tips[nx], tone: nx === 'Evento' ? 'warn' : 'info' }, tab: nx === 'Evento' ? 'eventos' : s.tab });
+      this.setState({ phase: s.phase + 1, bots: this.botStep(nx, false), msg: { text: 'Fase ' + nx + ': ' + tips[nx], tone: nx === 'Evento' ? 'warn' : 'info' }, tab: nx === 'Evento' ? 'eventos' : s.tab });
       this.send({ phase: s.phase + 1 });
       return;
     }
@@ -428,8 +456,34 @@ class Component extends DCLogic {
       dur[k] -= 1;
       if (dur[k] <= 0) { delete dur[k]; delete active[k]; used.push(k); log.unshift({ round: s.round, text: 'Termina el efecto de ' + E[k].label.toLowerCase() + '.' }); }
     });
-    this.setState({ round: s.round + 1, phase: 0, active: active, dur: dur, used: used, log: log.slice(0, 14), msg: { text: 'Empieza la ronda ' + (s.round + 1) + '. Los eventos que cumplieron su duración salen de juego.', tone: 'info' } });
+    const bots = this.botStep('Mercado', true);
+    Object.keys(bots).forEach((id) => { if (bots[id].closed) { log.unshift({ round: s.round, text: bots[id].name + ' (automática) liquidó su operación.' }); delete bots[id].closed; } });
+    this.setState({ round: s.round + 1, phase: 0, active: active, dur: dur, used: used, bots: bots, log: log.slice(0, 14), msg: { text: 'Empieza la ronda ' + (s.round + 1) + '. Los eventos que cumplieron su duración salen de juego.', tone: 'info' } });
     this.send({ round: s.round + 1, phase: 0, active: active });
+  }
+
+  // Empresa automática: avanza un tramo por fase salvo que un evento la golpee (entonces 1 de cada 2 veces);
+  // al cerrar la ronda liquida si completó los tramos y arranca una operación nueva.
+  botStep(phaseName, closing) {
+    const s = this.state, rows = this.companies(), bots = JSON.parse(JSON.stringify(s.bots || {}));
+    const roll = (id) => { let hsh = 7; (id + s.round + phaseName).split('').forEach((ch) => { hsh = (hsh * 31 + ch.charCodeAt(0)) % 1000; }); return hsh / 1000; };
+    rows.forEach((c) => {
+      if (!c.bot) return;
+      const b = bots[c.id] || { filled: c.filled, done: 0, name: c.name };
+      b.name = c.name;
+      if (closing) {
+        if (b.filled >= c.req) { b.done += 1; b.filled = 0; b.closed = true; }
+      } else if (b.filled < c.req) {
+        const hit = c.why.some((w) => !w.up);
+        if (!hit || roll(c.id) > 0.5) b.filled += 1;
+      }
+      bots[c.id] = b;
+    });
+    return bots;
+  }
+
+  companyGeo() {
+    return { cafe: [8.75, -75.88], acui: [9.3, -75.4], caribe: [10.39, -75.51], rot: [51.92, 4.48], shz: [22.54, 114.06], aero: [4.7, -74.14] };
   }
 
   togglePause() {
@@ -476,9 +530,13 @@ class Component extends DCLogic {
       if (act.ciber && c.nl) { o -= 2; hit('Ciberataque', -1); }
       if (act.impago && c.co) { m -= 1; hit('Impago', -1); }
       let filled = c.filled, req = c.req, hand = c.hand, live = false, glosas = 0, days = null, inc = '', visto = '';
-      const p = this.state.player;
-      if (c.id === 'cafe' && p) { filled = p.filled; req = p.required; hand = p.hand; live = true; glosas = p.glosas; days = p.days; inc = p.incoterm || ''; visto = p.visto || ''; if (p.executed) filled = req; }
-      return { id: c.id, name: c.name, meta: c.meta, m: m, o: o, x: x, why: why, hand: hand, op: c.op, filled: filled, req: req, live: live, glosas: glosas, days: days, inc: inc, visto: visto, executed: c.id === 'cafe' && p ? p.executed : filled >= req };
+      const p = (this.state.players || {})[c.id] || (c.id === 'cafe' ? this.state.player : null);
+      const humans = (this.props.roster || {})[c.id] || [];
+      const bot = !p && !humans.length;
+      if (p) { filled = p.filled; req = p.required; hand = p.hand; live = true; glosas = p.glosas; days = p.days; inc = p.incoterm || ''; visto = p.visto || ''; if (p.executed) filled = req; if (typeof p.margenPct === 'number') m = p.margenPct; if (typeof p.otif === 'boolean') o = p.otif ? Math.max(o, 95) : Math.min(o, 80); }
+      const b = bot ? (this.state.bots || {})[c.id] : null;
+      if (b) filled = Math.min(req, b.filled);
+      return { id: c.id, name: c.name, meta: c.meta, m: m, o: o, x: x, why: why, hand: hand, op: c.op, filled: filled, req: req, live: live, glosas: glosas, days: days, inc: inc, visto: visto, executed: p ? p.executed : filled >= req, bot: bot, humans: humans, done: b ? b.done : 0 };
     });
   }
 
@@ -532,6 +590,8 @@ class Component extends DCLogic {
       const pct = Math.round(c.filled / Math.max(1, c.req) * 100);
       return {
         name: c.name, meta: c.meta, rank: rank + 1,
+        who: c.bot ? 'Automática' + (c.done ? ' · ' + c.done + ' operación' + (c.done === 1 ? '' : 'es') + ' liquidada' + (c.done === 1 ? '' : 's') : '') : 'Equipo: ' + (c.humans.length ? c.humans.join(', ') : 'conectado'),
+        whoStyle: 'align-self: flex-start; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; ' + (c.bot ? 'background: ' + t.soft + '; color: ' + t.quiet : 'background: ' + t.okBg + '; color: ' + (night ? t.text : '#0E7C55')),
         rankStyle: 'display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-family: \'IBM Plex Mono\', monospace; font-weight: 600; color: ' + (night && rank < 3 ? '#0B1320' : t.text) + '; background: ' + (rank < 3 ? medal[rank] : t.soft),
         kpis: [['Margen', this.fmt(c.m, 1) + ' %', false], ['OTIF', c.o + ' %', c.o < 85], ['Exactitud', c.x + ' %', false]].map((k) => ({ label: k[0], value: k[1], box: 'display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-radius: 10px; background: ' + (k[2] ? t.pRed : t.soft) })),
         op: (c.executed ? 'Ejecutada · ' : 'Operación · ') + c.op + ' · ' + c.filled + '/' + c.req + ' tramos' + (c.live ? ' · en vivo' : ''),
@@ -576,6 +636,7 @@ class Component extends DCLogic {
     } else if (s.tab === 'mercado') {
       actions.push(btn('Revelar contrato', () => this.reveal(), 'ghost', !s.hidden.length));
     }
+    actions.push(btn(s.handOpen ? 'Ocultar cartas ▾' : 'Mostrar cartas ▴', () => this.setState({ handOpen: !s.handOpen }), 'ghost', false, !s.handOpen));
     actions.push(btn(s.paused ? 'Reanudar' : 'Pausar', () => this.togglePause(), 'ghost', false, s.paused));
     actions.push(btn(s.phase === this.phaseList().length - 1 ? 'Cerrar ronda' : 'Siguiente fase', () => this.nextPhase(), 'primary', false));
 
@@ -588,7 +649,8 @@ class Component extends DCLogic {
       live: { label: s.paused ? 'En pausa' : 'En vivo', style: 'display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 6px 4px; color: ' + (s.paused ? t.quiet : t.alertText), dot: 'width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: ' + (s.paused ? t.quiet : '#D62839') },
       noGL: s.noGL, setCanvas: this.setCanvas, setWrap: this.setWrap, down: this.down, move: this.move, up: this.up,
       ...this.nodeVals(t, s, act),
-      tabs: tabs, actions: actions, cards: cards, log: log,
+      tabs: tabs, actions: actions, cards: cards, log: log, handOpen: s.handOpen !== false,
+      ...this.globeCtl(t, s),
       rowEmpty: rowEmpty, rowEmptyText: s.tab === 'juego' ? 'No hay eventos en juego.' : 'Sin cartas en tu mano de eventos.',
       confirmOpen: !!cdef,
       confirm: cdef ? { title: '¿Jugar «' + cdef.label + '» durante ' + cdef.dur + ' ronda' + (cdef.dur === 1 ? '' : 's') + '?', hit: 'Afecta a: ' + cdef.hit + ' Los jugadores pueden mitigarlo con: ' + cdef.counter + '.' } : { title: '', hit: '' },
@@ -960,6 +1022,86 @@ class Component extends DCLogic {
       [0, 0.5].forEach((o, k) => { const m = makeTruck(tints[(i * 2 + k) % tints.length]); globe.add(m); trucks.push({ m: m, pts: pts, t: o, dir: k ? -1 : 1, a: rt.a, b: rt.b, speed: 0.0025 }); });
     });
 
+
+    // ---------- efectos visuales de los eventos y pines de empresa ----------
+    const fxRoot = new T.Group(); globe.add(fxRoot);
+    const surf = (lat, lon, h) => this.ll(T, lat, lon, R * (1 + (h || 0)));
+    const anchor = (lat, lon, h) => { const g = new T.Group(); const p = surf(lat, lon, h); g.position.copy(p); g.quaternion.setFromUnitVectors(UP, p.clone().normalize()); fxRoot.add(g); return g; };
+    const label = (text, bg, fg) => {
+      const cnv = document.createElement('canvas'); cnv.width = 1024; cnv.height = 128;
+      const x = cnv.getContext('2d');
+      if (x) {
+        x.font = '700 54px "IBM Plex Sans", Arial, sans-serif';
+        const w = Math.min(1010, x.measureText(text).width + 56);
+        x.fillStyle = bg; x.beginPath(); if (x.roundRect) x.roundRect((1024 - w) / 2, 14, w, 100, 50); else x.rect((1024 - w) / 2, 14, w, 100); x.fill();
+        x.fillStyle = fg || '#FFFFFF'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, 512, 66);
+      }
+      const tex = new T.CanvasTexture(cnv); if (T.SRGBColorSpace) tex.colorSpace = T.SRGBColorSpace;
+      const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+      sp.scale.set(0.48, 0.06, 1); sp.userData.isLabel = true;
+      return sp;
+    };
+    const ring = (g, color, r) => { const m = new T.Mesh(new T.RingGeometry(r * 0.82, r, 48), new T.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8, side: T.DoubleSide, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.y = 0.003; g.add(m); return m; };
+    const spiralTex = (() => {
+      const cnv = document.createElement('canvas'); cnv.width = cnv.height = 256; const x = cnv.getContext('2d');
+      if (x) {
+        x.translate(128, 128);
+        for (let arm = 0; arm < 3; arm++) {
+          for (let i = 0; i < 140; i++) {
+            const t2 = i / 140, a = arm * 2.094 + t2 * 5.2, r = 10 + t2 * 112;
+            x.fillStyle = 'rgba(255,255,255,' + (0.85 * (1 - t2 * 0.75)).toFixed(3) + ')';
+            x.beginPath(); x.arc(Math.cos(a) * r, Math.sin(a) * r, 14 * (1 - t2 * 0.6), 0, Math.PI * 2); x.fill();
+          }
+        }
+        x.fillStyle = 'rgba(40,60,110,0.9)'; x.beginPath(); x.arc(0, 0, 9, 0, Math.PI * 2); x.fill();
+      }
+      const tx = new T.CanvasTexture(cnv); return tx;
+    })();
+    const FX = {};
+    const fx = (key, lat, lon, build) => { const g = anchor(lat, lon, 0.004); g.visible = false; FX[key] = { g: g, t: 0, parts: build(g) || {} }; };
+    fx('tormenta', 14.5, -74, (g) => {
+      const disc = new T.Mesh(new T.CircleGeometry(0.16, 48), new T.MeshBasicMaterial({ map: spiralTex, transparent: true, depthWrite: false, side: T.DoubleSide }));
+      disc.rotation.x = -Math.PI / 2; disc.position.y = 0.025; g.add(disc);
+      const bolt = new T.Mesh(new T.PlaneGeometry(0.02, 0.09), new T.MeshBasicMaterial({ color: 0xFFF3A0, transparent: true, depthWrite: false, side: T.DoubleSide }));
+      bolt.position.set(0.05, 0.05, 0.03); g.add(bolt);
+      const lb = label('Tormenta tropical', '#2F55E6'); lb.position.y = 0.12; g.add(lb);
+      return { disc: disc, bolt: bolt };
+    });
+    fx('congestion', 11.4, -76.4, (g) => {
+      const fleet = [];
+      for (let i = 0; i < 6; i++) { const m = makeShip(tints[i % tints.length]); m.scale.setScalar(0.045); m.position.set((i % 3) * 0.035 - 0.035, 0.002, Math.floor(i / 3) * 0.03); m.rotation.y = 0.4; g.add(m); fleet.push(m); }
+      const lb = label('Congestión: buques en fila', '#B3600C'); lb.position.y = 0.09; g.add(lb);
+      return { fleet: fleet };
+    });
+    fx('huelga', 51.92, 4.48, (g) => { const r1 = ring(g, 0xD62839, 0.07), r2 = ring(g, 0xD62839, 0.07); const lb = label('Huelga portuaria', '#D62839'); lb.position.y = 0.1; g.add(lb); return { rings: [r1, r2] }; });
+    fx('marrojo', 13.5, 42.5, (g) => {
+      const r1 = ring(g, 0xD62839, 0.08), r2 = ring(g, 0xF2A93B, 0.08);
+      const smoke = []; for (let i = 0; i < 8; i++) { const m = new T.Mesh(new T.SphereGeometry(0.012, 8, 6), new T.MeshBasicMaterial({ color: 0x555555, transparent: true, opacity: 0.6, depthWrite: false })); g.add(m); smoke.push(m); }
+      const lb = label('Mar Rojo: ruta cerrada', '#D62839'); lb.position.y = 0.12; g.add(lb);
+      return { rings: [r1, r2], smoke: smoke };
+    });
+    fx('sequia', 9.1, -79.7, (g) => { const r1 = ring(g, 0xB3600C, 0.06), r2 = ring(g, 0xF2A93B, 0.06); const sun = new T.Mesh(new T.SphereGeometry(0.018, 12, 10), new T.MeshBasicMaterial({ color: 0xFFC93C })); sun.position.y = 0.05; g.add(sun); const lb = label('Sequía en el canal', '#B3600C'); lb.position.y = 0.11; g.add(lb); return { rings: [r1, r2], sun: sun }; });
+    const coins = (g, color) => { const arr = []; for (let i = 0; i < 6; i++) { const sp = label('$', color); sp.scale.set(0.16, 0.02, 1); sp.userData.isLabel = false; g.add(sp); arr.push(sp); } return arr; };
+    fx('devaluacion', 4.6, -74, (g) => { const lb = label('Peso más débil · dólar sube', '#0E7C55'); lb.position.y = 0.13; g.add(lb); return { coins: coins(g, '#0E7C55'), dir: 1 }; });
+    fx('revaluacion', 4.6, -74, (g) => { const lb = label('Peso más fuerte · dólar baja', '#B01F2E'); lb.position.y = 0.13; g.add(lb); return { coins: coins(g, '#B01F2E'), dir: -1 }; });
+    fx('flete', 30, -40, (g) => { const lb = label('Fletes +18 %', '#1F5EFF'); lb.position.y = 0.06; g.add(lb); const box = new T.Mesh(new T.BoxGeometry(0.05, 0.025, 0.025), mat(0xF26A1B)); box.position.y = 0.02; g.add(box); return { box: box, lb: lb }; });
+    fx('alerta', 50, 9, (g) => { const r1 = ring(g, 0x1F5EFF, 0.09); const lb = label('Alerta sanitaria UE', '#1F5EFF'); lb.position.y = 0.11; g.add(lb); return { rings: [r1] }; });
+    fx('inspeccion', 10.39, -75.51, (g) => { const r1 = ring(g, 0x14213D, 0.05); const lb = label('Inspección sorpresa', '#14213D'); lb.position.y = 0.08; g.add(lb); return { rings: [r1] }; });
+    fx('impago', 6.5, -72, (g) => { const lb = label('Pago a 60 días', '#55627A'); lb.position.y = 0.07; g.add(lb); return { lb: lb }; });
+    fx('ciber', 20, -55, (g) => { const lb = label('Ciberataque a la naviera', '#14213D', '#3DD6D0'); lb.position.y = 0.05; g.add(lb); return { lb: lb }; });
+    const shell = new T.Mesh(new T.SphereGeometry(R * 1.035, 48, 32), new T.MeshBasicMaterial({ color: 0x8B5CF6, transparent: true, opacity: 0.1, depthWrite: false }));
+    shell.visible = false; scene.add(shell);
+    const capeRoute = new T.Line(new T.BufferGeometry().setFromPoints(pathOf([P.SHA, [10, 110], [1.3, 104], [-8, 80], [-30, 45], [-35.5, 20], [-20, 5], [5, -15], [30, -15], [45, -10], [51.2, 2], P.RTM], 0.005)), new T.LineDashedMaterial({ color: 0xF26A1B, dashSize: 0.02, gapSize: 0.012 }));
+    capeRoute.computeLineDistances(); capeRoute.visible = false; globe.add(capeRoute);
+    // Pines de empresa: se resaltan al centrar el globo en una de ellas.
+    const geo = this.companyGeo ? this.companyGeo() : {};
+    const pins = {};
+    Object.keys(geo).forEach((id) => { const g = anchor(geo[id][0], geo[id][1], 0.003); const r = ring(g, 0xFFC93C, 0.035); g.visible = false; pins[id] = { g: g, r: r }; });
+    const focusTarget = (lat, lon) => { const v = this.ll(T, lat, lon, 1); return { ry: Math.atan2(-v.x, v.z), tx: Math.max(-0.5, Math.min(0.9, lat * Math.PI / 180)) }; };
+    const angDiff = (a, b) => { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; };
+    const evGeo = { tormenta: [14.5, -74], congestion: [11, -76], huelga: [51.92, 4.48], marrojo: [13.5, 42.5], sequia: [9.1, -79.7], devaluacion: [4.6, -74], revaluacion: [4.6, -74], flete: [30, -40], alerta: [50, 9], inspeccion: [10.39, -75.51], impago: [6.5, -72], ciber: [20, -55], pandemia: [10, -40] };
+    this.g.focusOn = (key) => { const ll = geo[key] || evGeo[key]; return ll ? focusTarget(ll[0], ll[1]) : null; };
+
     const resize = () => {
       const w = wrap.clientWidth, h = wrap.clientHeight;
       if (!w || !h) return;
@@ -1005,6 +1147,33 @@ class Component extends DCLogic {
         o.ring.material.color.setHex(alert[n.id] ? 0xD62839 : this.nodeTypeInfo(n.type).color);
         o.ring.material.opacity = n.id === sel ? 0.75 : (n.soon ? 0.25 : 0.4);
       });
+      // efectos de eventos
+      Object.keys(FX).forEach((k) => {
+        const f = FX[k], on = !!act[k];
+        f.g.visible = on; if (!on) return;
+        f.t += 0.016; const q = f.parts;
+        const nw = this.state.news, fresh = nw && nw.key === k && !nw.undone && Date.now() - nw.at < 12000;
+        f.g.children.forEach((c) => { if (c.userData.isLabel) c.visible = !!fresh; });
+        if (q.disc) { q.disc.rotation.z -= 0.03; q.bolt.visible = Math.sin(f.t * 17) > 0.85; }
+        if (q.rings) q.rings.forEach((r, i) => { const u = ((f.t * 0.6) + i * 0.5) % 1; r.scale.setScalar(0.4 + u * 1.4); r.material.opacity = 0.85 * (1 - u); });
+        if (q.smoke) q.smoke.forEach((m, i) => { const u = ((f.t * 0.4) + i / q.smoke.length) % 1; m.position.set(Math.sin(i * 2.1) * 0.02, 0.01 + u * 0.09, Math.cos(i * 1.7) * 0.02); m.scale.setScalar(0.6 + u * 1.6); m.material.opacity = 0.55 * (1 - u); });
+        if (q.sun) q.sun.scale.setScalar(1 + 0.25 * Math.sin(f.t * 4));
+        if (q.coins) q.coins.forEach((c, i) => { const u = ((f.t * 0.5) + i / q.coins.length) % 1; const y = q.dir > 0 ? u : 1 - u; c.position.set(Math.sin(i * 2.4) * 0.05, 0.01 + y * 0.1, Math.cos(i * 1.3) * 0.05); c.material.opacity = Math.sin(u * Math.PI); });
+        if (q.box) { q.box.position.y = 0.02 + 0.01 * Math.sin(f.t * 3); q.lb.position.y = 0.06 + 0.008 * Math.sin(f.t * 3); }
+        if (q.fleet) q.fleet.forEach((m, i) => { m.position.y = 0.002 + 0.001 * Math.sin(f.t * 2 + i); });
+        if (k === 'ciber' && q.lb) q.lb.material.opacity = Math.sin(f.t * 23) > -0.3 ? 1 : 0.2;
+      });
+      shell.visible = !!act.pandemia; if (shell.visible) shell.material.opacity = 0.07 + 0.05 * Math.sin(ph * 1.2);
+      capeRoute.visible = !!act.marrojo;
+      if (act.ciber) ships.forEach((s2) => { s2.line.material.opacity = Math.random() > 0.15 ? 0.8 : 0.1; });
+      else ships.forEach((s2) => { s2.line.material.opacity = 0.8; });
+      // pines de empresa y centrado
+      const focus = this.state.focus;
+      Object.keys(pins).forEach((id) => { const pn = pins[id]; pn.g.visible = id === focus; if (pn.g.visible) { const u = (ph * 0.3) % 1; pn.r.scale.setScalar(0.5 + u * 1.5); pn.r.material.opacity = 1 - u; } });
+      if (focus && this.g.focusOn && !this.drag) {
+        const tg = this.g.focusOn(focus);
+        if (tg) { globe.rotation.y += angDiff(globe.rotation.y, tg.ry) * 0.06; tilt.rotation.x += (tg.tx - tilt.rotation.x) * 0.06; }
+      }
       const paused = this.state.paused, slowAll = (act.pandemia ? 0.5 : 1) * (act.ciber ? 0.6 : 1);
       ships.forEach((s) => {
         const blocked = (alert.CTG && (s.a === 'CTG' || s.b === 'CTG')) || (alert.RTM && (s.a === 'RTM' || s.b === 'RTM')) || (alert.SUE && (s.a === 'SUE' || s.b === 'SUE'));
@@ -1014,7 +1183,8 @@ class Component extends DCLogic {
       });
       planes.forEach((p) => move(p, paused ? 0 : p.speed * (act.pandemia ? 0.4 : 1)));
       trucks.forEach((k) => move(k, paused ? 0 : k.speed * (act.tormenta && (k.b === 'CTG') ? 0.3 : 1)));
-      if (!this.drag && !this.state.nodeSel && this.props.rotar !== false) globe.rotation.y += 0.0012;
+      const spinning = this.state.spin === null || this.state.spin === undefined ? this.props.rotar !== false : this.state.spin;
+      if (!this.drag && !this.state.nodeSel && !focus && spinning) globe.rotation.y += 0.0012;
       renderer.render(scene, camera);
     };
     tick();

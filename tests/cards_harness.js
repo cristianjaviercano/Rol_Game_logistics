@@ -103,5 +103,50 @@ test('I1', 'Con el Superusuario conectado, él controla la fase y la liquidació
   } finally { delete global.window; global.BroadcastChannel = prev; }
 });
 
+// ---------- v3: empresas, roles, automáticas y noticias
+const loadP = (f, props) => { const h = fs.readFileSync(path.join(DIR, f), 'utf8'); return new (new Function('DCLogic', h.match(/<script type="text\/x-dc" data-dc-script[^>]*>([\s\S]*?)<\/script>/)[1] + '\nreturn Component;')(DCLogic))(props || {}); };
+test('E1', 'Cada empresa jugable tiene su caso: precios, ruta y moneda', () => {
+  const a = loadP('Jugador.dc.html', { empresa: 'acui' }), z = loadP('Jugador.dc.html', { empresa: 'shz' });
+  eq(a.contract().price, 83600); eq(a.contract().dest, 'Miami'); eq(v(a).emp.label, 'Acuícola del Sinú · Colombia · COP');
+  eq(z.contract().port, 'Shenzhen (Yantian)'); ok(/CNY/.test(v(z).sum.slice(-2)[0].label), v(z).sum.slice(-2)[0].label);
+});
+test('E2', 'Tilapia congelada exige equipo refrigerado en el acarreo', () => {
+  const a = loadP('Jugador.dc.html', { empresa: 'acui' });
+  a.setState({ board: Object.assign({}, a.state.board, { origen: ['trs'] }) });
+  ok(a.evaluate().missing.some((m) => /refrigerado/.test(m)), a.evaluate().missing.join(';'));
+  a.setState({ board: Object.assign({}, a.state.board, { origen: ['trf'] }) });
+  ok(!a.evaluate().missing.some((m) => /acarreo/.test(m)), a.evaluate().missing.join(';'));
+});
+test('E3', 'Los eventos afectan según la ruta: Shenzhen cruza Panamá y no le pega el peso', () => {
+  const z = loadP('Jugador.dc.html', { empresa: 'shz' });
+  z.setState({ world: { active: { sequia: true, revaluacion: true } } });
+  const ev = z.eventEffects();
+  eq(ev.find((e) => e.key === 'sequia').arrival, 4); ok(/yuanes/.test(ev.find((e) => e.key === 'revaluacion').text));
+});
+test('E4', 'Con dos integrantes, cada uno solo juega sus roles', () => {
+  const c = loadP('Jugador.dc.html', { empresa: 'cafe', roles: ['CEO', 'Tráfico', 'CFO'], owners: { Comercial: 'Beto' } });
+  eq(c.state.role, 'CEO');
+  const com = v(c).roles.find((r) => /^Comercial/.test(r.label));
+  eq(com.label, 'Comercial · Beto'); com.pick(); ok(/Beto/.test(c.state.msg.text)); eq(c.state.role, 'CEO');
+});
+test('E5', 'La Mesa marca empresas automáticas y las avanza; el evento sale como noticia', () => {
+  const store = {}; const prev = global.BroadcastChannel; const sent = [];
+  global.window = { localStorage: { getItem: (k) => store[k] || null, setItem: (k, x) => { store[k] = x; } } };
+  global.BroadcastChannel = class { constructor() {} postMessage(d) { sent.push(d); } close() {} };
+  global.window.BroadcastChannel = global.BroadcastChannel;
+  try {
+    const gm = loadP('Mesa.dc.html', { roster: { cafe: ['Ana'] } });
+    const rows = gm.companies();
+    eq(rows.find((r) => r.id === 'cafe').bot, false); eq(rows.find((r) => r.id === 'aero').bot, true);
+    const before = rows.find((r) => r.id === 'rot').filled;
+    gm.nextPhase(); gm.nextPhase();
+    ok(gm.companies().find((r) => r.id === 'rot').filled >= before, 'no avanzó');
+    gm.play('tormenta');
+    const last = sent[sent.length - 1];
+    eq(last.news.key, 'tormenta'); eq(last.info.tormenta.label, 'Tormenta tropical');
+    gm.setState({ handOpen: false }); eq(v(gm).handOpen, false);
+  } finally { delete global.window; global.BroadcastChannel = prev; }
+});
+
 results.forEach((r) => console.log(r.status.padEnd(6), r.id.padEnd(4), r.name, r.detail ? '→ ' + r.detail : ''));
 const f = results.filter((r) => r.status !== 'OK').length; console.log(JSON.stringify({ OK: results.length - f, FALLA: f }));

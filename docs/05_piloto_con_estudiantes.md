@@ -1,6 +1,6 @@
 # Piloto con estudiantes: app web, Supabase y Vercel
 
-La carpeta `web/` sirve las 12 pantallas del mock-up fuera del lienzo de Claude. Un script (`web/scripts/gen-screens.mjs`) toma cada `mockup/*.dc.html` sin modificarlo y la monta con un runtime propio (Preact). Así el lienzo y la app comparten la misma lógica y las mismas pruebas.
+La carpeta `web/` sirve las 13 pantallas del mock-up fuera del lienzo de Claude. Un script (`web/scripts/gen-screens.mjs`) toma cada `mockup/*.dc.html` sin modificarlo y la monta con un runtime propio (Preact). Así el lienzo y la app comparten la misma lógica y las mismas pruebas.
 
 ## Arquitectura del piloto
 
@@ -8,7 +8,7 @@ La carpeta `web/` sirve las 12 pantallas del mock-up fuera del lienzo de Claude.
 | --- | --- |
 | GitHub | Código fuente; cada push a `main` despliega en Vercel |
 | Vercel (plan Hobby) | Sitio estático: `web/` construido con Vite |
-| Supabase Auth | Estudiantes: sesión anónima con código de partida + alias. Docente: correo y contraseña |
+| Supabase Auth | Al iniciar cada persona se identifica: Superusuario (correo y contraseña) o jugador (sesión anónima, sin correo) |
 | Supabase Realtime | Canal por partida que reemplaza el `BroadcastChannel` del lienzo: la Mesa del Superusuario mueve el mundo y cada equipo recibe fases y eventos en su computador |
 | Supabase Postgres | Partidas, participantes, último estado por canal, eventos del piloto y encuestas, protegidos con RLS |
 
@@ -17,7 +17,7 @@ Sin variables de Supabase la app arranca en **modo local**: las pantallas se com
 ## Puesta en marcha (una vez)
 
 1. **Crear el proyecto** en [supabase.com](https://supabase.com): región *South America (São Paulo)*, la más cercana a Colombia.
-2. **Crear las tablas:** en *SQL Editor*, pegar y ejecutar `supabase/migrations/001_piloto.sql`. Se puede volver a ejecutar sin perder datos.
+2. **Crear las tablas:** en *SQL Editor*, pegar y ejecutar `supabase/migrations/001_piloto.sql` y luego `002_salas_empresas.sql`. Se pueden volver a ejecutar sin perder datos.
 3. **Activar el ingreso anónimo:** *Authentication → Sign In / Providers → Allow anonymous sign-ins*.
 4. **Cuenta del docente:** en la app, *Soy docente → Crear cuenta*. Si Supabase pide confirmar el correo, confirmarlo una vez.
 5. **Conectar Vercel:** en el proyecto `rol-game-logistics`, *Settings → Environment Variables*:
@@ -29,14 +29,14 @@ Sin variables de Supabase la app arranca en **modo local**: las pantallas se com
 
 | Momento | Docente | Estudiantes |
 | --- | --- | --- |
-| Antes | Panel docente → crear partida → proyectar el código | — |
-| 0–10 min | Explica roles y fases | Entran con código, alias y equipo; aceptan el consentimiento |
+| Antes | «Soy el Superusuario» → abrir sala con nombre → se abre la Mesa del Superusuario | — |
+| 0–10 min | Explica empresas, roles y fases | «Soy jugador» → eligen la sala, su empresa y un alias; aceptan el consentimiento. Si comparten empresa, los roles se reparten solos |
 | 10–15 min | — | Prueba corta tipo Saber Pro (pre-test, en papel o formulario) |
-| 15–75 min | Abre la Mesa del Superusuario en el proyector; avanza fases y juega cartas de evento | Una pantalla grande por equipo con la *Mesa del jugador*; roles en celular si quieren |
+| 15–75 min | Proyecta la Mesa del Superusuario; avanza fases y juega cartas de evento (todos ven el aviso animado) | Cada integrante juega sus roles en la *Mesa del jugador*; el *Mundo de la partida* muestra el globo con los eventos |
 | 75–85 min | Revisa la tabla de equipos del panel | Encuesta final (SUS + 2 preguntas abiertas) |
 | Después | Descarga los CSV y cierra la partida | — |
 
-Se recomiendan 12 a 24 estudiantes, en 4 a 6 equipos de 3 a 6 integrantes.
+Hay 3 empresas jugables (Café Sinú, Acuícola del Sinú, Shenzhen Parts) y 3 contrapartes automáticas; una empresa jugable sin integrantes también la maneja el computador. Con 2 a 6 personas por empresa se cubren de 6 a 18 estudiantes por sala; para grupos más grandes se abren varias salas.
 
 ## Datos que se guardan
 
@@ -70,6 +70,7 @@ Desde el panel docente se descargan como CSV (UTF-8, abre en Excel).
 
 ## Limitaciones conocidas del piloto
 
-- **Mismo caso para todos:** todos los equipos juegan el caso de Café Sinú en paralelo. La tarjeta de Café Sinú en la Mesa del Superusuario muestra al último equipo que actualizó su estado; la comparación entre equipos está en la tabla del panel docente.
+- **Mesa compartida:** si dos integrantes cambian lo mismo al mismo tiempo, gana el último cambio.
+- **Contrapartes:** Caribe Line, Rotterdam Foods y AeroCarga todavía no son jugables.
 - **Escenas 3D:** son ilustrativas; no cambian los indicadores del juego.
 - **Tamaños de pantalla:** las pantallas se diseñaron a 1440 px y se escalan al ancho del navegador; las de rol están a 390 px, para celular.

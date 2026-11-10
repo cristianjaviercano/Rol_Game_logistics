@@ -1,4 +1,4 @@
-"""Arma Mesa.dc.html: inserta en la plantilla los métodos del globo 3D.
+"""Arma Mesa.dc.html y Mundo.dc.html: inserta en sus plantillas los métodos del globo 3D.
 
 Toma de Main.dc.html los métodos comunes (proyección, mapa, países, estrechos) y de
 tools/mesa_globe.js el globo propio de la mesa (nodos, buques, aviones, camiones y selección).
@@ -11,7 +11,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MOCK = ROOT / (sys.argv[1] if len(sys.argv) > 1 else 'mockup')
 main = (MOCK / 'Main.dc.html').read_text(encoding='utf-8')
-template = (ROOT / 'tools' / 'Mesa.template.html').read_text(encoding='utf-8')
 own = (ROOT / 'tools' / 'mesa_globe.js').read_text(encoding='utf-8').rstrip('\n')
 script = main.split('class Component extends DCLogic {')[1]
 
@@ -37,6 +36,8 @@ globe = '\n'.join(method(n) for n in names)
 globe = globe.replace(
     "if (act.tormenta || act.devaluacion) ids.push('170');",
     "if (act.tormenta || act.devaluacion || act.revaluacion || act.congestion) ids.push('170');")
-out = template.replace('%%GLOBE%%', globe + '\n\n' + own)
-(MOCK / 'Mesa.dc.html').write_text(out, encoding='utf-8')
-print('Mesa.dc.html generado:', len(out), 'caracteres')
+for name in ('Mesa', 'Mundo'):
+    tpl = (ROOT / 'tools' / (name + '.template.html')).read_text(encoding='utf-8')
+    out = tpl.replace('%%GLOBE%%', globe + '\n\n' + own)
+    (MOCK / (name + '.dc.html')).write_text(out, encoding='utf-8')
+    print(name + '.dc.html generado:', len(out), 'caracteres')

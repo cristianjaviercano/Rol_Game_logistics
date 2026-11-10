@@ -31,6 +31,37 @@ export async function ensureAnon() {
   return r.data.user;
 }
 
+export const EMPRESAS = [
+  { id: 'cafe', name: 'Café Sinú S.A.S.', meta: 'Colombia · exporta café verde a Rotterdam', playable: true },
+  { id: 'acui', name: 'Acuícola del Sinú', meta: 'Colombia · exporta tilapia congelada a Miami', playable: true },
+  { id: 'shz', name: 'Shenzhen Parts Co.', meta: 'China · exporta repuestos a Cartagena', playable: true },
+  { id: 'caribe', name: 'Caribe Line', meta: 'Naviera · contraparte automática', playable: false },
+  { id: 'rot', name: 'Rotterdam Foods B.V.', meta: 'Importadora · contraparte automática', playable: false },
+  { id: 'aero', name: 'AeroCarga Andina', meta: 'Aerolínea de carga · contraparte automática', playable: false }
+];
+export const ROLES = ['CEO', 'Comercial', 'Tráfico', 'Aduanas', 'CFO', 'Riesgos'];
+// Reparte los 6 roles entre los integrantes de una empresa, por orden de llegada (rol j → integrante j mód n).
+export function rolesFor(members, empresa) {
+  const team = members.filter((m) => m.equipo === empresa);
+  const owners = {}, byAlias = {};
+  ROLES.forEach((r, j) => { const m = team.length ? team[j % team.length] : null; owners[r] = m ? m.alias : ''; if (m) (byAlias[m.alias] = byAlias[m.alias] || []).push(r); });
+  return { owners: owners, byAlias: byAlias, team: team };
+}
+export async function listRooms() {
+  await ensureAnon();
+  const { data, error } = await sb.rpc('listar_salas');
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+let membersCache = [];
+export async function members() {
+  const pid = partidaId(); if (!sb || !pid) return membersCache;
+  const { data, error } = await sb.rpc('miembros_partida', { p: pid });
+  if (!error && data) membersCache = data;
+  return membersCache;
+}
+export const lastMembers = () => membersCache;
+
 export async function joinGame(codigo, alias, equipo, consentimiento) {
   await ensureAnon();
   const { data, error } = await sb.rpc('unirse_partida', { p_codigo: codigo.trim().toUpperCase(), p_alias: alias.trim(), p_equipo: equipo, p_consentimiento: !!consentimiento });
@@ -105,6 +136,10 @@ export async function teamStates() {
 
 /* ---------------- bus en tiempo real (reemplaza BroadcastChannel) ---------------- */
 const RealBC = window.BroadcastChannel;
+const CLIENT = Math.random().toString(36).slice(2, 10);
+const busSubs = new Set();
+export const onBus = (f) => { busSubs.add(f); return () => busSubs.delete(f); };
+const notify = (name, data) => busSubs.forEach((f) => { try { f(name, data); } catch (e) { /* nada */ } });
 const locals = new Set();
 let rt = null, rtStatus = 'local', presence = {};
 const statusSubs = new Set();
@@ -115,11 +150,12 @@ class LVChannel {
   constructor(name) {
     this.name = name; this.onmessage = null;
     this.real = RealBC ? new RealBC(name) : null;
-    if (this.real) this.real.onmessage = (e) => { if (this.onmessage) this.onmessage(e); };
+    if (this.real) this.real.onmessage = (e) => { notify(this.name, e.data); if (this.onmessage) this.onmessage(e); };
     locals.add(this);
   }
   postMessage(data) {
     if (this.real) this.real.postMessage(data);
+    notify(this.name, data);
     const me = emisor();
     if (ONLINE && partidaId()) {
       if (this.name === 'logiverse-mundo' && me !== 'gm') return; // solo el docente mueve el mundo
@@ -148,7 +184,12 @@ export function connectRealtime(pantalla) {
     // Un equipo no recibe el estado de otro equipo: cada mesa ve solo el suyo; el docente ve todos.
     if (payload.name === 'logiverse-jugador' && me !== 'gm' && payload.emisor !== me) return;
     ls.set(payload.name, payload.data);
+    notify(payload.name, payload.data);
     locals.forEach((c) => { if (c.name === payload.name && c.onmessage) { try { c.onmessage({ data: payload.data }); } catch (e) { logError('bus', e.message); } } });
+  });
+  rt.on('broadcast', { event: 'sync' }, ({ payload }) => {
+    if (!payload || payload.from === CLIENT || payload.empresa !== emisor()) return;
+    applyPatch(payload.screen, payload.patch);
   });
   rt.on('presence', { event: 'sync' }, () => { presence = rt.presenceState(); emit(); });
   rt.subscribe((st) => {
@@ -206,6 +247,10 @@ screenHooks.onState.push((screen, st, prev, embedded) => {
   (WATCH[screen] || []).forEach((k) => {
     if (st[k] !== prev[k] && JSON.stringify(st[k]) !== JSON.stringify(prev[k])) logEvent('cambio', screen, { clave: k, valor: st[k] });
   });
+  if (screen === 'Jugador' && rt && emisor() !== 'gm') {
+    const patch = diffState(st, prev);
+    if (patch) rt.send({ type: 'broadcast', event: 'sync', payload: { from: CLIENT, empresa: emisor(), screen: screen, patch: patch } });
+  }
   if (SNAP.has(screen)) {
     const snap = {};
     Object.keys(st).forEach((k) => { if (!TRANSIENT.has(k) && typeof st[k] !== 'function') snap[k] = st[k]; });
@@ -213,6 +258,43 @@ screenHooks.onState.push((screen, st, prev, embedded) => {
     upsertLater('snap:' + screen, snaps[screen], 2500);
   }
 });
+
+/* ---------------- sincronía entre dispositivos de la misma empresa ---------------- */
+// Cada integrante juega sus roles en su propio dispositivo; los cambios de estado viajan como parches:
+// claves de primer nivel, o sub-claves si el valor es un objeto (tablero, documentos…). La bitácora se une por entrada.
+const LOCAL = new Set(['role', 'tab', 'sel', 'msg', 'quiz', 'world', 'connected', 'history']);
+const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+function diffState(st, prev) {
+  const patch = {}; let any = false;
+  Object.keys(st).forEach((k) => {
+    if (LOCAL.has(k) || TRANSIENT.has(k) || st[k] === prev[k]) return;
+    if (isObj(st[k]) && isObj(prev[k])) {
+      const sub = {}; let n = 0;
+      Object.keys(st[k]).forEach((sk) => { if (JSON.stringify(st[k][sk]) !== JSON.stringify(prev[k][sk])) { sub[sk] = st[k][sk]; n++; } });
+      if (n) { patch[k] = { __sub: sub }; any = true; }
+    } else if (JSON.stringify(st[k]) !== JSON.stringify(prev[k])) { patch[k] = st[k]; any = true; }
+  });
+  return any ? JSON.parse(JSON.stringify(patch)) : null;
+}
+const entryKey = (e) => [e.seq, e.role, e.decision].join('|');
+function mergeInto(state, patch) {
+  const out = Object.assign({}, state);
+  Object.keys(patch).forEach((k) => {
+    const v = patch[k];
+    if (v && v.__sub) out[k] = Object.assign({}, out[k] || {}, v.__sub);
+    else if (k === 'log' && Array.isArray(v) && Array.isArray(out.log)) {
+      const seen = new Set(out.log.map(entryKey));
+      out.log = out.log.concat(v.filter((e) => !seen.has(entryKey(e)))).sort((a, b) => (a.seq || 0) - (b.seq || 0));
+    } else out[k] = v;
+  });
+  return out;
+}
+function applyPatch(screen, patch) {
+  if (!patch) return;
+  const inst = window.__lv && window.__lv[screen];
+  if (inst && inst.__host && !inst.__host.dead) { inst.state = mergeInto(inst.state, patch); inst.__host.redraw(); if (inst.later) inst.later(); }
+  snaps[screen] = mergeInto(snaps[screen] || {}, patch);
+}
 
 /* ---------------- encuesta y exportación ---------------- */
 export async function saveSurvey(respuestas, puntaje, comentarios) {
