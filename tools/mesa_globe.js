@@ -13,8 +13,8 @@
       { id: 'MIA-A', type: 'aeropuerto', name: 'Internacional de Miami', city: 'Miami', country: 'EE. UU.', lat: 26.9, lon: -81.0, desc: 'Centro de carga aérea entre América Latina y el resto del mundo.' },
       { id: 'AMS', type: 'aeropuerto', name: 'Schiphol', city: 'Ámsterdam', country: 'Países Bajos', lat: 52.9, lon: 6.3, desc: 'Centro europeo de carga perecedera y farmacéutica.' },
       { id: 'PVG', type: 'aeropuerto', name: 'Pudong', city: 'Shanghái', country: 'China', lat: 32.4, lon: 120.6, desc: 'Uno de los aeropuertos de carga con más toneladas del mundo.' },
-      { id: 'LRD', type: 'terminal', name: 'Laredo', country: 'México · EE. UU.', lat: 27.5, lon: -99.5, desc: 'Terminal de carga terrestre en la frontera; se habilita en la etapa 2.', soon: true },
-      { id: 'MEX', type: 'bodega', name: 'Ciudad de México', country: 'México', lat: 19.43, lon: -99.13, desc: 'Centro de distribución y bodega; se habilita en la etapa 2.', soon: true }
+      { id: 'LRD', type: 'terminal', name: 'Laredo', country: 'México · EE. UU.', lat: 27.5, lon: -99.5, desc: 'Paso fronterizo de carga terrestre: garita, aduana con semáforo fiscal y bodega de trasbordo.' },
+      { id: 'MEX', type: 'bodega', name: 'Ciudad de México', country: 'México', lat: 19.43, lon: -99.13, desc: 'Centro de distribución y bodega; escena próximamente.', soon: true }
     ];
   }
 
